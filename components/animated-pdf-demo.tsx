@@ -1,86 +1,88 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, ResponsiveContainer, ReferenceLine } from "recharts"
-import { generateNormalPdf } from "@/lib/pdf-utils"
-import type { PdfPoint } from "@/lib/types"
+import { PdfChart } from "@/components/pdf-chart"
+// Chart controls live inside PdfChart; keep this demo focused on feeding data
+
+// Simple normal distribution function
+function normalPdf(x: number, mean: number, stdDev: number): number {
+  const variance = stdDev * stdDev
+  const coefficient = 1 / Math.sqrt(2 * Math.PI * variance)
+  const exponent = -Math.pow(x - mean, 2) / (2 * variance)
+  return coefficient * Math.exp(exponent)
+}
 
 export function AnimatedPdfDemo() {
-  const [pdfData, setPdfData] = useState<PdfPoint[]>([])
   const [mean, setMean] = useState(50)
   const [variance, setVariance] = useState(100)
   const [direction, setDirection] = useState(1)
+  const [pdfData, setPdfData] = useState<Array<{ x: number, y: number }>>([])
+
+  // Generate data points with useEffect
+  useEffect(() => {
+    const data = []
+    const stdDev = Math.sqrt(variance)
+
+    for (let x = 0; x <= 100; x += 0.5) {
+      const y = normalPdf(x, mean, stdDev)
+      data.push({ x, y })
+    }
+    setPdfData(data)
+  }, [mean, variance])
+
+  // Fallback data if pdfData is empty - create a proper curve
+  const fallbackData = []
+  for (let x = 0; x <= 100; x += 2) {
+    const y = Math.exp(-Math.pow(x - 50, 2) / 200) * 0.02
+    fallbackData.push({ x, y })
+  }
+
+  const displayData = pdfData.length > 0 ? pdfData : fallbackData
 
   useEffect(() => {
     const interval = setInterval(() => {
-      // Animate mean back and forth
       setMean((prev) => {
         const next = prev + direction * 0.5
         if (next > 70 || next < 30) {
           setDirection((d) => -d)
         }
-        return next
+        return Math.max(30, Math.min(70, next))
       })
 
-      // Slightly vary variance
       setVariance((prev) => {
         const variation = Math.sin(Date.now() / 1000) * 20
-        return 100 + variation
+        return Math.max(50, 100 + variation)
       })
     }, 50)
 
     return () => clearInterval(interval)
   }, [direction])
 
-  useEffect(() => {
-    const pdf = generateNormalPdf(mean, variance, { min: 0, max: 100 }, 200)
-    setPdfData(pdf)
-  }, [mean, variance])
-
   return (
     <div className="w-full h-[400px] relative">
       <div className="absolute top-4 left-4 z-10 space-y-1">
-        <div className="text-xs text-muted-foreground">Live Demo</div>
+        <div className="text-xs text-muted-foreground">Live Demo - UPDATED!</div>
         <div className="font-mono text-sm">
-          μ = <span className="text-primary">{mean.toFixed(1)}</span>
+          μ = <span className="text-cyan-400">{mean.toFixed(1)}</span>
         </div>
         <div className="font-mono text-sm">
-          σ² = <span className="text-secondary">{variance.toFixed(1)}</span>
+          σ² = <span className="text-violet-400">{variance.toFixed(1)}</span>
         </div>
       </div>
 
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={pdfData} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
-          <defs>
-            <linearGradient id="pdfGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.8} />
-              <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.1} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
-          <XAxis
-            dataKey="x"
-            stroke="hsl(var(--muted-foreground))"
-            tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
-            label={{ value: "Outcome Value", position: "insideBottom", offset: -10, fill: "hsl(var(--foreground))" }}
-          />
-          <YAxis
-            stroke="hsl(var(--muted-foreground))"
-            tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
-            label={{ value: "Density", angle: -90, position: "insideLeft", fill: "hsl(var(--foreground))" }}
-          />
-          <ReferenceLine x={mean} stroke="hsl(var(--primary))" strokeDasharray="3 3" label="μ" />
-          <Area
-            type="monotone"
-            dataKey="y"
-            stroke="hsl(var(--primary))"
-            strokeWidth={2}
-            fill="url(#pdfGradient)"
-            animationDuration={300}
-            isAnimationActive={true}
-          />
-        </AreaChart>
-      </ResponsiveContainer>
+      {/* Chart mode buttons are rendered by PdfChart */}
+
+      <div className="w-full h-full">
+        <PdfChart
+          data={displayData}
+          mean={mean}
+          median={mean * 0.98}
+          selectedRange={[mean - 10, mean + 10]}
+          domain={{ min: 0, max: 100 }}
+          unit=""
+          liquidityDepth={10000}
+        />
+      </div>
 
       <div className="absolute bottom-4 right-4 text-xs text-muted-foreground">
         Ghost handles moving • Curve reweighting in real-time

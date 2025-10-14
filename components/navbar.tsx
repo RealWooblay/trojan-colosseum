@@ -4,6 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { ConnectButton } from "@/components/wallet/connect-button"
 
 export function Navbar() {
   const pathname = usePathname()
@@ -41,8 +42,8 @@ export function Navbar() {
             ))}
           </div>
 
-          {/* Connect Wallet (Mock) */}
-          <Button className="bg-primary text-primary-foreground hover:bg-primary/90">Connect Wallet</Button>
+          {/* Connect Wallet */}
+          <ConnectButton />
         </div>
       </div>
     </nav>

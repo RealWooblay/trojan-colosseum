@@ -4,6 +4,7 @@ import { Space_Grotesk, Geist_Mono } from "next/font/google"
 import { Toaster } from "@/components/ui/toaster"
 import { Suspense } from "react"
 import "./globals.css"
+import { AppKitProvider } from "@/components/wallet/appkit-provider"
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -31,8 +32,10 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={`font-sans ${spaceGrotesk.variable} ${geistMono.variable}`}>
-        <Suspense fallback={null}>{children}</Suspense>
-        <Toaster />
+        <AppKitProvider>
+          <Suspense fallback={null}>{children}</Suspense>
+          <Toaster />
+        </AppKitProvider>
       </body>
     </html>
   )

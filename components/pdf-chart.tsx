@@ -59,9 +59,13 @@ export function PdfChart({
   }, [data, selectedRange])
 
   const cdfData = useMemo(() => {
+    // Integrate using trapezoids with actual x-spacing so the CDF shape/scale is correct
     let cumulative = 0
-    return data.map((point) => {
-      cumulative += point.y * 0.1
+    return data.map((point, index) => {
+      if (index === 0) return { x: point.x, y: 0 }
+      const dx = data[index].x - data[index - 1].x
+      const avgY = (data[index].y + data[index - 1].y) / 2
+      cumulative += avgY * dx
       return { x: point.x, y: cumulative }
     })
   }, [data])
@@ -153,13 +157,12 @@ export function PdfChart({
         )}
         <Badge
           variant="outline"
-          className={`font-mono ${
-            liquidityDepth < 1000
-              ? "bg-red-500/10 border-red-500/30 text-red-400"
-              : liquidityDepth < 10000
-                ? "bg-yellow-500/10 border-yellow-500/30 text-yellow-400"
-                : "bg-green-500/10 border-green-500/30 text-green-400"
-          }`}
+          className={`font-mono ${liquidityDepth < 1000
+            ? "bg-red-500/10 border-red-500/30 text-red-400"
+            : liquidityDepth < 10000
+              ? "bg-yellow-500/10 border-yellow-500/30 text-yellow-400"
+              : "bg-green-500/10 border-green-500/30 text-green-400"
+            }`}
         >
           Liquidity: {getLiquidityLabel(liquidityDepth)}
         </Badge>
@@ -211,11 +214,13 @@ export function PdfChart({
 
               <XAxis
                 dataKey="x"
+                type="number"
+                allowDataOverflow
                 stroke="rgba(255,255,255,0.95)"
                 tick={{ fill: "rgba(255,255,255,0.95)", fontSize: 11 }}
                 tickFormatter={(value) => fmtAxis(value, unit)}
                 label={{
-                  value: `Outcome Value (${unit})`,
+                  value: unit ? `Outcome Value (${unit})` : "Outcome Value",
                   position: "insideBottom",
                   offset: -10,
                   fill: "rgba(255,255,255,0.95)",
