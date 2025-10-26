@@ -30,11 +30,16 @@ export default function MarketDetailPage() {
   const [selectedRange, setSelectedRange] = useState<[number, number]>([0, 100])
   const [tradePreview, setTradePreview] = useState<any>(null)
   const [isUserInteracting, setIsUserInteracting] = useState(false)
+  const [ghostPdf, setGhostPdf] = useState<PdfPoint[] | undefined>(undefined)
 
   const selectedRangeRef = useRef(selectedRange)
 
-  // Generate ghost curve based on betting range - SAME LOGIC AS HOME PAGE
+  // Generate ghost curve - either trade preview result or range-based prediction
   const ghostData: PdfPoint[] = useMemo(() => {
+    // Priority 1: Trade preview ghost data (actual trade result from API)
+    if (ghostPdf) return ghostPdf
+
+    // Priority 2: Range-based prediction (mathematical estimate based on selected range)
     if (!market || pdf.length === 0) return []
 
     // Calculate the center of the betting range
@@ -52,7 +57,7 @@ export default function MarketDetailPage() {
     const newVariance = market.stats.variance * varianceAdjustment
 
     return generateNormalPdf(newMean, newVariance, market.domain)
-  }, [selectedRange, market, pdf])
+  }, [selectedRange, market, pdf, ghostPdf])
 
   useEffect(() => {
     fetch(`/api/markets/${marketId}`)
@@ -115,6 +120,9 @@ export default function MarketDetailPage() {
   const handleRangeChange = useCallback((newRange: [number, number]) => {
     setSelectedRange(newRange)
     setIsUserInteracting(true)
+
+    // Clear trade preview ghost when range changes to show range-based prediction
+    setGhostPdf(undefined)
 
     // Resume animation after 2 seconds for more responsive feel
     setTimeout(() => {
@@ -181,6 +189,7 @@ export default function MarketDetailPage() {
                 <PdfChart
                   data={pdf}
                   ghostData={ghostData}
+                  ghostType={ghostPdf ? "trade-preview" : "range-prediction"}
                   mean={market.stats.mean}
                   median={market.stats.mean * 0.98}
                   selectedRange={selectedRange}

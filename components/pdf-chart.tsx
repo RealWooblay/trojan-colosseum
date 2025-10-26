@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import React, { useState, useMemo } from "react"
 import {
   AreaChart,
   Area,
@@ -22,6 +22,7 @@ import type { PdfPoint } from "@/lib/types"
 interface PdfChartProps {
   data: PdfPoint[]
   ghostData?: PdfPoint[]
+  ghostType?: "trade-preview" | "range-prediction"
   mean?: number
   median?: number
   selectedRange?: [number, number]
@@ -34,6 +35,7 @@ interface PdfChartProps {
 export function PdfChart({
   data,
   ghostData,
+  ghostType,
   mean,
   median,
   selectedRange,
@@ -127,8 +129,8 @@ export function PdfChart({
                 <stop offset="100%" stopColor="#A46CFF" stopOpacity={0} />
               </linearGradient>
               <linearGradient id="ghostFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#A46CFF" stopOpacity={0.35} />
-                <stop offset="100%" stopColor="#A46CFF" stopOpacity={0} />
+                <stop offset="0%" stopColor="#A46CFF" stopOpacity={0.5} />
+                <stop offset="100%" stopColor="#A46CFF" stopOpacity={0.1} />
               </linearGradient>
               <filter id="glow">
                 <feGaussianBlur stdDeviation="2.5" result="coloredBlur" />
@@ -168,6 +170,8 @@ export function PdfChart({
                 fill: "rgba(255,255,255,0.95)",
                 fontSize: 12,
               }}
+              domain={[0, 'dataMax']}
+              scale="linear"
             />
 
             <Tooltip
@@ -198,14 +202,15 @@ export function PdfChart({
                   data={ghostData}
                   dataKey="y"
                   stroke="#A46CFF"
-                  strokeWidth={4}
-                  strokeDasharray="12 6"
+                  strokeWidth={6}
+                  strokeDasharray="8 4"
                   fill="url(#ghostFill)"
                   filter="url(#glow)"
                   animationDuration={800}
                   animationEasing="ease-in-out"
+                  connectNulls={false}
                   style={{
-                    filter: 'drop-shadow(0 0 8px rgba(164, 108, 255, 0.6))'
+                    filter: 'drop-shadow(0 0 12px rgba(164, 108, 255, 0.8))'
                   }}
                 />
               </>
@@ -246,7 +251,7 @@ export function PdfChart({
         {ghostData && (
           <div className="absolute top-14 right-8">
             <Badge variant="outline" className="bg-violet-500/10 border-violet-500/30 text-violet-400 text-xs">
-              After trade
+              {ghostType === "trade-preview" ? "After trade" : "Range prediction"}
             </Badge>
           </div>
         )}

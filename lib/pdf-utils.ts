@@ -154,22 +154,28 @@ export function calculateMassInRange(pdf: PdfPoint[], range: [number, number]): 
   return mass
 }
 
-// Simulate reweighting PDF after a trade
+// Simulate reweighting PDF after a trade with smooth transitions
 export function reweightPdf(pdf: PdfPoint[], range: [number, number], deltaMass: number): PdfPoint[] {
-  // Simple model: add deltaMass uniformly in range, subtract proportionally elsewhere
-  const currentMass = calculateMassInRange(pdf, range)
   const rangeWidth = range[1] - range[0]
-  const densityIncrease = deltaMass / rangeWidth
+  const rangeCenter = (range[0] + range[1]) / 2
+
+  // Create a smooth transition function using sigmoid-like curve
+  const smoothTransition = (x: number, center: number, width: number) => {
+    const distance = Math.abs(x - center) / (width / 2)
+    if (distance >= 1) return 0
+    // Smooth falloff using cosine function for natural curve
+    return 0.5 * (1 + Math.cos(Math.PI * distance))
+  }
 
   return pdf.map((point) => {
-    if (point.x >= range[0] && point.x <= range[1]) {
-      // Increase density in range
-      return { x: point.x, y: Math.max(0, point.y + densityIncrease) }
-    } else {
-      // Decrease density outside range proportionally
-      const decreaseFactor = 1 - deltaMass * 0.1 // Simplified model
-      return { x: point.x, y: Math.max(0, point.y * decreaseFactor) }
-    }
+    // Calculate smooth weight based on distance from range center
+    const weight = smoothTransition(point.x, rangeCenter, rangeWidth)
+
+    // Apply density change with smooth transition
+    const densityChange = deltaMass * weight / rangeWidth
+    const newY = Math.max(0, point.y + densityChange)
+
+    return { x: point.x, y: newY }
   })
 }
 
