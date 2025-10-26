@@ -20,7 +20,7 @@ export function RangeSelector({ range, domain, onChange, unit }: RangeSelectorPr
   const [maxInput, setMaxInput] = useState(range[1].toString())
   const [error, setError] = useState<string | null>(null)
 
-  const debounceTimerRef = useRef<NodeJS.Timeout>()
+  const debounceTimerRef = useRef<NodeJS.Timeout | undefined>(undefined)
 
   useEffect(() => {
     setMinInput(range[0].toFixed(2))
@@ -77,7 +77,7 @@ export function RangeSelector({ range, domain, onChange, unit }: RangeSelectorPr
       }
 
       // Clear existing timer
-      if (debounceTimerRef.current) {
+      if (debounceTimerRef.current !== undefined) {
         clearTimeout(debounceTimerRef.current)
       }
 

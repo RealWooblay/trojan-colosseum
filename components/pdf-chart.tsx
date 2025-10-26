@@ -25,11 +25,13 @@ interface PdfChartProps {
   ghostType?: "trade-preview" | "range-prediction"
   mean?: number
   median?: number
-  selectedRange?: [number, number]
+  selectedRange?: [number, number] // For backward compatibility
+  selectedRanges?: [number, number][] // New multi-range support
   domain: { min: number; max: number }
   unit: string
   liquidityDepth: number
   onRangeChange?: (range: [number, number]) => void
+  onUpdateRange?: (index: number, range: [number, number]) => void // New callback for individual range updates
 }
 
 export function PdfChart({
@@ -39,12 +41,16 @@ export function PdfChart({
   mean,
   median,
   selectedRange,
+  selectedRanges,
   domain,
   unit,
   liquidityDepth,
   onRangeChange,
+  onUpdateRange,
 }: PdfChartProps) {
-  const [localRange, setLocalRange] = useState<[number, number]>(selectedRange || [domain.min, domain.max])
+  // Use selectedRanges if available, otherwise fall back to selectedRange for backward compatibility
+  const ranges = selectedRanges || (selectedRange ? [selectedRange] : [])
+  const [localRange, setLocalRange] = useState<[number, number]>(ranges[0] || [domain.min, domain.max])
 
   const mode = useMemo(() => findMode(data), [data])
   const calculatedMean = useMemo(() => {
@@ -57,15 +63,6 @@ export function PdfChart({
     return calcRangeProb(data, selectedRange || localRange)
   }, [data, selectedRange, localRange])
 
-  const handleBrushChange = (e: any) => {
-    if (e.startIndex !== undefined && e.endIndex !== undefined) {
-      const newRange: [number, number] = [data[e.startIndex].x, data[e.endIndex].x]
-      setLocalRange(newRange)
-      if (onRangeChange) {
-        onRangeChange(newRange)
-      }
-    }
-  }
 
   return (
     <div className="space-y-4">
@@ -123,6 +120,22 @@ export function PdfChart({
                 <stop offset="0%" stopColor="#00E0FF" />
                 <stop offset="100%" stopColor="#A46CFF" />
               </linearGradient>
+              <linearGradient id="neonStroke2" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#FF6B35" />
+                <stop offset="100%" stopColor="#FF8E53" />
+              </linearGradient>
+              <linearGradient id="neonStroke3" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#4ECDC4" />
+                <stop offset="100%" stopColor="#44A08D" />
+              </linearGradient>
+              <linearGradient id="neonStroke4" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#45B7D1" />
+                <stop offset="100%" stopColor="#96C93D" />
+              </linearGradient>
+              <linearGradient id="neonStroke5" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#96CEB4" />
+                <stop offset="100%" stopColor="#FECA57" />
+              </linearGradient>
               <linearGradient id="neonFill" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#00E0FF" stopOpacity={0.55} />
                 <stop offset="50%" stopColor="#A46CFF" stopOpacity={0.5} />
@@ -179,20 +192,33 @@ export function PdfChart({
               cursor={{ stroke: "rgba(0,224,255,0.5)", strokeWidth: 2 }}
             />
 
-            {(selectedRange || localRange) && (
-              <ReferenceArea
-                x1={(selectedRange || localRange)[0]}
-                x2={(selectedRange || localRange)[1]}
-                fill="url(#neonStroke)"
-                fillOpacity={0.3}
-                stroke="#00E0FF"
-                strokeWidth={3}
-                strokeDasharray="6 3"
-                style={{
-                  filter: 'drop-shadow(0 0 6px rgba(0, 224, 255, 0.4))'
-                }}
-              />
-            )}
+            {/* Render multiple ranges with different colors */}
+            {ranges.map((range, index) => {
+              const colors = [
+                { fill: "url(#neonStroke)", stroke: "#00E0FF" },
+                { fill: "url(#neonStroke2)", stroke: "#FF6B35" },
+                { fill: "url(#neonStroke3)", stroke: "#4ECDC4" },
+                { fill: "url(#neonStroke4)", stroke: "#45B7D1" },
+                { fill: "url(#neonStroke5)", stroke: "#96CEB4" },
+              ]
+              const colorSet = colors[index % colors.length]
+
+              return (
+                <ReferenceArea
+                  key={index}
+                  x1={range[0]}
+                  x2={range[1]}
+                  fill={colorSet.fill}
+                  fillOpacity={0.2 + (index * 0.1)}
+                  stroke={colorSet.stroke}
+                  strokeWidth={3}
+                  strokeDasharray="6 3"
+                  style={{
+                    filter: `drop-shadow(0 0 6px ${colorSet.stroke}40)`
+                  }}
+                />
+              )
+            })}
 
 
             {ghostData && (
@@ -228,23 +254,56 @@ export function PdfChart({
           </AreaChart>
         </ResponsiveContainer>
 
-        {/* Clean Brush Component */}
-        <div className="mt-6 px-6 py-4">
-          <div className="text-center text-sm text-white/80 mb-3 font-medium">Select your betting range</div>
-          <ResponsiveContainer width="100%" height={60}>
-            <AreaChart data={data} margin={{ top: 8, right: 40, left: 40, bottom: 8 }}>
-              <Brush
-                dataKey="x"
-                height={35}
-                stroke="rgba(0,224,255,1)"
-                fill="rgba(0,224,255,0.3)"
-                tickFormatter={(value: number) => fmtAxis(value, unit)}
-                onChange={handleBrushChange}
-                startIndex={0}
-                endIndex={data.length - 1}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+        {/* Multiple Brush Components for each range */}
+        <div className="mt-6 px-6 py-4 space-y-4">
+          <div className="text-center text-sm text-white/80 mb-3 font-medium">
+            Drag to adjust ranges {ranges.length > 1 && `(${ranges.length} ranges)`}
+          </div>
+          {ranges.map((range, index) => {
+            const colors = [
+              { stroke: "#00E0FF", fill: "rgba(0,224,255,0.3)" },
+              { stroke: "#FF6B35", fill: "rgba(255,107,53,0.3)" },
+              { stroke: "#4ECDC4", fill: "rgba(78,205,196,0.3)" },
+              { stroke: "#45B7D1", fill: "rgba(69,183,209,0.3)" },
+              { stroke: "#96CEB4", fill: "rgba(150,206,180,0.3)" },
+            ]
+            const colorSet = colors[index % colors.length]
+
+            // Find the start and end indices for this range
+            const startIndex = data.findIndex(point => point.x >= range[0])
+            const endIndex = data.findLastIndex(point => point.x <= range[1])
+
+            return (
+              <div key={index} className="space-y-2">
+                <div className="text-xs text-center text-white/60 font-mono">
+                  Range {index + 1}: {fmtAxis(range[0], unit)} - {fmtAxis(range[1], unit)}
+                </div>
+                <ResponsiveContainer width="100%" height={50}>
+                  <AreaChart data={data} margin={{ top: 4, right: 40, left: 40, bottom: 4 }}>
+                    <Brush
+                      dataKey="x"
+                      height={30}
+                      stroke={colorSet.stroke}
+                      fill={colorSet.fill}
+                      tickFormatter={(value: number) => fmtAxis(value, unit)}
+                      onChange={(e: any) => {
+                        if (e.startIndex !== undefined && e.endIndex !== undefined) {
+                          const newRange: [number, number] = [data[e.startIndex].x, data[e.endIndex].x]
+                          if (onUpdateRange) {
+                            onUpdateRange(index, newRange)
+                          } else if (onRangeChange) {
+                            onRangeChange(newRange)
+                          }
+                        }
+                      }}
+                      startIndex={Math.max(0, startIndex)}
+                      endIndex={Math.min(data.length - 1, endIndex)}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            )
+          })}
         </div>
 
 

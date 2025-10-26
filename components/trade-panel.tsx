@@ -11,9 +11,13 @@ import type { Market } from "@/lib/types"
 
 interface TradePanelProps {
   market: Market
-  selectedRange: [number, number]
+  selectedRange?: [number, number] // For backward compatibility
+  selectedRanges?: [number, number][] // New multi-range support
   onRangeChange: (range: [number, number]) => void
   onTradePreview: (side: "buy" | "sell", notional: number) => void
+  onAddRange?: () => void
+  onRemoveRange?: (index: number) => void
+  onUpdateRange?: (index: number, range: [number, number]) => void
   tradePreview?: {
     deltaMass: number
     costUSD: number
@@ -23,18 +27,34 @@ interface TradePanelProps {
   }
 }
 
-export function TradePanel({ market, selectedRange, onRangeChange, onTradePreview, tradePreview }: TradePanelProps) {
+export function TradePanel({
+  market,
+  selectedRange,
+  selectedRanges,
+  onRangeChange,
+  onTradePreview,
+  onAddRange,
+  onRemoveRange,
+  onUpdateRange,
+  tradePreview
+}: TradePanelProps) {
+  // Use selectedRanges if available, otherwise fall back to selectedRange for backward compatibility
+  const ranges = selectedRanges || (selectedRange ? [selectedRange] : [])
+  const currentRange = ranges[0] || [market.domain.min, market.domain.max]
+
   const [notional, setNotional] = useState("500")
   const [slippage, setSlippage] = useState("50")
   const [side, setSide] = useState<"buy" | "sell">("buy")
-  const [minInput, setMinInput] = useState(selectedRange[0].toString())
-  const [maxInput, setMaxInput] = useState(selectedRange[1].toString())
+  const [minInput, setMinInput] = useState(currentRange[0].toString())
+  const [maxInput, setMaxInput] = useState(currentRange[1].toString())
   const [errors, setErrors] = useState<{ min?: string; max?: string; notional?: string }>({})
   const { toast } = useToast()
 
   useEffect(() => {
-    setMinInput(selectedRange[0].toFixed(2))
-    setMaxInput(selectedRange[1].toFixed(2))
+    if (selectedRange) {
+      setMinInput(selectedRange[0].toFixed(2))
+      setMaxInput(selectedRange[1].toFixed(2))
+    }
   }, [selectedRange])
 
   useEffect(() => {
@@ -50,9 +70,9 @@ export function TradePanel({ market, selectedRange, onRangeChange, onTradePrevie
   const handleMinChange = (value: string) => {
     setMinInput(value)
     const num = Number.parseFloat(value)
-    if (!isNaN(num) && num >= market.domain.min && num < selectedRange[1]) {
+    if (!isNaN(num) && num >= market.domain.min && num < currentRange[1]) {
       setErrors((prev) => ({ ...prev, min: undefined }))
-      onRangeChange([num, selectedRange[1]])
+      onRangeChange([num, currentRange[1]])
     } else if (!isNaN(num)) {
       setErrors((prev) => ({ ...prev, min: "Min must be less than max" }))
     }
@@ -61,9 +81,9 @@ export function TradePanel({ market, selectedRange, onRangeChange, onTradePrevie
   const handleMaxChange = (value: string) => {
     setMaxInput(value)
     const num = Number.parseFloat(value)
-    if (!isNaN(num) && num <= market.domain.max && num > selectedRange[0]) {
+    if (!isNaN(num) && num <= market.domain.max && num > currentRange[0]) {
       setErrors((prev) => ({ ...prev, max: undefined }))
-      onRangeChange([selectedRange[0], num])
+      onRangeChange([currentRange[0], num])
     } else if (!isNaN(num)) {
       setErrors((prev) => ({ ...prev, max: "Max must be greater than min" }))
     }
@@ -171,6 +191,114 @@ export function TradePanel({ market, selectedRange, onRangeChange, onTradePrevie
         </div>
       </div>
 
+      {/* Multi-Range Management */}
+      {selectedRanges && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label className="text-sm font-semibold">BETTING RANGES</Label>
+            {onAddRange && (
+              <Button
+                onClick={onAddRange}
+                size="sm"
+                variant="outline"
+                className="h-8 w-8 p-0 border-cyan-400/50 text-cyan-400 hover:bg-cyan-400/10"
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
+
+          <div className="space-y-3">
+            {ranges.map((range, index) => {
+              const colors = [
+                { bg: "bg-cyan-500/10", border: "border-cyan-400/50", text: "text-cyan-300", handle: "bg-cyan-400" },
+                { bg: "bg-orange-500/10", border: "border-orange-400/50", text: "text-orange-300", handle: "bg-orange-400" },
+                { bg: "bg-teal-500/10", border: "border-teal-400/50", text: "text-teal-300", handle: "bg-teal-400" },
+                { bg: "bg-blue-500/10", border: "border-blue-400/50", text: "text-blue-300", handle: "bg-blue-400" },
+                { bg: "bg-green-500/10", border: "border-green-400/50", text: "text-green-300", handle: "bg-green-400" },
+              ]
+              const colorSet = colors[index % colors.length]
+
+              return (
+                <div key={index} className={`${colorSet.bg} ${colorSet.border} border rounded-lg p-3 relative`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className={`${colorSet.text} text-xs font-mono font-semibold`}>
+                      RANGE {index + 1}
+                    </div>
+                    <div className={`${colorSet.text} text-xs font-mono`}>
+                      {range[1] - range[0] > 0 ? `${((range[1] - range[0]) / (market.domain.max - market.domain.min) * 100).toFixed(1)}%` : '0%'} width
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <label className="text-xs text-muted-foreground">Min</label>
+                        <Input
+                          type="number"
+                          value={range[0].toFixed(2)}
+                          onChange={(e) => {
+                            const value = Number.parseFloat(e.target.value)
+                            if (!isNaN(value) && onUpdateRange) {
+                              onUpdateRange(index, [value, range[1]])
+                            }
+                          }}
+                          placeholder="Min"
+                          step={1}
+                          className={`font-mono bg-black/80 ${colorSet.border} text-white placeholder:text-cyan-300 focus:border-cyan-400 text-xs`}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs text-muted-foreground">Max</label>
+                        <Input
+                          type="number"
+                          value={range[1].toFixed(2)}
+                          onChange={(e) => {
+                            const value = Number.parseFloat(e.target.value)
+                            if (!isNaN(value) && onUpdateRange) {
+                              onUpdateRange(index, [range[0], value])
+                            }
+                          }}
+                          placeholder="Max"
+                          step={1}
+                          className={`font-mono bg-black/80 ${colorSet.border} text-white placeholder:text-cyan-300 focus:border-cyan-400 text-xs`}
+                        />
+                      </div>
+                    </div>
+
+                    {onRemoveRange && ranges.length > 1 && (
+                      <Button
+                        onClick={() => onRemoveRange(index)}
+                        size="sm"
+                        variant="outline"
+                        className="h-8 w-8 p-0 border-red-400/50 text-red-400 hover:bg-red-400/10 self-end"
+                      >
+                        <Minus className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Visual range indicator */}
+                  <div className="mt-2 h-2 bg-black/50 rounded-full relative overflow-hidden">
+                    <div
+                      className={`absolute top-0 h-full ${colorSet.handle} opacity-60`}
+                      style={{
+                        left: `${((range[0] - market.domain.min) / (market.domain.max - market.domain.min)) * 100}%`,
+                        width: `${((range[1] - range[0]) / (market.domain.max - market.domain.min)) * 100}%`
+                      }}
+                    />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          <div className="text-xs text-cyan-300 font-mono tracking-wide">
+            TOTAL RANGES: {ranges.length} | CREATE CAMEL CURVES WITH MULTIPLE PEAKS
+          </div>
+        </div>
+      )}
+
       <div className="space-y-2">
         <Label>Range</Label>
         <div className="grid grid-cols-2 gap-2">
@@ -180,7 +308,7 @@ export function TradePanel({ market, selectedRange, onRangeChange, onTradePrevie
               value={minInput}
               onChange={(e) => handleMinChange(e.target.value)}
               placeholder="Min"
-              step={market.step || 1}
+              step={1}
               className={`font-mono bg-white/5 border-white/10 ${errors.min ? "border-destructive" : ""}`}
             />
             {errors.min && <p className="text-xs text-destructive">{errors.min}</p>}
@@ -191,7 +319,7 @@ export function TradePanel({ market, selectedRange, onRangeChange, onTradePrevie
               value={maxInput}
               onChange={(e) => handleMaxChange(e.target.value)}
               placeholder="Max"
-              step={market.step || 1}
+              step={1}
               className={`font-mono bg-white/5 border-white/10 ${errors.max ? "border-destructive" : ""}`}
             />
             {errors.max && <p className="text-xs text-destructive">{errors.max}</p>}

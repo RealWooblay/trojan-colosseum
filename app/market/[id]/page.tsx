@@ -27,37 +27,58 @@ export default function MarketDetailPage() {
   const [pdf, setPdf] = useState<PdfPoint[]>([])
   const [recentTrades, setRecentTrades] = useState<Trade[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedRange, setSelectedRange] = useState<[number, number]>([0, 100])
+  const [selectedRanges, setSelectedRanges] = useState<[number, number][]>([[0, 100]])
   const [tradePreview, setTradePreview] = useState<any>(null)
   const [isUserInteracting, setIsUserInteracting] = useState(false)
   const [ghostPdf, setGhostPdf] = useState<PdfPoint[] | undefined>(undefined)
 
-  const selectedRangeRef = useRef(selectedRange)
+  const selectedRangesRef = useRef(selectedRanges)
 
-  // Generate ghost curve - either trade preview result or range-based prediction
+  // Generate ghost curve - either trade preview result or multi-range prediction
   const ghostData: PdfPoint[] = useMemo(() => {
     // Priority 1: Trade preview ghost data (actual trade result from API)
     if (ghostPdf) return ghostPdf
 
-    // Priority 2: Range-based prediction (mathematical estimate based on selected range)
-    if (!market || pdf.length === 0) return []
+    // Priority 2: Multi-range prediction (mathematical estimate based on selected ranges)
+    if (!market || pdf.length === 0 || selectedRanges.length === 0) return []
 
-    // Calculate the center of the betting range
-    const rangeCenter = (selectedRange[0] + selectedRange[1]) / 2
-    const rangeWidth = selectedRange[1] - selectedRange[0]
+    // Calculate weighted center of all ranges (same as working single-range logic)
+    const rangeCenters = selectedRanges.map(range => (range[0] + range[1]) / 2)
+    const rangeWidths = selectedRanges.map(range => range[1] - range[0])
 
-    // More subtle shift - smooth mathematical transition
-    const concentrationFactor = Math.min(rangeWidth / (market.domain.max - market.domain.min), 1)
-    const shiftAmount = (rangeCenter - market.stats.mean) * (0.2 + concentrationFactor * 0.3)
+    // Weighted average of range centers
+    const totalWeight = rangeWidths.reduce((sum, width) => sum + width, 0)
+    const weightedCenter = rangeCenters.reduce((sum, center, i) =>
+      sum + center * (rangeWidths[i] / totalWeight), 0
+    )
 
-    // Slight variance adjustment - keep curve smooth
+    // Calculate total range coverage (same logic as working single-range)
+    const totalRangeCoverage = rangeWidths.reduce((sum, width) => sum + width, 0)
+    const concentrationFactor = Math.min(totalRangeCoverage / (market.domain.max - market.domain.min), 1)
+
+    // Use the EXACT same shift calculation as the working single-range version
+    const shiftAmount = (weightedCenter - market.stats.mean) * (0.2 + concentrationFactor * 0.3)
+
+    // Use the EXACT same variance adjustment as the working single-range version
     const varianceAdjustment = 1 - (concentrationFactor * 0.2)
 
     const newMean = market.stats.mean + shiftAmount
-    const newVariance = market.stats.variance * varianceAdjustment
+    // Ensure variance is proportional to domain - prevent spikes
+    const domainRange = market.domain.max - market.domain.min
+    const baseVariance = Math.pow(domainRange * 0.15, 2) // 15% of domain as std dev
+    const newVariance = Math.max(market.stats.variance * varianceAdjustment, baseVariance)
 
+    console.log('Ghost curve generated:', {
+      weightedCenter,
+      marketMean: market.stats.mean,
+      shiftAmount,
+      newMean,
+      newVariance,
+      concentrationFactor,
+      totalRangeCoverage
+    })
     return generateNormalPdf(newMean, newVariance, market.domain)
-  }, [selectedRange, market, pdf, ghostPdf])
+  }, [selectedRanges, market, pdf, ghostPdf])
 
   useEffect(() => {
     fetch(`/api/markets/${marketId}`)
@@ -69,18 +90,18 @@ export default function MarketDetailPage() {
 
         const mode = findMode(data.pdf)
         const bandwidth = (data.market.domain.max - data.market.domain.min) * 0.1
-        setSelectedRange([
+        setSelectedRanges([[
           Math.max(data.market.domain.min, mode - bandwidth / 2),
           Math.min(data.market.domain.max, mode + bandwidth / 2),
-        ])
+        ]])
 
         setLoading(false)
       })
   }, [marketId])
 
   useEffect(() => {
-    selectedRangeRef.current = selectedRange
-  }, [selectedRange])
+    selectedRangesRef.current = selectedRanges
+  }, [selectedRanges])
 
   const handleTradePreview = useCallback(
     async (side: "buy" | "sell", notional: number) => {
@@ -93,14 +114,14 @@ export default function MarketDetailPage() {
           body: JSON.stringify({
             marketId: market.id,
             side,
-            range: selectedRangeRef.current,
+            range: selectedRangesRef.current[0] || [market.domain.min, market.domain.max],
             notionalUSD: notional,
           }),
         })
 
         const data = await response.json()
 
-        const rangeProbAfter = calcRangeProb(data.newPdf || pdf, selectedRangeRef.current)
+        const rangeProbAfter = calcRangeProb(data.newPdf || pdf, selectedRangesRef.current[0] || [market.domain.min, market.domain.max])
 
         setTradePreview({
           ...data,
@@ -117,18 +138,44 @@ export default function MarketDetailPage() {
     [market, pdf],
   )
 
-  const handleRangeChange = useCallback((newRange: [number, number]) => {
-    setSelectedRange(newRange)
-    setIsUserInteracting(true)
+  // Range management functions
+  const addRange = () => {
+    if (!market) return
+    const newRange: [number, number] = [
+      market.domain.min + (market.domain.max - market.domain.min) * 0.2,
+      market.domain.min + (market.domain.max - market.domain.min) * 0.4
+    ]
+    setSelectedRanges([...selectedRanges, newRange])
+  }
 
-    // Clear trade preview ghost when range changes to show range-based prediction
+  const removeRange = (index: number) => {
+    if (selectedRanges.length <= 1) return // Keep at least one range
+    setSelectedRanges(selectedRanges.filter((_, i) => i !== index))
+  }
+
+  const updateRange = useCallback((index: number, newRange: [number, number]) => {
+    setSelectedRanges(prev => {
+      const updated = [...prev]
+      updated[index] = newRange
+      return updated
+    })
+
+    // Clear trade preview ghost when range changes
     setGhostPdf(undefined)
+  }, [])
+
+  const handleRangeChange = useCallback((newRange: [number, number]) => {
+    // Update the first range (for backward compatibility with single range selector)
+    if (selectedRanges.length > 0) {
+      updateRange(0, newRange)
+    }
+    setIsUserInteracting(true)
 
     // Resume animation after 2 seconds for more responsive feel
     setTimeout(() => {
       setIsUserInteracting(false)
     }, 2000)
-  }, [])
+  }, [selectedRanges, updateRange])
 
   if (loading || !market) {
     return (
@@ -200,11 +247,12 @@ export default function MarketDetailPage() {
                   ghostType={ghostPdf ? "trade-preview" : "range-prediction"}
                   mean={market.stats.mean}
                   median={market.stats.mean * 0.98}
-                  selectedRange={selectedRange}
+                  selectedRanges={selectedRanges}
                   domain={market.domain}
                   unit={market.unit}
                   liquidityDepth={market.liquidityUSD}
                   onRangeChange={handleRangeChange}
+                  onUpdateRange={updateRange}
                 />
               </div>
             </motion.div>
@@ -301,10 +349,13 @@ export default function MarketDetailPage() {
             <div data-trade-panel>
               <TradePanel
                 market={market}
-                selectedRange={selectedRange}
+                selectedRanges={selectedRanges}
                 onRangeChange={handleRangeChange}
                 onTradePreview={handleTradePreview}
                 tradePreview={tradePreview}
+                onAddRange={addRange}
+                onRemoveRange={removeRange}
+                onUpdateRange={updateRange}
               />
             </div>
           </motion.div>
