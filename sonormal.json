@@ -1,0 +1,1142 @@
+{
+  "address": "EUBUDsfBubKuFcXL5vpBPz2YFwLJjvjt42ZAMLfNLdTB",
+  "metadata": {
+    "name": "sonormal",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "buy",
+      "discriminator": [
+        102,
+        6,
+        61,
+        18,
+        1,
+        218,
+        235,
+        234
+      ],
+      "accounts": [
+        {
+          "name": "buyer_authority",
+          "signer": true
+        },
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "liquidity_mint",
+          "writable": true
+        },
+        {
+          "name": "market_pool_ata",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  77,
+                  65,
+                  82,
+                  75,
+                  69,
+                  84,
+                  95,
+                  80,
+                  79,
+                  79,
+                  76
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market"
+              }
+            ]
+          }
+        },
+        {
+          "name": "buyer_ata",
+          "writable": true
+        },
+        {
+          "name": "protocol_fee_receiver_ata",
+          "writable": true
+        },
+        {
+          "name": "market_fee_receiver_ata",
+          "writable": true
+        },
+        {
+          "name": "controller",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  67,
+                  79,
+                  78,
+                  84,
+                  82,
+                  79,
+                  76,
+                  76,
+                  69,
+                  82
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "market",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  77,
+                  65,
+                  82,
+                  75,
+                  69,
+                  84
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "market_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "ticket",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  84,
+                  73,
+                  67,
+                  75,
+                  69,
+                  84
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market"
+              },
+              {
+                "kind": "account",
+                "path": "market.total_tickets",
+                "account": "Market"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "market_id",
+          "type": "u64"
+        },
+        {
+          "name": "coefficients",
+          "type": {
+            "vec": "f64"
+          }
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "claim",
+      "discriminator": [
+        62,
+        198,
+        214,
+        193,
+        213,
+        159,
+        108,
+        210
+      ],
+      "accounts": [
+        {
+          "name": "claimer_authority",
+          "signer": true
+        },
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "liquidity_mint",
+          "writable": true
+        },
+        {
+          "name": "market_pool_ata",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  77,
+                  65,
+                  82,
+                  75,
+                  69,
+                  84,
+                  95,
+                  80,
+                  79,
+                  79,
+                  76
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market"
+              }
+            ]
+          }
+        },
+        {
+          "name": "claimer_ata",
+          "writable": true
+        },
+        {
+          "name": "protocol_fee_receiver_ata",
+          "writable": true
+        },
+        {
+          "name": "market_fee_receiver_ata",
+          "writable": true
+        },
+        {
+          "name": "controller",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  67,
+                  79,
+                  78,
+                  84,
+                  82,
+                  79,
+                  76,
+                  76,
+                  69,
+                  82
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "market",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  77,
+                  65,
+                  82,
+                  75,
+                  69,
+                  84
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "market_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "ticket",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  84,
+                  73,
+                  67,
+                  75,
+                  69,
+                  84
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market"
+              },
+              {
+                "kind": "arg",
+                "path": "ticket_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "market_id",
+          "type": "u64"
+        },
+        {
+          "name": "ticket_id",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "initialize_controller",
+      "discriminator": [
+        137,
+        255,
+        100,
+        190,
+        201,
+        247,
+        241,
+        81
+      ],
+      "accounts": [
+        {
+          "name": "controller_authority",
+          "signer": true
+        },
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "fee_receiver_authority"
+        },
+        {
+          "name": "controller",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  67,
+                  79,
+                  78,
+                  84,
+                  82,
+                  79,
+                  76,
+                  76,
+                  69,
+                  82
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "protocol_fee",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "new_market",
+      "discriminator": [
+        225,
+        17,
+        229,
+        149,
+        222,
+        113,
+        43,
+        226
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "market_authority"
+        },
+        {
+          "name": "liquidity_mint"
+        },
+        {
+          "name": "market_pool_ata",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  77,
+                  65,
+                  82,
+                  75,
+                  69,
+                  84,
+                  95,
+                  80,
+                  79,
+                  79,
+                  76
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market"
+              }
+            ]
+          }
+        },
+        {
+          "name": "fee_receiver_ata",
+          "writable": true
+        },
+        {
+          "name": "controller",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  67,
+                  79,
+                  78,
+                  84,
+                  82,
+                  79,
+                  76,
+                  76,
+                  69,
+                  82
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "market",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  77,
+                  65,
+                  82,
+                  75,
+                  69,
+                  84
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "controller.total_markets",
+                "account": "Controller"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "market_fee",
+          "type": "u16"
+        },
+        {
+          "name": "alpha",
+          "type": {
+            "vec": "f64"
+          }
+        },
+        {
+          "name": "params",
+          "type": {
+            "defined": {
+              "name": "MarketParams"
+            }
+          }
+        },
+        {
+          "name": "expiry",
+          "type": "i64"
+        }
+      ]
+    },
+    {
+      "name": "sell",
+      "discriminator": [
+        51,
+        230,
+        133,
+        164,
+        1,
+        127,
+        131,
+        173
+      ],
+      "accounts": [
+        {
+          "name": "seller_authority",
+          "signer": true
+        },
+        {
+          "name": "market_authority",
+          "signer": true
+        },
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "liquidity_mint",
+          "writable": true
+        },
+        {
+          "name": "market_pool_ata",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  77,
+                  65,
+                  82,
+                  75,
+                  69,
+                  84,
+                  95,
+                  80,
+                  79,
+                  79,
+                  76
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market"
+              }
+            ]
+          }
+        },
+        {
+          "name": "seller_ata",
+          "writable": true
+        },
+        {
+          "name": "protocol_fee_receiver_ata",
+          "writable": true
+        },
+        {
+          "name": "market_fee_receiver_ata",
+          "writable": true
+        },
+        {
+          "name": "controller",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  67,
+                  79,
+                  78,
+                  84,
+                  82,
+                  79,
+                  76,
+                  76,
+                  69,
+                  82
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "market",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  77,
+                  65,
+                  82,
+                  75,
+                  69,
+                  84
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "market_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "ticket",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  84,
+                  73,
+                  67,
+                  75,
+                  69,
+                  84
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market"
+              },
+              {
+                "kind": "arg",
+                "path": "ticket_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "market_id",
+          "type": "u64"
+        },
+        {
+          "name": "ticket_id",
+          "type": "u64"
+        },
+        {
+          "name": "t_star",
+          "type": "f64"
+        },
+        {
+          "name": "alpha_prime",
+          "type": {
+            "vec": "f64"
+          }
+        }
+      ]
+    },
+    {
+      "name": "settle",
+      "discriminator": [
+        175,
+        42,
+        185,
+        87,
+        144,
+        131,
+        102,
+        212
+      ],
+      "accounts": [
+        {
+          "name": "market_authority",
+          "signer": true
+        },
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "market",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  77,
+                  65,
+                  82,
+                  75,
+                  69,
+                  84
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "market_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "market_id",
+          "type": "u64"
+        },
+        {
+          "name": "weights",
+          "type": {
+            "vec": "f64"
+          }
+        },
+        {
+          "name": "max_weight",
+          "type": "f64"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Controller",
+      "discriminator": [
+        184,
+        79,
+        171,
+        0,
+        183,
+        43,
+        113,
+        110
+      ]
+    },
+    {
+      "name": "Market",
+      "discriminator": [
+        219,
+        190,
+        213,
+        55,
+        0,
+        227,
+        198,
+        154
+      ]
+    },
+    {
+      "name": "Ticket",
+      "discriminator": [
+        41,
+        228,
+        24,
+        165,
+        78,
+        90,
+        235,
+        200
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InvalidAlphaLength",
+      "msg": "Invalid alpha length"
+    },
+    {
+      "code": 6001,
+      "name": "NonPositiveAlpha",
+      "msg": "Non-positive alpha"
+    },
+    {
+      "code": 6002,
+      "name": "InvalidDegree",
+      "msg": "Invalid degree"
+    },
+    {
+      "code": 6003,
+      "name": "InvalidBounds",
+      "msg": "Invalid bounds"
+    },
+    {
+      "code": 6004,
+      "name": "FloorsMustBeGreaterThanZero",
+      "msg": "Floors must be greater than zero"
+    },
+    {
+      "code": 6005,
+      "name": "SimplexOutOfTolerance",
+      "msg": "Simplex out of tolerance"
+    },
+    {
+      "code": 6006,
+      "name": "InvalidExpiry",
+      "msg": "Expiry must be in the future"
+    },
+    {
+      "code": 6007,
+      "name": "FeeTooHigh",
+      "msg": "Fee must be less than 100 basis points"
+    },
+    {
+      "code": 6008,
+      "name": "MarketSettled",
+      "msg": "Market settled"
+    },
+    {
+      "code": 6009,
+      "name": "MarketExpired",
+      "msg": "Market expired"
+    },
+    {
+      "code": 6010,
+      "name": "MarketStillOnGoing",
+      "msg": "Market still on going"
+    },
+    {
+      "code": 6011,
+      "name": "ZeroCollateralAmount",
+      "msg": "Zero collateral amount"
+    }
+  ],
+  "types": [
+    {
+      "name": "Controller",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "protocol_fee",
+            "type": "u16"
+          },
+          {
+            "name": "fee_receiver_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "total_markets",
+            "type": "u64"
+          },
+          {
+            "name": "_reserved",
+            "type": {
+              "array": [
+                "u8",
+                128
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Market",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "id",
+            "type": "u64"
+          },
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "liquidity_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "pool_ata",
+            "type": "pubkey"
+          },
+          {
+            "name": "total_pool_amount",
+            "type": "f64"
+          },
+          {
+            "name": "market_fee",
+            "type": "u16"
+          },
+          {
+            "name": "fee_receiver_ata",
+            "type": "pubkey"
+          },
+          {
+            "name": "total_tickets",
+            "type": "u64"
+          },
+          {
+            "name": "alpha",
+            "type": {
+              "vec": "f64"
+            }
+          },
+          {
+            "name": "params",
+            "type": {
+              "defined": {
+                "name": "MarketParams"
+              }
+            }
+          },
+          {
+            "name": "precomp",
+            "type": {
+              "defined": {
+                "name": "MarketPrecomp"
+              }
+            }
+          },
+          {
+            "name": "expiry",
+            "type": "i64"
+          },
+          {
+            "name": "weights",
+            "type": {
+              "vec": "f64"
+            }
+          },
+          {
+            "name": "max_weight",
+            "type": "f64"
+          },
+          {
+            "name": "settled",
+            "type": "bool"
+          },
+          {
+            "name": "_reserved",
+            "type": {
+              "array": [
+                "u8",
+                128
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "MarketParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "k",
+            "type": "bytes"
+          },
+          {
+            "name": "l",
+            "type": "f64"
+          },
+          {
+            "name": "h",
+            "type": "f64"
+          },
+          {
+            "name": "unit_map_kind",
+            "type": {
+              "defined": {
+                "name": "UnitMapKind"
+              }
+            }
+          },
+          {
+            "name": "eps_alpha",
+            "type": "f64"
+          },
+          {
+            "name": "tol_coeff_sum",
+            "type": "f64"
+          },
+          {
+            "name": "tol_prob_sum",
+            "type": "f64"
+          },
+          {
+            "name": "boundary_margin_eta",
+            "type": "f64"
+          },
+          {
+            "name": "eps_dens",
+            "type": "f64"
+          },
+          {
+            "name": "mu_default",
+            "type": "f64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "MarketPrecomp",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "delta",
+            "type": "f64"
+          },
+          {
+            "name": "binom",
+            "type": {
+              "vec": "f64"
+            }
+          },
+          {
+            "name": "c_pdf_x",
+            "type": "f64"
+          },
+          {
+            "name": "log_binom",
+            "type": {
+              "vec": "f64"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Ticket",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "id",
+            "type": "u64"
+          },
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "coefficients",
+            "type": {
+              "vec": "f64"
+            }
+          },
+          {
+            "name": "claim",
+            "type": "f64"
+          },
+          {
+            "name": "_reserved",
+            "type": {
+              "array": [
+                "u8",
+                128
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "UnitMapKind",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Linear"
+          }
+        ]
+      }
+    }
+  ],
+  "constants": [
+    {
+      "name": "CONTROLLER_NAMESPACE",
+      "type": "bytes",
+      "value": "[67, 79, 78, 84, 82, 79, 76, 76, 69, 82]"
+    }
+  ]
+}
