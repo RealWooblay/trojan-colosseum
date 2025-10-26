@@ -78,67 +78,71 @@ export default function DocsPage() {
   ]
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-black tron-grid">
       <Navbar />
 
       <div className="container mx-auto px-4 py-12 max-w-5xl">
-        {/* Header */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4 mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold">Documentation</h1>
-          <p className="text-lg text-muted-foreground text-balance">
-            Learn how continuous outcome markets work and how to trade probability mass effectively
+        {/* TRON Header */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 mb-16">
+          <h1 className="text-5xl md:text-6xl font-bold text-white font-mono tracking-wider">DOCUMENTATION</h1>
+          <div className="h-1 w-40 bg-gradient-to-r from-cyan-400 to-transparent"></div>
+          <p className="text-xl text-cyan-200 font-mono tracking-wide max-w-3xl">
+            LEARN HOW CONTINUOUS OUTCOME MARKETS WORK AND HOW TO TRADE PROBABILITY MASS EFFECTIVELY
           </p>
         </motion.div>
 
-        {/* Quick Start */}
+        {/* TRON Quick Start */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <Card className="glass-card p-8 mb-12 border-primary/30">
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 text-primary" />
+          <div className="tron-card p-8 mb-16 relative">
+            {/* Circuit pattern */}
+            <div className="absolute top-4 left-4 w-2 h-2 bg-cyan-400/60"></div>
+            <div className="absolute top-4 right-4 w-2 h-2 bg-cyan-400/60"></div>
+            <div className="absolute bottom-4 left-4 w-2 h-2 bg-cyan-400/60"></div>
+            <div className="absolute bottom-4 right-4 w-2 h-2 bg-cyan-400/60"></div>
+
+            <div className="space-y-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 border-2 border-cyan-400/50 flex items-center justify-center transform rotate-45">
+                  <TrendingUp className="w-6 h-6 text-cyan-400 transform -rotate-45" />
                 </div>
-                <h2 className="text-2xl font-semibold">Quick Start</h2>
+                <h2 className="text-3xl font-bold text-cyan-400 neon-glow font-mono tracking-wider">QUICK START</h2>
               </div>
-              <div className="space-y-3 text-sm leading-relaxed">
-                <p>
-                  <strong>1. Browse Markets:</strong> Explore continuous markets on the{" "}
-                  <Link href="/markets" className="text-primary hover:underline">
-                    Markets page
+              <div className="space-y-4 text-sm leading-relaxed font-mono tracking-wide">
+                <p className="text-cyan-200">
+                  <strong className="text-white">1. BROWSE MARKETS:</strong> EXPLORE CONTINUOUS MARKETS ON THE{" "}
+                  <Link href="/markets" className="text-cyan-400 hover:text-cyan-300 transition-colors">
+                    MARKETS PAGE
                   </Link>
-                  . Each market has a probability density function (PDF) showing where traders think the outcome will
-                  land.
+                  . EACH MARKET HAS A PROBABILITY DENSITY FUNCTION (PDF) SHOWING WHERE TRADERS THINK THE OUTCOME WILL LAND.
                 </p>
-                <p>
-                  <strong>2. Select a Range:</strong> On the trading desk, use the range selector to choose your
-                  interval. The shaded area shows your selected probability mass.
+                <p className="text-cyan-200">
+                  <strong className="text-white">2. SELECT A RANGE:</strong> ON THE TRADING DESK, USE THE RANGE SELECTOR TO CHOOSE YOUR INTERVAL. THE SHADED AREA SHOWS YOUR SELECTED PROBABILITY MASS.
                 </p>
-                <p>
-                  <strong>3. Buy or Sell:</strong> Enter your notional amount and review the trade preview. The ghost
-                  curve shows how the PDF will shift after your trade.
+                <p className="text-cyan-200">
+                  <strong className="text-white">3. BUY OR SELL:</strong> ENTER YOUR NOTIONAL AMOUNT AND REVIEW THE TRADE PREVIEW. THE GHOST CURVE SHOWS HOW THE PDF WILL SHIFT AFTER YOUR TRADE.
                 </p>
-                <p>
-                  <strong>4. Track Positions:</strong> Monitor your open positions and PnL on the{" "}
-                  <Link href="/portfolio" className="text-primary hover:underline">
-                    Portfolio page
+                <p className="text-cyan-200">
+                  <strong className="text-white">4. TRACK POSITIONS:</strong> MONITOR YOUR OPEN POSITIONS AND PNL ON THE{" "}
+                  <Link href="/portfolio" className="text-cyan-400 hover:text-cyan-300 transition-colors">
+                    PORTFOLIO PAGE
                   </Link>
                   .
                 </p>
               </div>
-              <div className="flex gap-3 pt-2">
+              <div className="flex gap-4 pt-4">
                 <Link href="/markets">
-                  <Button className="bg-primary text-primary-foreground hover:bg-primary/90">Start Trading</Button>
+                  <Button className="neon-border bg-cyan-400 text-black hover:bg-cyan-300 font-mono tracking-wider transition-all duration-300">START TRADING</Button>
                 </Link>
                 <Link href="/create">
-                  <Button variant="outline">Create Market</Button>
+                  <Button className="neon-border bg-black/50 text-cyan-400 hover:bg-cyan-400/10 font-mono tracking-wider transition-all duration-300">CREATE MARKET</Button>
                 </Link>
               </div>
             </div>
-          </Card>
+          </div>
         </motion.div>
 
-        {/* Core Concepts */}
-        <div className="space-y-6">
+        {/* TRON Core Concepts */}
+        <div className="space-y-8">
           {sections.map((section, index) => (
             <motion.div
               key={section.title}
@@ -146,23 +150,27 @@ export default function DocsPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 + index * 0.05 }}
             >
-              <Card className="glass-card p-6 hover:border-primary/30 transition-all duration-300">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`w-10 h-10 rounded-lg bg-${section.color}/20 flex items-center justify-center flex-shrink-0`}
-                    >
-                      <section.icon className={`w-5 h-5 text-${section.color}`} />
+              <div className="tron-card p-8 hover:scale-105 transition-all duration-500 relative">
+                {/* Circuit corners */}
+                <div className="absolute top-2 left-2 w-3 h-3 border-l border-t border-cyan-400/50"></div>
+                <div className="absolute top-2 right-2 w-3 h-3 border-r border-t border-cyan-400/50"></div>
+                <div className="absolute bottom-2 left-2 w-3 h-3 border-l border-b border-cyan-400/50"></div>
+                <div className="absolute bottom-2 right-2 w-3 h-3 border-r border-b border-cyan-400/50"></div>
+
+                <div className="space-y-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 border-2 border-cyan-400/50 flex items-center justify-center transform rotate-45">
+                      <section.icon className="w-8 h-8 text-cyan-400 transform -rotate-45" />
                     </div>
-                    <h3 className="text-xl font-semibold">{section.title}</h3>
+                    <h3 className="text-2xl font-bold text-white font-mono tracking-wider">{section.title.toUpperCase()}</h3>
                   </div>
-                  <div className="space-y-2 text-sm text-muted-foreground leading-relaxed">
+                  <div className="space-y-3 text-sm text-cyan-200 leading-relaxed font-mono tracking-wide">
                     {section.content.map((paragraph, i) => (
-                      <p key={i}>{paragraph}</p>
+                      <p key={i}>{paragraph.toUpperCase()}</p>
                     ))}
                   </div>
                 </div>
-              </Card>
+              </div>
             </motion.div>
           ))}
         </div>

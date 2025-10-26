@@ -103,53 +103,60 @@ export default function CreateMarketPage() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-black tron-grid">
       <Navbar />
 
       <div className="container mx-auto px-4 py-12 max-w-4xl">
-        {/* Header */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-2 mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold">Create Continuous Market</h1>
-          <p className="text-lg text-muted-foreground">Launch a new probability mass trading market</p>
+        {/* TRON Header */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 mb-12">
+          <h1 className="text-5xl md:text-6xl font-bold text-white font-mono tracking-wider">CREATE CONTINUOUS MARKET</h1>
+          <div className="h-1 w-40 bg-gradient-to-r from-cyan-400 to-transparent"></div>
+          <p className="text-xl text-cyan-200 font-mono tracking-wide">LAUNCH A NEW PROBABILITY MASS TRADING MARKET</p>
         </motion.div>
 
-        {/* Stepper */}
-        <div className="flex items-center justify-center gap-4 mb-12">
+        {/* TRON Stepper */}
+        <div className="flex items-center justify-center gap-6 mb-16">
           {[1, 2, 3].map((s) => (
-            <div key={s} className="flex items-center gap-2">
+            <div key={s} className="flex items-center gap-4">
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${s === step
-                  ? "bg-primary text-primary-foreground"
+                className={`w-12 h-12 border-2 flex items-center justify-center font-bold font-mono tracking-wider transition-all duration-300 ${s === step
+                  ? "border-cyan-400 bg-cyan-400 text-black neon-glow"
                   : s < step
-                    ? "bg-primary/30 text-primary"
-                    : "bg-white/5 text-muted-foreground"
+                    ? "border-cyan-400/50 bg-cyan-400/20 text-cyan-400"
+                    : "border-cyan-400/30 bg-black/50 text-cyan-300"
                   }`}
               >
-                {s < step ? <CheckCircle className="w-5 h-5" /> : s}
+                {s < step ? <CheckCircle className="w-6 h-6" /> : s}
               </div>
-              {s < 3 && <div className="w-12 h-0.5 bg-white/10" />}
+              {s < 3 && <div className="w-16 h-0.5 bg-gradient-to-r from-cyan-400/50 to-transparent" />}
             </div>
           ))}
         </div>
 
         {/* Step Content */}
-        <Card className="glass-card p-8 min-h-fit">
+        <div className="tron-card p-8 min-h-fit relative">
+          {/* Circuit pattern */}
+          <div className="absolute top-4 left-4 w-2 h-2 bg-cyan-400/60"></div>
+          <div className="absolute top-4 right-4 w-2 h-2 bg-cyan-400/60"></div>
+          <div className="absolute bottom-4 left-4 w-2 h-2 bg-cyan-400/60"></div>
+          <div className="absolute bottom-4 right-4 w-2 h-2 bg-cyan-400/60"></div>
           {step === 1 && (
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
-              <div className="space-y-2">
-                <h2 className="text-2xl font-semibold">Market Details</h2>
-                <p className="text-sm text-muted-foreground">Define the basic parameters of your market</p>
+              <div className="space-y-4">
+                <h2 className="text-3xl font-bold text-cyan-400 neon-glow font-mono tracking-wider">MARKET DETAILS</h2>
+                <div className="h-0.5 w-24 bg-gradient-to-r from-cyan-400 to-transparent"></div>
+                <p className="text-sm text-cyan-200 font-mono tracking-wide">DEFINE THE BASIC PARAMETERS OF YOUR MARKET</p>
               </div>
 
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Market Title</Label>
+                <div className="space-y-3">
+                  <Label htmlFor="title" className="text-cyan-300 font-mono tracking-wider text-sm uppercase">MARKET TITLE</Label>
                   <Input
                     id="title"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="e.g., Bitcoin Price on Dec 31, 2025"
-                    className="bg-white/5 border-white/10"
+                    placeholder="E.G., BITCOIN PRICE ON DEC 31, 2025"
+                    className="bg-black/80 border-cyan-500/30 text-white placeholder:text-cyan-300 focus:border-cyan-400 transition-all duration-300 font-mono tracking-wide"
                   />
                 </div>
 
@@ -216,8 +223,8 @@ export default function CreateMarketPage() {
                 </div>
               </div>
 
-              <Button onClick={() => setStep(2)} className="w-full bg-primary hover:bg-primary/90" size="lg">
-                Next: Initial Prior
+              <Button onClick={() => setStep(2)} className="w-full neon-border bg-cyan-400 text-black hover:bg-cyan-300 font-mono tracking-wider transition-all duration-300" size="lg">
+                NEXT: INITIAL PRIOR
                 <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
             </motion.div>
@@ -453,7 +460,7 @@ export default function CreateMarketPage() {
               </div>
             </motion.div>
           )}
-        </Card>
+        </div>
       </div>
     </div>
   )

@@ -145,27 +145,30 @@ export default function MarketDetailPage() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-black tron-grid">
       <Navbar />
       <MicroTutorialOverlay />
 
       <div className="container mx-auto px-4 py-8">
         <Link
           href="/markets"
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary mb-6 transition-colors"
+          className="inline-flex items-center gap-3 text-cyan-300 hover:text-cyan-400 transition-colors mb-8 font-mono tracking-wider"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to Markets
+          BACK TO MARKETS
         </Link>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4 mb-8">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 mb-12">
           <div className="flex items-start justify-between gap-4">
-            <div className="space-y-2">
-              <h1 className="text-3xl md:text-4xl font-bold text-balance">{market.title}</h1>
-              <div className="flex items-center gap-3">
-                <Badge>{market.category}</Badge>
-                <span className="text-sm text-muted-foreground">Unit: {market.unit}</span>
-                <span className="text-sm text-muted-foreground">Liquidity: {fmtUSD(market.liquidityUSD)}</span>
+            <div className="space-y-4">
+              <h1 className="text-4xl md:text-5xl font-bold text-white font-mono tracking-wider">{market.title.toUpperCase()}</h1>
+              <div className="h-1 w-32 bg-gradient-to-r from-cyan-400 to-transparent"></div>
+              <div className="flex items-center gap-4">
+                <Badge variant="outline" className="border-cyan-400/50 text-cyan-300 font-mono tracking-wider">
+                  {market.category.toUpperCase()}
+                </Badge>
+                <span className="text-cyan-200 font-mono tracking-wide">UNIT: {market.unit}</span>
+                <span className="text-cyan-200 font-mono tracking-wide">LIQUIDITY: {fmtUSD(market.liquidityUSD)}</span>
               </div>
             </div>
           </div>
@@ -185,7 +188,12 @@ export default function MarketDetailPage() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.1 }}
             >
-              <Card className="glass-card p-6">
+              <div className="tron-card p-8 relative">
+                {/* Circuit pattern */}
+                <div className="absolute top-4 left-4 w-2 h-2 bg-cyan-400/60"></div>
+                <div className="absolute top-4 right-4 w-2 h-2 bg-cyan-400/60"></div>
+                <div className="absolute bottom-4 left-4 w-2 h-2 bg-cyan-400/60"></div>
+                <div className="absolute bottom-4 right-4 w-2 h-2 bg-cyan-400/60"></div>
                 <PdfChart
                   data={pdf}
                   ghostData={ghostData}
@@ -198,7 +206,7 @@ export default function MarketDetailPage() {
                   liquidityDepth={market.liquidityUSD}
                   onRangeChange={handleRangeChange}
                 />
-              </Card>
+              </div>
             </motion.div>
 
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>

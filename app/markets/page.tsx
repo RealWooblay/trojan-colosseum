@@ -33,62 +33,68 @@ export default function MarketsPage() {
   })
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-black tron-grid">
       <Navbar />
 
       <div className="container mx-auto px-4 py-12">
-        {/* Header */}
-        <div className="space-y-6 mb-12">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-2">
-            <h1 className="text-4xl md:text-5xl font-bold">Continuous Markets</h1>
-            <p className="text-lg text-muted-foreground">Trade probability mass across infinite outcome states</p>
+        {/* TRON Header */}
+        <div className="space-y-8 mb-16">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+            <div className="relative">
+              <h1 className="text-6xl md:text-7xl font-bold text-cyan-400 neon-glow">CONTINUOUS MARKETS</h1>
+              <div className="h-1 w-40 bg-gradient-to-r from-cyan-400 to-transparent mt-4"></div>
+            </div>
+            <p className="text-cyan-200 text-xl font-mono tracking-wider">TRADE PROBABILITY MASS ACROSS INFINITE OUTCOME STATES</p>
           </motion.div>
 
-          {/* Search and Filters */}
+          {/* TRON Search and Filters */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="flex flex-col md:flex-row gap-4"
+            className="flex flex-col md:flex-row gap-8"
           >
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-400" />
               <Input
-                placeholder="Search markets..."
+                placeholder="SEARCH MARKETS..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-white/5 border-white/10"
+                className="pl-12 py-4 bg-black/80 border-cyan-500/30 text-white placeholder:text-cyan-300 focus:border-cyan-400 transition-all duration-300 font-mono tracking-wider"
               />
             </div>
 
-            <div className="flex items-center gap-2 flex-wrap">
-              <Filter className="w-4 h-4 text-muted-foreground" />
+            <div className="flex items-center gap-4 flex-wrap">
               <Button
                 variant={selectedCategory === null ? "default" : "outline"}
-                size="sm"
                 onClick={() => setSelectedCategory(null)}
-                className={selectedCategory === null ? "bg-primary" : ""}
+                className={`neon-border px-6 py-3 font-mono tracking-wider transition-all duration-300 ${selectedCategory === null
+                  ? "bg-cyan-400 text-black hover:bg-cyan-300"
+                  : "bg-black/50 text-cyan-400 hover:bg-cyan-400/10"
+                  }`}
               >
-                All
+                ALL
               </Button>
               {categories.map((category) => (
                 <Button
                   key={category}
                   variant={selectedCategory === category ? "default" : "outline"}
-                  size="sm"
                   onClick={() => setSelectedCategory(category)}
-                  className={selectedCategory === category ? "bg-primary" : ""}
+                  className={`neon-border px-6 py-3 font-mono tracking-wider transition-all duration-300 ${selectedCategory === category
+                    ? "bg-cyan-400 text-black hover:bg-cyan-300"
+                    : "bg-black/50 text-cyan-400 hover:bg-cyan-400/10"
+                    }`}
                 >
-                  {category}
+                  {category.toUpperCase()}
                 </Button>
               ))}
             </div>
           </motion.div>
         </div>
 
-        {/* Markets Grid */}
+        {/* Sleek Markets Grid */}
         {loading ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[...Array(6)].map((_, i) => (
               <div key={i} className="glass-card p-6 h-64 animate-pulse" />
             ))}
@@ -102,7 +108,7 @@ export default function MarketsPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
+            className="grid md:grid-cols-2 lg:grid-cols-3 gap-8"
           >
             {filteredMarkets.map((market, index) => (
               <motion.div

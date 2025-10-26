@@ -121,23 +121,24 @@ export default function HomePage() {
   ]
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-black tron-grid">
       <Navbar />
 
-      {/* Hero Section */}
+      {/* TRON Hero Section */}
       <section className="container mx-auto px-4 py-20 md:py-32">
-        <div className="max-w-4xl mx-auto text-center space-y-8">
+        <div className="max-w-4xl mx-auto text-center space-y-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="space-y-4"
+            className="space-y-6"
           >
-            <h1 className="text-5xl md:text-7xl font-bold text-balance">
-              Trade <span className="text-primary neon-glow">Continuous Outcomes</span>
+            <h1 className="text-6xl md:text-8xl font-bold text-white font-mono tracking-wider">
+              TRADE <span className="text-cyan-400 neon-glow">CONTINUOUS OUTCOMES</span>
             </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground text-balance">
-              Buy and sell probability mass. One pool, infinite states.
+            <div className="h-1 w-48 bg-gradient-to-r from-cyan-400 to-transparent mx-auto"></div>
+            <p className="text-xl md:text-2xl text-cyan-200 font-mono tracking-wide">
+              BUY AND SELL PROBABILITY MASS. ONE POOL, INFINITE STATES.
             </p>
           </motion.div>
 
@@ -145,61 +146,68 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="flex flex-wrap items-center justify-center gap-4"
+            className="flex flex-wrap items-center justify-center gap-6"
           >
             <Link href="/markets">
-              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8">
-                Start Trading
+              <Button className="neon-border bg-cyan-400 text-black hover:bg-cyan-300 px-8 py-4 text-lg font-mono tracking-wider transition-all duration-300">
+                START TRADING
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
             <Link href="/create">
-              <Button size="lg" variant="outline" className="text-lg px-8 bg-transparent">
-                Create Market
+              <Button className="neon-border bg-black/50 text-cyan-400 hover:bg-cyan-400/10 px-8 py-4 text-lg font-mono tracking-wider transition-all duration-300">
+                CREATE MARKET
               </Button>
             </Link>
             <Link href="/docs">
-              <Button size="lg" variant="ghost" className="text-lg px-8">
-                Read Docs
+              <Button className="neon-border bg-black/50 text-cyan-400 hover:bg-cyan-400/10 px-8 py-4 text-lg font-mono tracking-wider transition-all duration-300">
+                READ DOCS
               </Button>
             </Link>
           </motion.div>
         </div>
       </section>
 
-      {/* Animated Demo Chart */}
-      <section className="container mx-auto px-4 py-12">
+      {/* TRON Demo Chart */}
+      <section className="container mx-auto px-4 py-16">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, delay: 0.4 }}
         >
-          <Card className="glass-card p-8 max-w-4xl mx-auto">
-            <div className="space-y-6">
-              <div className="text-center space-y-2">
-                <h2 className="text-2xl font-semibold">Live Demo</h2>
-                <p className="text-muted-foreground">
-                  ETH Price Prediction - Dec 2025 • Watch the market shift as betting ranges change dynamically
+          <div className="tron-card p-8 max-w-4xl mx-auto relative">
+            {/* Circuit pattern */}
+            <div className="absolute top-4 left-4 w-2 h-2 bg-cyan-400/60"></div>
+            <div className="absolute top-4 right-4 w-2 h-2 bg-cyan-400/60"></div>
+            <div className="absolute bottom-4 left-4 w-2 h-2 bg-cyan-400/60"></div>
+            <div className="absolute bottom-4 right-4 w-2 h-2 bg-cyan-400/60"></div>
+
+            <div className="space-y-8">
+              <div className="text-center space-y-4">
+                <h2 className="text-3xl font-bold text-cyan-400 neon-glow font-mono tracking-wider">LIVE DEMO</h2>
+                <div className="h-0.5 w-32 bg-gradient-to-r from-cyan-400 to-transparent mx-auto"></div>
+                <p className="text-cyan-200 font-mono tracking-wide">
+                  ETH PRICE PREDICTION - DEC 2025 • WATCH THE MARKET SHIFT DYNAMICALLY
                 </p>
               </div>
 
               {/* Live Scenario Indicator */}
-              <div className="text-center space-y-1">
-                <div className="flex items-center justify-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${isUserInteracting ? 'bg-orange-400' : 'bg-violet-400 animate-pulse'}`}></div>
-                  <p className="text-sm font-medium text-violet-400">After Your Trade</p>
-                  {isUserInteracting && <span className="text-xs text-orange-400">(Paused)</span>}
+              <div className="text-center space-y-3">
+                <div className="flex items-center justify-center gap-3">
+                  <div className={`w-3 h-3 ${isUserInteracting ? 'bg-orange-400' : 'bg-cyan-400'} ${!isUserInteracting ? 'animate-pulse' : ''}`}></div>
+                  <p className="text-sm font-mono tracking-wider text-cyan-300">AFTER YOUR TRADE</p>
+                  {isUserInteracting && <span className="text-xs text-orange-400 font-mono">(PAUSED)</span>}
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-cyan-400 font-mono tracking-wide">
                   {isUserInteracting
-                    ? `Market shifts based on your betting range: $${Math.round(selectedRange[0])} - $${Math.round(selectedRange[1])}`
-                    : "Market automatically shifting based on dynamic betting patterns"
+                    ? `MARKET SHIFTS BASED ON YOUR BETTING RANGE: $${Math.round(selectedRange[0])} - $${Math.round(selectedRange[1])}`
+                    : "MARKET AUTOMATICALLY SHIFTING BASED ON DYNAMIC BETTING PATTERNS"
                   }
                 </p>
               </div>
 
               {/* Interactive Chart */}
-              <div className="rounded-lg border border-white/10 bg-black/20 p-4">
+              <div className="border border-cyan-400/30 bg-black/50 p-6">
                 <PdfChart
                   data={pdfData}
                   ghostData={ghostData}
@@ -214,17 +222,17 @@ export default function HomePage() {
               </div>
 
               {/* Simple explanation */}
-              <div className="text-center text-sm text-muted-foreground">
-                <p><strong>Solid curve:</strong> Current market • <strong>Dotted curve:</strong> After your trade</p>
+              <div className="text-center text-sm text-cyan-300 font-mono tracking-wide">
+                <p><strong className="text-white">SOLID CURVE:</strong> CURRENT MARKET • <strong className="text-white">DOTTED CURVE:</strong> AFTER YOUR TRADE</p>
               </div>
             </div>
-          </Card>
+          </div>
         </motion.div>
       </section>
 
-      {/* Feature Cards */}
+      {/* TRON Feature Cards */}
       <section className="container mx-auto px-4 py-20">
-        <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {features.map((feature, index) => (
             <motion.div
               key={feature.title}
@@ -232,57 +240,67 @@ export default function HomePage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.6 + index * 0.1 }}
             >
-              <Card className="glass-card p-6 h-full space-y-4 hover:border-primary/50 transition-all duration-300">
-                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <feature.icon className="w-6 h-6 text-primary" />
+              <div className="tron-card p-8 h-full space-y-6 hover:scale-105 transition-all duration-500 relative">
+                {/* Circuit corners */}
+                <div className="absolute top-2 left-2 w-3 h-3 border-l border-t border-cyan-400/50"></div>
+                <div className="absolute top-2 right-2 w-3 h-3 border-r border-t border-cyan-400/50"></div>
+                <div className="absolute bottom-2 left-2 w-3 h-3 border-l border-b border-cyan-400/50"></div>
+                <div className="absolute bottom-2 right-2 w-3 h-3 border-r border-b border-cyan-400/50"></div>
+
+                <div className="w-16 h-16 border-2 border-cyan-400/50 flex items-center justify-center transform rotate-45">
+                  <feature.icon className="w-8 h-8 text-cyan-400 transform -rotate-45" />
                 </div>
-                <div className="space-y-2">
-                  <h3 className="text-xl font-semibold">{feature.title}</h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed">{feature.description}</p>
+                <div className="space-y-3">
+                  <h3 className="text-xl font-bold text-white font-mono tracking-wider">{feature.title.toUpperCase()}</h3>
+                  <p className="text-cyan-200 text-sm leading-relaxed font-mono tracking-wide">{feature.description}</p>
                 </div>
-              </Card>
+              </div>
             </motion.div>
           ))}
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* TRON CTA Section */}
       <section className="container mx-auto px-4 py-20">
-        <Card className="glass-card p-12 max-w-4xl mx-auto text-center space-y-6">
-          <h2 className="text-3xl md:text-4xl font-bold text-balance">Ready to Trade Probability?</h2>
-          <p className="text-lg text-muted-foreground text-balance max-w-2xl mx-auto">
-            Join the future of continuous outcome markets. No binaries, no consensus perps — just pure probability
-            trading.
+        <div className="tron-card p-12 max-w-4xl mx-auto text-center space-y-8 relative">
+          {/* Circuit pattern */}
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent"></div>
+          <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent"></div>
+
+          <h2 className="text-4xl md:text-5xl font-bold text-white font-mono tracking-wider">READY TO TRADE PROBABILITY?</h2>
+          <div className="h-1 w-40 bg-gradient-to-r from-cyan-400 to-transparent mx-auto"></div>
+          <p className="text-lg text-cyan-200 font-mono tracking-wide max-w-2xl mx-auto">
+            JOIN THE FUTURE OF CONTINUOUS OUTCOME MARKETS. NO BINARIES, NO CONSENSUS PERPS — JUST PURE PROBABILITY TRADING.
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
+          <div className="flex flex-wrap items-center justify-center gap-6 pt-4">
             <Link href="/markets">
-              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90">
-                Explore Markets
+              <Button className="neon-border bg-cyan-400 text-black hover:bg-cyan-300 px-8 py-4 text-lg font-mono tracking-wider transition-all duration-300">
+                EXPLORE MARKETS
               </Button>
             </Link>
             <Link href="/docs">
-              <Button size="lg" variant="outline">
-                Learn More
+              <Button className="neon-border bg-black/50 text-cyan-400 hover:bg-cyan-400/10 px-8 py-4 text-lg font-mono tracking-wider transition-all duration-300">
+                LEARN MORE
               </Button>
             </Link>
           </div>
-        </Card>
+        </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-white/10 py-8">
+      {/* TRON Footer */}
+      <footer className="border-t border-cyan-400/30 py-8 bg-black/50">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="text-sm text-muted-foreground">© 2025 Trojan. Trade continuous outcomes.</div>
+            <div className="text-sm text-cyan-300 font-mono tracking-wide">© 2025 TROJAN. TRADE CONTINUOUS OUTCOMES.</div>
             <div className="flex items-center gap-6">
-              <Link href="/docs" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                Documentation
+              <Link href="/docs" className="text-sm text-cyan-300 hover:text-cyan-400 transition-colors font-mono tracking-wide">
+                DOCUMENTATION
               </Link>
-              <Link href="/markets" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                Markets
+              <Link href="/markets" className="text-sm text-cyan-300 hover:text-cyan-400 transition-colors font-mono tracking-wide">
+                MARKETS
               </Link>
-              <Link href="/create" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                Create
+              <Link href="/create" className="text-sm text-cyan-300 hover:text-cyan-400 transition-colors font-mono tracking-wide">
+                CREATE
               </Link>
             </div>
           </div>

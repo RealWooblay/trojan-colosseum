@@ -4,42 +4,57 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Custom Trojan DeFi dark theme with neon cyan/violet accents */
+/* Sophisticated dark theme with warm slate base and vibrant accents */
 :root {
-  --background: oklch(0.04 0.01 270); /* deep charcoal #0A0B0F */
-  --background-secondary: oklch(0.06 0.01 270); /* #10121A */
-  --foreground: oklch(0.98 0 0);
-  --card: oklch(0.08 0.01 270 / 0.5); /* glass effect */
-  --card-foreground: oklch(0.98 0 0);
-  --popover: oklch(0.08 0.01 270);
-  --popover-foreground: oklch(0.98 0 0);
-  --primary: oklch(0.75 0.2 195); /* neon cyan #00E0FF */
-  --primary-foreground: oklch(0.04 0.01 270);
-  --secondary: oklch(0.65 0.25 290); /* neon violet #A46CFF */
-  --secondary-foreground: oklch(0.98 0 0);
-  --muted: oklch(0.25 0.01 270);
-  --muted-foreground: oklch(0.55 0 0);
-  --accent: oklch(0.75 0.2 195);
-  --accent-foreground: oklch(0.04 0.01 270);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.98 0 0 / 0.1); /* white/10 */
-  --input: oklch(0.98 0 0 / 0.1);
-  --ring: oklch(0.75 0.2 195);
-  --chart-1: oklch(0.75 0.2 195); /* cyan */
-  --chart-2: oklch(0.65 0.25 290); /* violet */
-  --chart-3: oklch(0.7 0.22 240); /* blue */
-  --chart-4: oklch(0.68 0.23 320); /* magenta */
-  --chart-5: oklch(0.72 0.21 170); /* teal */
-  --radius: 0.75rem;
-  --sidebar: oklch(0.98 0 0);
-  --sidebar-foreground: oklch(0.04 0.01 270);
-  --sidebar-primary: oklch(0.75 0.2 195);
-  --sidebar-primary-foreground: oklch(0.04 0.01 270);
-  --sidebar-accent: oklch(0.98 0 0);
-  --sidebar-accent-foreground: oklch(0.04 0.01 270);
-  --sidebar-border: oklch(0.98 0 0 / 0.1);
-  --sidebar-ring: oklch(0.75 0.2 195);
+  --background: oklch(0.12 0.01 240);
+  /* warm dark slate #1E293B */
+  --background-secondary: oklch(0.15 0.01 240);
+  /* slightly lighter #334155 */
+  --foreground: oklch(0.95 0.01 240);
+  /* warm white */
+  --card: oklch(0.18 0.01 240 / 0.8);
+  /* glass effect with warm tint */
+  --card-foreground: oklch(0.95 0.01 240);
+  --popover: oklch(0.18 0.01 240);
+  --popover-foreground: oklch(0.95 0.01 240);
+  --primary: oklch(0.7 0.15 200);
+  /* softer cyan #22D3EE */
+  --primary-foreground: oklch(0.12 0.01 240);
+  --secondary: oklch(0.65 0.2 280);
+  /* softer violet #A855F7 */
+  --secondary-foreground: oklch(0.95 0.01 240);
+  --muted: oklch(0.35 0.01 240);
+  /* warm gray */
+  --muted-foreground: oklch(0.65 0.01 240);
+  /* softer muted text */
+  --accent: oklch(0.7 0.15 200);
+  --accent-foreground: oklch(0.12 0.01 240);
+  --destructive: oklch(0.6 0.2 15);
+  /* warmer red #EF4444 */
+  --destructive-foreground: oklch(0.95 0.01 240);
+  --border: oklch(0.95 0.01 240 / 0.15);
+  /* softer borders */
+  --input: oklch(0.95 0.01 240 / 0.15);
+  --ring: oklch(0.7 0.15 200);
+  --chart-1: oklch(0.7 0.15 200);
+  /* cyan */
+  --chart-2: oklch(0.65 0.2 280);
+  /* violet */
+  --chart-3: oklch(0.68 0.18 220);
+  /* blue */
+  --chart-4: oklch(0.7 0.2 320);
+  /* magenta */
+  --chart-5: oklch(0.72 0.18 160);
+  /* teal */
+  --radius: 1rem;
+  --sidebar: oklch(0.95 0.01 240);
+  --sidebar-foreground: oklch(0.12 0.01 240);
+  --sidebar-primary: oklch(0.7 0.15 200);
+  --sidebar-primary-foreground: oklch(0.12 0.01 240);
+  --sidebar-accent: oklch(0.95 0.01 240);
+  --sidebar-accent-foreground: oklch(0.12 0.01 240);
+  --sidebar-border: oklch(0.95 0.01 240 / 0.15);
+  --sidebar-ring: oklch(0.7 0.15 200);
 }
 
 .dark {
@@ -123,9 +138,9 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
-    @apply bg-gradient-to-br from-background to-background-secondary text-foreground antialiased;
-    background-attachment: fixed;
+    @apply bg-slate-950 text-foreground antialiased;
   }
 
   /* Subtle noise texture */
@@ -158,13 +173,49 @@
   }
 }
 
-/* Glass card effect */
-.glass-card {
-  @apply bg-white/5 border border-white/10 backdrop-blur-xl shadow-lg;
+/* TRON-inspired card effects */
+.tron-card {
+  @apply bg-black/80 border border-cyan-500/30 backdrop-blur-sm;
+  position: relative;
+  overflow: hidden;
 }
 
-.glass-card:hover {
-  @apply border-primary/50 shadow-[0_0_20px_rgba(0,224,255,0.15)];
+.tron-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.1), transparent);
+  transition: left 0.5s;
+}
+
+.tron-card:hover::before {
+  left: 100%;
+}
+
+.tron-card:hover {
+  @apply border-cyan-400/60;
+  box-shadow: 0 0 20px rgba(34, 211, 238, 0.3);
+}
+
+/* Neon glow effects */
+.neon-glow {
+  text-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor;
+}
+
+.neon-border {
+  border: 1px solid #22d3ee;
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.5), inset 0 0 10px rgba(34, 211, 238, 0.1);
+}
+
+/* TRON grid pattern */
+.tron-grid {
+  background-image:
+    linear-gradient(rgba(34, 211, 238, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(34, 211, 238, 0.1) 1px, transparent 1px);
+  background-size: 20px 20px;
 }
 
 /* Neon glow effect */
@@ -175,7 +226,7 @@
 /* Neon border for active chart mode buttons */
 .neon-border {
   @apply relative;
-  box-shadow: 0 0 15px rgba(0, 224, 255, 0.4), inset 0 0 10px rgba(0, 224, 255, 0.2);
+  box-shadow: 0 0 15px rgba(34, 211, 238, 0.4), inset 0 0 10px rgba(34, 211, 238, 0.2);
 }
 
 .neon-border::before {
@@ -184,7 +235,7 @@
   inset: -2px;
   border-radius: inherit;
   padding: 2px;
-  background: linear-gradient(135deg, #00e0ff, #a46cff);
+  background: linear-gradient(135deg, #22d3ee, #a855f7);
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
@@ -197,18 +248,17 @@
   0% {
     background-position: -1000px 0;
   }
+
   100% {
     background-position: 1000px 0;
   }
 }
 
 .shimmer {
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.02) 0%,
-    rgba(255, 255, 255, 0.08) 50%,
-    rgba(255, 255, 255, 0.02) 100%
-  );
+  background: linear-gradient(90deg,
+      rgba(148, 163, 184, 0.05) 0%,
+      rgba(148, 163, 184, 0.15) 50%,
+      rgba(148, 163, 184, 0.05) 100%);
   background-size: 1000px 100%;
   animation: shimmer 2s infinite linear;
 }

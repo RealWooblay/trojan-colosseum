@@ -15,58 +15,66 @@ export function MarketCard({ market }: MarketCardProps) {
 
   return (
     <Link href={`/market/${market.id}`}>
-      <Card className="glass-card p-6 transition-all duration-300 hover:scale-[1.02] cursor-pointer group">
-        <div className="space-y-4">
-          {/* Header */}
+      <div className="tron-card p-8 relative transform hover:scale-105 transition-all duration-500 cursor-pointer group">
+        {/* Circuit pattern overlay */}
+        <div className="absolute top-4 left-4 w-2 h-2 bg-cyan-400/60"></div>
+        <div className="absolute top-4 right-4 w-2 h-2 bg-cyan-400/60"></div>
+        <div className="absolute bottom-4 left-4 w-2 h-2 bg-cyan-400/60"></div>
+        <div className="absolute bottom-4 right-4 w-2 h-2 bg-cyan-400/60"></div>
+
+        <div className="space-y-6">
+          {/* TRON Header */}
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-lg text-balance group-hover:text-primary transition-colors">
-                {market.title}
+              <h3 className="font-bold text-xl text-white group-hover:text-cyan-300 transition-colors mb-3 font-mono tracking-wide">
+                {market.title.toUpperCase()}
               </h3>
-              <div className="flex items-center gap-2 mt-1">
-                <Badge variant="outline" className="text-xs">
-                  {market.category}
+              <div className="flex items-center gap-4">
+                <Badge variant="outline" className="text-xs border-cyan-400/50 text-cyan-300 font-mono tracking-wider">
+                  {market.category.toUpperCase()}
                 </Badge>
-                <span className="text-xs text-muted-foreground">Unit: {market.unit}</span>
+                <span className="text-xs text-cyan-400 font-mono tracking-wider">UNIT: {market.unit}</span>
               </div>
             </div>
           </div>
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* TRON Stats Grid */}
+          <div className="grid grid-cols-2 gap-6">
             <div>
-              <div className="text-xs text-muted-foreground">Liquidity</div>
-              <div className="font-mono text-sm font-semibold">${(market.liquidityUSD / 1000).toFixed(1)}k</div>
+              <div className="text-xs text-cyan-300 uppercase tracking-widest font-mono">LIQUIDITY</div>
+              <div className="font-mono text-xl font-bold text-white neon-glow mt-2">${(market.liquidityUSD / 1000).toFixed(1)}K</div>
             </div>
             <div>
-              <div className="text-xs text-muted-foreground">24h Volume</div>
-              <div className="font-mono text-sm font-semibold flex items-center gap-1">
+              <div className="text-xs text-cyan-300 uppercase tracking-widest font-mono">24H VOLUME</div>
+              <div className="font-mono text-xl font-bold flex items-center gap-2 mt-2">
                 {isPositive ? (
-                  <TrendingUp className="w-3 h-3 text-primary" />
+                  <TrendingUp className="w-4 h-4 text-green-400 neon-glow" />
                 ) : (
-                  <TrendingDown className="w-3 h-3 text-destructive" />
+                  <TrendingDown className="w-4 h-4 text-red-400 neon-glow" />
                 )}
-                ${(market.vol24hUSD / 1000).toFixed(1)}k
+                <span className={`neon-glow ${isPositive ? "text-green-400" : "text-red-400"}`}>
+                  ${(market.vol24hUSD / 1000).toFixed(1)}K
+                </span>
               </div>
             </div>
             <div>
-              <div className="text-xs text-muted-foreground">Mean μ</div>
-              <div className="font-mono text-sm font-semibold">{market.stats.mean.toFixed(2)}</div>
+              <div className="text-xs text-cyan-300 uppercase tracking-widest font-mono">MEAN μ</div>
+              <div className="font-mono text-xl font-bold text-white neon-glow mt-2">{market.stats.mean.toFixed(2)}</div>
             </div>
             <div>
-              <div className="text-xs text-muted-foreground">Variance σ²</div>
-              <div className="font-mono text-sm font-semibold">{market.stats.variance.toFixed(2)}</div>
+              <div className="text-xs text-cyan-300 uppercase tracking-widest font-mono">VARIANCE σ²</div>
+              <div className="font-mono text-xl font-bold text-white neon-glow mt-2">{market.stats.variance.toFixed(2)}</div>
             </div>
           </div>
 
-          {/* Footer */}
-          <div className="pt-2 border-t border-white/5">
-            <div className="text-xs text-muted-foreground">
-              Resolves: {market.resolvesAt ? new Date(market.resolvesAt).toLocaleDateString() : "TBD"}
+          {/* TRON Footer */}
+          <div className="pt-4 border-t border-cyan-400/30">
+            <div className="text-xs text-cyan-400 font-mono tracking-wider">
+              RESOLVES: {market.resolvesAt ? new Date(market.resolvesAt).toLocaleDateString().toUpperCase() : "TBD"}
             </div>
           </div>
         </div>
-      </Card>
+      </div>
     </Link>
   )
 }
