@@ -31,33 +31,32 @@ export function CustomTooltip({ active, payload, label, unit, selectedRange, all
       <div className="space-y-1">
         <div className="flex justify-between gap-6">
           <span className="text-muted-foreground">Density:</span>
-          <span className="font-mono font-semibold">{density.toFixed(4)}</span>
+          <span className="font-mono font-semibold">{density.toFixed(3)}</span>
         </div>
 
         {selectedRange && label >= selectedRange[0] && label <= selectedRange[1] && (
           <div className="flex justify-between gap-6">
             <span className="text-muted-foreground">Range Prob:</span>
-            <span className="font-mono font-semibold text-primary">{(cumulativeProb * 100).toFixed(2)}%</span>
+            <span className="font-mono font-semibold text-primary">{(cumulativeProb * 100).toFixed(1)}%</span>
           </div>
         )}
 
         <div className="flex justify-between gap-6">
           <span className="text-muted-foreground">Liquidity:</span>
           <span
-            className={`font-semibold text-xs uppercase ${
-              liquidityDepth === "thin"
+            className={`font-semibold text-xs uppercase ${liquidityDepth === "thin"
                 ? "text-destructive"
                 : liquidityDepth === "thick"
                   ? "text-primary"
                   : "text-yellow-500"
-            }`}
+              }`}
           >
             {liquidityDepth}
           </span>
         </div>
 
         {liquidityDepth === "thin" && (
-          <div className="text-xs text-destructive/80 pt-1 border-t border-white/10">⚠ Higher price impact here</div>
+          <div className="text-xs text-destructive/80 pt-1 border-t border-white/10">⚠ Higher price impact</div>
         )}
       </div>
     </div>

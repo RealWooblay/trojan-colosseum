@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "Trojan | Trade Continuous Outcomes",
+  title: "Dig | Trade Continuous Outcomes",
   description: "Buy and sell probability mass. One pool, infinite states.",
   generator: "v0.app",
 }

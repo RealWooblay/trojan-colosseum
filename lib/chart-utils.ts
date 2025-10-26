@@ -2,19 +2,19 @@
 
 export function formatCompact(value: number): string {
   if (value >= 1_000_000) {
-    return `${(value / 1_000_000).toFixed(1)}M`
+    return `${Math.round(value / 1_000_000)}M`
   }
   if (value >= 1_000) {
-    return `${(value / 1_000).toFixed(1)}k`
+    return `${Math.round(value / 1_000)}K`
   }
-  return value.toFixed(0)
+  return Math.round(value).toString()
 }
 
 export function formatValue(value: number, unit: string): string {
   if (Math.abs(value) >= 1000) {
     return `${formatCompact(value)} ${unit}`
   }
-  return `${value.toFixed(2)} ${unit}`
+  return `${Math.round(value * 10) / 10} ${unit}`
 }
 
 export function calculateCumulativeProbability(data: { x: number; y: number }[], range: [number, number]): number {

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback, useRef } from "react"
+import { useEffect, useState, useCallback, useRef, useMemo } from "react"
 import { useParams } from "next/navigation"
 import { Navbar } from "@/components/navbar"
 import { PdfChart } from "@/components/pdf-chart"
@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { fmtPct, fmtUSD, fmtOutcome, calcRangeProb } from "@/lib/formatters"
 import { findMode } from "@/lib/chart-utils"
+import { generateNormalPdf } from "@/lib/pdf-utils"
 import type { Market, PdfPoint, Trade } from "@/lib/types"
 import { ArrowLeft, Info } from "lucide-react"
 import Link from "next/link"
@@ -24,13 +25,34 @@ export default function MarketDetailPage() {
 
   const [market, setMarket] = useState<Market | null>(null)
   const [pdf, setPdf] = useState<PdfPoint[]>([])
-  const [ghostPdf, setGhostPdf] = useState<PdfPoint[] | undefined>(undefined)
   const [recentTrades, setRecentTrades] = useState<Trade[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedRange, setSelectedRange] = useState<[number, number]>([0, 100])
   const [tradePreview, setTradePreview] = useState<any>(null)
+  const [isUserInteracting, setIsUserInteracting] = useState(false)
 
   const selectedRangeRef = useRef(selectedRange)
+
+  // Generate ghost curve based on betting range - SAME LOGIC AS HOME PAGE
+  const ghostData: PdfPoint[] = useMemo(() => {
+    if (!market || pdf.length === 0) return []
+
+    // Calculate the center of the betting range
+    const rangeCenter = (selectedRange[0] + selectedRange[1]) / 2
+    const rangeWidth = selectedRange[1] - selectedRange[0]
+
+    // More subtle shift - smooth mathematical transition
+    const concentrationFactor = Math.min(rangeWidth / (market.domain.max - market.domain.min), 1)
+    const shiftAmount = (rangeCenter - market.stats.mean) * (0.2 + concentrationFactor * 0.3)
+
+    // Slight variance adjustment - keep curve smooth
+    const varianceAdjustment = 1 - (concentrationFactor * 0.2)
+
+    const newMean = market.stats.mean + shiftAmount
+    const newVariance = market.stats.variance * varianceAdjustment
+
+    return generateNormalPdf(newMean, newVariance, market.domain)
+  }, [selectedRange, market, pdf])
 
   useEffect(() => {
     fetch(`/api/markets/${marketId}`)
@@ -92,6 +114,12 @@ export default function MarketDetailPage() {
 
   const handleRangeChange = useCallback((newRange: [number, number]) => {
     setSelectedRange(newRange)
+    setIsUserInteracting(true)
+
+    // Resume animation after 2 seconds for more responsive feel
+    setTimeout(() => {
+      setIsUserInteracting(false)
+    }, 2000)
   }, [])
 
   if (loading || !market) {
@@ -152,7 +180,7 @@ export default function MarketDetailPage() {
               <Card className="glass-card p-6">
                 <PdfChart
                   data={pdf}
-                  ghostData={ghostPdf}
+                  ghostData={ghostData}
                   mean={market.stats.mean}
                   median={market.stats.mean * 0.98}
                   selectedRange={selectedRange}

@@ -24,7 +24,7 @@ export function Navbar() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
             <div className="text-2xl font-bold">
-              <span className="text-primary neon-glow">TROJAN</span>
+              <span className="text-primary neon-glow">DIG</span>
             </div>
           </Link>
 

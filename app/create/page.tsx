@@ -118,13 +118,12 @@ export default function CreateMarketPage() {
           {[1, 2, 3].map((s) => (
             <div key={s} className="flex items-center gap-2">
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
-                  s === step
-                    ? "bg-primary text-primary-foreground"
-                    : s < step
-                      ? "bg-primary/30 text-primary"
-                      : "bg-white/5 text-muted-foreground"
-                }`}
+                className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${s === step
+                  ? "bg-primary text-primary-foreground"
+                  : s < step
+                    ? "bg-primary/30 text-primary"
+                    : "bg-white/5 text-muted-foreground"
+                  }`}
               >
                 {s < step ? <CheckCircle className="w-5 h-5" /> : s}
               </div>
@@ -134,7 +133,7 @@ export default function CreateMarketPage() {
         </div>
 
         {/* Step Content */}
-        <Card className="glass-card p-8">
+        <Card className="glass-card p-8 min-h-fit">
           {step === 1 && (
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
               <div className="space-y-2">
@@ -339,15 +338,16 @@ export default function CreateMarketPage() {
                 {/* Live Preview */}
                 <div className="space-y-2">
                   <Label>Live Preview</Label>
-                  <div className="h-[300px] rounded-lg border border-white/10 p-4">
+                  <div className="min-h-[400px] rounded-lg border border-white/10 p-4">
                     {previewPdf.length > 0 ? (
                       <PdfChart
                         data={previewPdf}
                         domain={{ min: Number.parseFloat(minBound), max: Number.parseFloat(maxBound) }}
                         unit={unit}
+                        liquidityDepth={10000}
                       />
                     ) : (
-                      <div className="flex items-center justify-center h-full text-muted-foreground">
+                      <div className="flex items-center justify-center h-[400px] text-muted-foreground">
                         <Button onClick={updatePreview} variant="outline">
                           Generate Preview
                         </Button>

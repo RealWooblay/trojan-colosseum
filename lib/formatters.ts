@@ -29,7 +29,7 @@ export function fmtUSD(x: number): string {
 }
 
 /**
- * Format number with max 3 significant figures, trim trailing zeros
+ * Format number with max 2 significant figures, cleaner rounding
  */
 export function fmtNum(x: number): string {
   if (x === 0) return "0"
@@ -39,16 +39,25 @@ export function fmtNum(x: number): string {
 
   // For very small numbers, use scientific notation
   if (abs < 0.001) {
-    return x.toExponential(2)
+    return x.toExponential(1)
   }
 
-  // For numbers >= 1, use up to 3 sig figs
+  // For numbers >= 1, use up to 2 sig figs with cleaner rounding
   if (abs >= 1) {
-    return `${sign}${abs.toPrecision(3).replace(/\.?0+$/, "")}`
+    if (abs >= 1000) {
+      return `${sign}${Math.round(abs)}`
+    }
+    if (abs >= 100) {
+      return `${sign}${abs.toFixed(0)}`
+    }
+    if (abs >= 10) {
+      return `${sign}${abs.toFixed(1)}`
+    }
+    return `${sign}${abs.toFixed(2)}`
   }
 
-  // For decimals < 1, show up to 3 decimal places
-  return `${sign}${abs.toFixed(3).replace(/\.?0+$/, "")}`
+  // For decimals < 1, show up to 2 decimal places
+  return `${sign}${abs.toFixed(2)}`
 }
 
 /**
@@ -74,17 +83,20 @@ export function getLiquidityLabel(depth: number): string {
 }
 
 /**
- * Format axis tick with unit
+ * Format axis tick with unit - cleaner formatting
  */
 export function fmtAxis(x: number, unit: string): string {
   if (unit === "$" || unit === "USD") {
     const abs = Math.abs(x)
-    if (abs >= 1_000_000) return `$${(x / 1_000_000).toFixed(1)}M`
-    if (abs >= 1_000) return `$${(x / 1_000).toFixed(1)}K`
-    return `$${x.toFixed(0)}`
+    if (abs >= 1_000_000) return `$${Math.round(x / 1_000_000)}M`
+    if (abs >= 10_000) return `$${Math.round(x / 1_000)}K`
+    return `$${Math.round(x)}`
   }
   if (unit === "%") {
-    return `${x.toFixed(1)}%`
+    return `${Math.round(x * 10) / 10}%`
+  }
+  if (unit === "°C") {
+    return `${Math.round(x)}°C`
   }
   return fmtNum(x)
 }
