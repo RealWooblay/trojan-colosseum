@@ -1,3 +1,45 @@
 {
-  "data": []
+  "data": [
+    {
+      "id": "btc-mh8tpdgf",
+      "title": "BTC",
+      "unit": "USD",
+      "category": "Crypto",
+      "domain": {
+        "min": 0,
+        "max": 100
+      },
+      "prior": {
+        "kind": "uniform",
+        "params": {}
+      },
+      "liquidityUSD": 0,
+      "vol24hUSD": 0,
+      "stats": {
+        "mean": 50,
+        "variance": 833.3333333333334,
+        "skew": 0,
+        "kurtosis": 3
+      },
+      "resolvesAt": "2026-01-13T14:02:00.000Z",
+      "coefficients": [
+        0.5,
+        0.5
+      ],
+      "ranges": [
+        [
+          20,
+          40
+        ],
+        [
+          5,
+          25
+        ]
+      ],
+      "expiry": "2026-01-13T14:02:00.000Z",
+      "createdAt": "2025-10-27T07:35:31.935Z",
+      "txSignature": "4Jro2rNjPZVouNiPB7FEw1BjqMJmy6gGHAvMYo4ba3R3hpGnu8n1KejxUm3cpC2JZ355SxqQJwgT6qJzPx4FR5QA",
+      "description": "Because"
+    }
+  ]
 }
