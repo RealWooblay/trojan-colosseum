@@ -43,6 +43,7 @@ export type Market = {
   }
   oracle?: MarketOracleState
   resolvedOutcome?: OracleOutcome
+  resolutionConfidence?: number
 }
 
 export type PdfPoint = {

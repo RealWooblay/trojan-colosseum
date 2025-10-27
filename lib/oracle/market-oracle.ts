@@ -128,6 +128,11 @@ export async function syncStoredMarketsWithOracle(existing?: Market[]): Promise<
   const nextMarkets: Market[] = []
 
   for (const market of markets) {
+    if (hasMarketResolved(market)) {
+      nextMarkets.push(market)
+      continue
+    }
+
     const oracleState = market.oracle
     if (!oracleState || oracleState.type !== "ai") {
       nextMarkets.push(market)
@@ -146,7 +151,21 @@ export async function syncStoredMarketsWithOracle(existing?: Market[]): Promise<
     const deadline =
       typeof deadlineValue === "string" ? new Date(deadlineValue) : deadlineValue
 
-    if (deadline && deadline.getTime() > now) {
+    const fallbackExpiry =
+      market.resolvesAt ?? market.expiry ?? market.oracle?.request.resolutionDeadline
+    const fallbackDeadline =
+      fallbackExpiry && typeof fallbackExpiry === "string"
+        ? new Date(fallbackExpiry)
+        : (fallbackExpiry as unknown as Date | undefined)
+
+    const effectiveDeadline = deadline ?? fallbackDeadline
+    const effectiveDeadlineTime = effectiveDeadline?.getTime()
+
+    if (
+      !effectiveDeadline ||
+      Number.isNaN(effectiveDeadlineTime) ||
+      (effectiveDeadlineTime as number) > now
+    ) {
       nextMarkets.push(market)
       continue
     }
@@ -154,7 +173,7 @@ export async function syncStoredMarketsWithOracle(existing?: Market[]): Promise<
     try {
       const request: OutcomeRequest = {
         ...oracleState.request,
-        resolutionDeadline: deadline,
+        resolutionDeadline: effectiveDeadline,
       }
       const verdict = await oracle.checkOutcome(request)
 
@@ -168,15 +187,24 @@ export async function syncStoredMarketsWithOracle(existing?: Market[]): Promise<
         error: undefined,
       }
 
+      const resolutionConfidence = Math.round(verdict.confidence * 100)
+      const boundedConfidence =
+        resolvedOutcome && !Number.isNaN(resolutionConfidence)
+          ? Math.min(100, Math.max(0, resolutionConfidence))
+          : market.resolutionConfidence
+
       nextMarkets.push({
         ...market,
         oracle: nextOracleState,
         resolvedOutcome: resolvedOutcome ?? market.resolvedOutcome,
+        resolutionConfidence: boundedConfidence,
       })
 
       if (
         oracleState.lastVerdict?.outcome !== verdict.outcome ||
-        oracleState.status !== nextOracleState.status
+        oracleState.status !== nextOracleState.status ||
+        (resolvedOutcome && market.resolutionConfidence !== boundedConfidence) ||
+        oracleState.lastCheckedAt !== nextOracleState.lastCheckedAt
       ) {
         updated = true
       }

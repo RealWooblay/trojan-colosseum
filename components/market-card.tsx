@@ -17,6 +17,7 @@ export function MarketCard({ market }: MarketCardProps) {
   const lastChecked = market.oracle?.lastCheckedAt
     ? new Date(market.oracle.lastCheckedAt).toLocaleString()
     : null
+  const resolutionConfidence = market.resolutionConfidence
 
   return (
     <Link href={`/market/${market.id}`}>
@@ -81,7 +82,9 @@ export function MarketCard({ market }: MarketCardProps) {
               <div className="text-xs text-cyan-300 font-mono tracking-wider mt-2">
                 AI ORACLE:{" "}
                 {oracleStatus === "resolved" && resolvedOutcome
-                  ? `RESOLVED ${resolvedOutcome}`
+                  ? `RESOLVED ${resolvedOutcome}${
+                      typeof resolutionConfidence === "number" ? ` • CONF ${resolutionConfidence}%` : ""
+                    }`
                   : oracleStatus === "pending"
                     ? "PENDING"
                     : "UNKNOWN"}
