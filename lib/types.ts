@@ -1,4 +1,16 @@
+import type { OracleOutcome, OutcomeRequest, OutcomeVerdict } from "./oracle/ai-oracle"
+
 // Core data types for Trojan DeFi
+
+export type MarketOracleState = {
+  type: "ai"
+  request: OutcomeRequest
+  status: "pending" | "resolved"
+  lastCheckedAt?: string
+  lastVerdict?: OutcomeVerdict
+  resolvedOutcome?: OracleOutcome
+  error?: string
+}
 
 export type Market = {
   id: string
@@ -29,6 +41,8 @@ export type Market = {
     skew: number
     kurtosis: number
   }
+  oracle?: MarketOracleState
+  resolvedOutcome?: OracleOutcome
 }
 
 export type PdfPoint = {

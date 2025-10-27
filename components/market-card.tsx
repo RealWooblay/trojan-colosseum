@@ -12,6 +12,11 @@ interface MarketCardProps {
 
 export function MarketCard({ market }: MarketCardProps) {
   const isPositive = market.vol24hUSD > 0
+  const oracleStatus = market.oracle?.status
+  const resolvedOutcome = market.oracle?.resolvedOutcome ?? market.resolvedOutcome
+  const lastChecked = market.oracle?.lastCheckedAt
+    ? new Date(market.oracle.lastCheckedAt).toLocaleString()
+    : null
 
   return (
     <Link href={`/market/${market.id}`}>
@@ -72,6 +77,17 @@ export function MarketCard({ market }: MarketCardProps) {
             <div className="text-xs text-cyan-400 font-mono tracking-wider">
               RESOLVES: {market.resolvesAt ? new Date(market.resolvesAt).toLocaleDateString().toUpperCase() : "TBD"}
             </div>
+            {market.oracle && (
+              <div className="text-xs text-cyan-300 font-mono tracking-wider mt-2">
+                AI ORACLE:{" "}
+                {oracleStatus === "resolved" && resolvedOutcome
+                  ? `RESOLVED ${resolvedOutcome}`
+                  : oracleStatus === "pending"
+                    ? "PENDING"
+                    : "UNKNOWN"}
+                {lastChecked ? ` • LAST CHECK ${lastChecked.toUpperCase()}` : ""}
+              </div>
+            )}
           </div>
         </div>
       </div>

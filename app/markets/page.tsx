@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button"
 import type { Market } from "@/lib/types"
 import { Search, Filter } from "lucide-react"
 import { motion } from "framer-motion"
-import { readStoredMarkets } from "@/lib/storage"
 
 export default function MarketsPage() {
   const [markets, setMarkets] = useState<Market[]>([])
@@ -17,10 +16,41 @@ export default function MarketsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
 
   useEffect(() => {
-    readStoredMarkets().then((markets) => {
-      setMarkets(markets)
-      setLoading(false)
-    })
+    let cancelled = false
+
+    async function loadMarkets() {
+      setLoading(true)
+      try {
+        const response = await fetch("/api/markets", {
+          method: "GET",
+          cache: "no-store",
+        })
+
+        if (!response.ok) {
+          throw new Error(`Failed to load markets (${response.status})`)
+        }
+
+        const payload = await response.json()
+        if (!cancelled) {
+          setMarkets(payload.markets ?? [])
+        }
+      } catch (error) {
+        console.error("[MarketsPage] Failed to load markets", error)
+        if (!cancelled) {
+          setMarkets([])
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false)
+        }
+      }
+    }
+
+    loadMarkets()
+
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const categories = Array.from(new Set(markets.map((m) => m.category)))

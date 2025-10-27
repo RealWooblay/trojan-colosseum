@@ -6,6 +6,7 @@ import { Sonormal } from "../../sonormal";
 import SonormalIdl from "../../sonormal.json";
 import { getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { appendStoredMarket } from "../storage";
+import { createDefaultAiOracleState } from "../oracle/market-oracle";
 import { findControllerPda, findMarketPda, findTicketPda } from "./pda";
 import { fetchSellMath } from "./math";
 import { ed25519 } from "@noble/curves/ed25519";
@@ -124,8 +125,11 @@ export async function newMarket(
         const controllerPda = findControllerPda();
         const controller = await sonormalProgram.account.controller.fetch(controllerPda);
 
+        const marketId = (controller.totalMarkets.toNumber() - 1).toString();
+        const expiryIso = new Date(expiry * 1000).toISOString();
+
         await appendStoredMarket({
-            id: (controller.totalMarkets.toNumber() - 1).toString(),
+            id: marketId,
             title: title,
             description: description,
             unit: unit,
@@ -140,7 +144,8 @@ export async function newMarket(
             liquidityUSD: 0,
             vol24hUSD: 0,
             category: category,
-            expiry: new Date(expiry * 1000).toISOString(),
+            expiry: expiryIso,
+            resolvesAt: expiryIso,
             alpha: alpha,
             k: k,
             tolCoeffSum: tolCoeffSum,
@@ -154,7 +159,14 @@ export async function newMarket(
                 skew: 0,
                 kurtosis: 0
             },
-            txSignature: result.signature
+            txSignature: result.signature,
+            oracle: createDefaultAiOracleState({
+                id: marketId,
+                title,
+                category,
+                description,
+                expiry: expiryIso,
+            }),
         });
 
         return {
