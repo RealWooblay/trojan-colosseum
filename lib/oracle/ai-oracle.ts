@@ -58,6 +58,22 @@ export interface AiOracleConfig {
    * Optional logger interface; defaults to console.
    */
   logger?: Pick<Console, 'info' | 'warn' | 'error'>;
+  /**
+   * Optional OpenAI API key. Falls back to process.env.OPENAI_API_KEY.
+   */
+  openAiApiKey?: string;
+  /**
+   * OpenAI model used for verdict generation.
+   */
+  openAiModel?: string;
+  /**
+   * Override OpenAI base URL (useful for Azure/OpenAI-compatible endpoints).
+   */
+  openAiBaseUrl?: string;
+  /**
+   * Number of retries when calling OpenAI.
+   */
+  openAiMaxRetries?: number;
 }
 
 interface AggregatedScores {
@@ -74,6 +90,16 @@ const DEFAULT_CONFIG: Required<Pick<
   logger: console,
 };
 
+type ResolvedAiOracleConfig = Required<Pick<
+  AiOracleConfig,
+  'fetcher' | 'maxSignalsPerQuery' | 'resolutionThreshold' | 'logger'
+>> & {
+  openAiApiKey?: string;
+  openAiModel: string;
+  openAiBaseUrl: string;
+  openAiMaxRetries: number;
+};
+
 /**
  * DuckDuckGo and Google block direct scraping, but https://r.jina.ai acts as
  * a passthrough that returns the raw document. The endpoint used here does not
@@ -83,12 +109,16 @@ const GOOGLE_NEWS_RSS_BASE =
   'https://r.jina.ai/http://news.google.com/rss/search?hl=en-US&gl=US&ceid=US:en&q=';
 
 export class AiOracle {
-  private readonly config: Required<AiOracleConfig>;
+  private readonly config: ResolvedAiOracleConfig;
 
   constructor(config: AiOracleConfig = {}) {
     this.config = {
       ...DEFAULT_CONFIG,
       ...config,
+      openAiApiKey: config.openAiApiKey ?? process.env.OPENAI_API_KEY,
+      openAiModel: config.openAiModel ?? process.env.OPENAI_MODEL ?? 'gpt-4.1-mini',
+      openAiBaseUrl: config.openAiBaseUrl ?? process.env.OPENAI_BASE_URL ?? 'https://api.openai.com',
+      openAiMaxRetries: config.openAiMaxRetries ?? 2,
     };
   }
 
@@ -98,19 +128,22 @@ export class AiOracle {
   async checkOutcome(request: OutcomeRequest): Promise<OutcomeVerdict> {
     const signals = await this.collectSignals(request);
     const scores = this.scoreSignals(request, signals);
-    const { outcome, confidence, reasoning } = this.decideOutcome(
-      request,
-      scores,
-      signals,
-    );
+    const heuristicVerdict = this.buildHeuristicVerdict(request, scores, signals);
 
-    return {
-      outcome,
-      confidence,
-      reasoning,
-      decidedAt: new Date().toISOString(),
-      signals,
-    };
+    if (this.config.openAiApiKey && signals.length > 0) {
+      try {
+        const aiVerdict = await this.requestVerdictFromOpenAi(request, signals, heuristicVerdict);
+        if (aiVerdict) {
+          return aiVerdict;
+        }
+      } catch (error) {
+        this.config.logger.warn?.(
+          `[AiOracle] OpenAI verdict failed for market "${request.marketId}": ${(error as Error).message}`,
+        );
+      }
+    }
+
+    return heuristicVerdict;
   }
 
   private async collectSignals(request: OutcomeRequest): Promise<OutcomeSignal[]> {
@@ -175,11 +208,11 @@ export class AiOracle {
     return scores;
   }
 
-  private decideOutcome(
+  private buildHeuristicVerdict(
     request: OutcomeRequest,
     scores: AggregatedScores,
     signals: OutcomeSignal[],
-  ): { outcome: OracleOutcome; confidence: number; reasoning: string } {
+  ): OutcomeVerdict {
     const sorted = [...request.options]
       .map((option) => ({
         option,
@@ -195,6 +228,8 @@ export class AiOracle {
         outcome: 'PENDING',
         confidence: 0,
         reasoning: 'No supporting signals were collected.',
+        decidedAt: new Date().toISOString(),
+        signals,
       };
     }
 
@@ -207,6 +242,8 @@ export class AiOracle {
         confidence,
         reasoning:
           'Signals are inconclusive. Accumulate more data or escalate to a human reviewer.',
+        decidedAt: new Date().toISOString(),
+        signals,
       };
     }
 
@@ -229,6 +266,8 @@ export class AiOracle {
       outcome: this.normalizeOutcomeLabel(top.option.label),
       confidence,
       reasoning,
+      decidedAt: new Date().toISOString(),
+      signals,
     };
   }
 
@@ -340,6 +379,174 @@ export class AiOracle {
     }
 
     return 0.4;
+  }
+
+  private async requestVerdictFromOpenAi(
+    request: OutcomeRequest,
+    signals: OutcomeSignal[],
+    heuristicVerdict: OutcomeVerdict,
+  ): Promise<OutcomeVerdict | undefined> {
+    const apiKey = this.config.openAiApiKey;
+    if (!apiKey) return undefined;
+
+    const evidence = signals.slice(0, 8).map((signal, index) => {
+      const published = signal.publishedAt ? ` • ${signal.publishedAt}` : '';
+      return `${index + 1}. ${signal.headline} (${signal.source}${published})\n   Snippet: ${signal.snippet}\n   URL: ${signal.url}`;
+    });
+
+    const optionsSummary = request.options
+      .map((option) => `- ${option.id}: ${option.label}${option.keywords ? ` (keywords: ${option.keywords.join(', ')})` : ''}`)
+      .join('\n');
+
+    const deadline =
+      typeof request.resolutionDeadline === 'string'
+        ? request.resolutionDeadline
+        : request.resolutionDeadline?.toISOString();
+
+    const body = {
+      model: this.config.openAiModel,
+      input: [
+        {
+          role: 'system',
+          content: [
+            {
+              type: 'text',
+              text: 'You are an impartial prediction market oracle. Return a verdict in JSON. Only use the provided evidence.',
+            },
+          ],
+        },
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: [
+                `Market ID: ${request.marketId}`,
+                `Question: ${request.question}`,
+                request.resolutionCriteria ? `Resolution criteria: ${request.resolutionCriteria}` : undefined,
+                deadline ? `Resolution deadline: ${deadline}` : undefined,
+                `Options:\n${optionsSummary}`,
+                `Heuristic baseline outcome: ${heuristicVerdict.outcome} (confidence ${heuristicVerdict.confidence.toFixed(
+                  2,
+                )})`,
+                `Evidence:\n${evidence.join('\n') || 'No evidence collected.'}`,
+                'Return JSON with fields: outcome (YES | NO | INVALID | PENDING), confidence (0-1), reasoning (<= 280 chars).',
+              ]
+                .filter(Boolean)
+                .join('\n\n'),
+            },
+          ],
+        },
+      ],
+      response_format: {
+        type: 'json_schema',
+        json_schema: {
+          name: 'oracle_verdict',
+          schema: {
+            type: 'object',
+            properties: {
+              outcome: {
+                type: 'string',
+                enum: ['YES', 'NO', 'INVALID', 'PENDING'],
+              },
+              confidence: {
+                type: 'number',
+                minimum: 0,
+                maximum: 1,
+              },
+              reasoning: {
+                type: 'string',
+                maxLength: 512,
+              },
+            },
+            required: ['outcome', 'confidence', 'reasoning'],
+            additionalProperties: false,
+          },
+        },
+      },
+      temperature: 0.1,
+      max_output_tokens: 500,
+    };
+
+    const url = `${this.config.openAiBaseUrl.replace(/\/+$/, '')}/v1/responses`;
+
+    for (let attempt = 0; attempt <= this.config.openAiMaxRetries; attempt += 1) {
+      try {
+        const response = await this.config.fetcher(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify(body),
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`OpenAI request failed with status ${response.status}: ${errorText}`);
+        }
+
+        const payload = await response.json();
+        const rawText = this.extractOpenAiText(payload);
+        if (!rawText) {
+          throw new Error('OpenAI response did not include text output.');
+        }
+
+        let parsed: { outcome: OracleOutcome; confidence: number; reasoning: string };
+        try {
+          parsed = JSON.parse(rawText);
+        } catch (parseError) {
+          throw new Error(`Failed to parse OpenAI JSON response: ${(parseError as Error).message}`);
+        }
+
+        const outcome = this.normalizeOutcomeLabel(parsed.outcome);
+        const confidence = Number.isFinite(parsed.confidence)
+          ? Math.min(1, Math.max(0, parsed.confidence))
+          : heuristicVerdict.confidence;
+        const reasoning = parsed.reasoning?.trim() || heuristicVerdict.reasoning;
+
+        return {
+          outcome,
+          confidence,
+          reasoning,
+          decidedAt: new Date().toISOString(),
+          signals,
+        };
+      } catch (error) {
+        if (attempt >= this.config.openAiMaxRetries) {
+          throw error;
+        }
+        const delay = 500 * (attempt + 1);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+    }
+
+    return undefined;
+  }
+
+  private extractOpenAiText(payload: any): string | undefined {
+    const outputs = payload?.output ?? payload?.outputs ?? payload?.choices;
+    if (!outputs) return undefined;
+
+    if (Array.isArray(outputs)) {
+      for (const item of outputs) {
+        const content = item?.content ?? item?.message?.content;
+        if (Array.isArray(content)) {
+          for (const block of content) {
+            if (block?.type === 'output_text' && typeof block.text === 'string') {
+              return block.text;
+            }
+            if (block?.type === 'text' && typeof block.text === 'string') {
+              return block.text;
+            }
+          }
+        } else if (typeof content === 'string') {
+          return content;
+        }
+      }
+    }
+
+    return undefined;
   }
 }
 
