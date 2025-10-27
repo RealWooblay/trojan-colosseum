@@ -35,7 +35,10 @@ export default function CreateMarketPage() {
     return projectGhostFromRanges(basePdf, ranges, DOMAIN)
   }, [basePdf, ranges])
 
-  const coefficients = useMemo(() => rangesToCoefficients(ranges, DOMAIN), [ranges])
+  const coefficients = useMemo(
+    () => rangesToCoefficients(ranges, DOMAIN, MAX_RANGE_SLOTS, basePdf),
+    [ranges, basePdf],
+  )
   const weightSum = useMemo(() => coefficients.reduce((sum, weight) => sum + weight, 0), [coefficients])
 
   const canProceedStepOne = title.trim().length > 2 && category.trim().length > 0 && expiry.length > 0

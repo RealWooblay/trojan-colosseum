@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import { fmtPct, fmtUSD, fmtNum } from "@/lib/formatters"
 import { TrendingUp, TrendingDown, Plus, Minus } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import type { Market } from "@/lib/types"
+import type { Market, PdfPoint } from "@/lib/types"
 import { rangesToCoefficients, MAX_COEFFICIENTS, MAX_RANGE_SLOTS, normalizeAlpha } from "@/lib/trade-utils"
 import { buyTransaction, getTotalTickets } from "@/lib/sonormal/program"
 import { useAppKitProvider, useAppKitAccount } from "@reown/appkit/react"
@@ -17,6 +17,7 @@ import { appendStoredTicket } from "@/lib/storage"
 
 interface TradePanelProps {
   market: Market
+  marketPdf?: PdfPoint[]
   selectedRanges?: [number, number][]
   onTradePreview: (side: "buy" | "sell", amount: number, coefficients?: number[]) => void
   onAddRange?: () => void
@@ -33,6 +34,7 @@ interface TradePanelProps {
 
 export function TradePanel({
   market,
+  marketPdf,
   selectedRanges,
   onTradePreview,
   onAddRange,
@@ -53,8 +55,8 @@ export function TradePanel({
   const isBuy = side === "buy"
 
   const coefficients = useMemo(() => {
-    return rangesToCoefficients(ranges, domain, MAX_COEFFICIENTS)
-  }, [ranges, domain.min, domain.max])
+    return rangesToCoefficients(ranges, domain, MAX_COEFFICIENTS, marketPdf)
+  }, [ranges, domain.min, domain.max, marketPdf])
 
   const weightSum = useMemo(() => coefficients.reduce((sum, weight) => sum + weight, 0), [coefficients])
 

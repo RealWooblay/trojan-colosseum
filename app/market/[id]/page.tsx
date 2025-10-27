@@ -18,7 +18,7 @@ import type { Market, PdfPoint, Trade } from "@/lib/types"
 import { ArrowLeft, Info } from "lucide-react"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { rangesToCoefficients, MAX_RANGE_SLOTS, coefficientsToRanges } from "@/lib/trade-utils"
+import { rangesToCoefficients, MAX_RANGE_SLOTS, coefficientsToRanges, MAX_COEFFICIENTS } from "@/lib/trade-utils"
 
 export default function MarketDetailPage() {
   const params = useParams()
@@ -90,7 +90,7 @@ export default function MarketDetailPage() {
           const payloadCoefficients =
             coefficients && coefficients.length > 0
               ? coefficients
-              : rangesToCoefficients(selectedRangesRef.current, market.domain)
+              : rangesToCoefficients(selectedRangesRef.current, market.domain, MAX_COEFFICIENTS, pdf)
 
           payload.coefficients = payloadCoefficients
           payload.ranges = selectedRangesRef.current
@@ -358,6 +358,7 @@ export default function MarketDetailPage() {
             <div data-trade-panel>
               <TradePanel
                 market={market}
+                marketPdf={pdf}
                 selectedRanges={selectedRanges}
                 onTradePreview={handleTradePreview}
                 tradePreview={tradePreview}

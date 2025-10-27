@@ -1,3 +1,6 @@
+import { calcRangeProb } from "./formatters"
+import type { PdfPoint } from "./types"
+
 type Domain = { min: number; max: number }
 
 export const MAX_COEFFICIENTS = 8
@@ -22,27 +25,55 @@ export function normalizeAlpha(
   epsilon = 1e-8,
 ): number[] {
   if (!Array.isArray(weights)) weights = []
+  const cappedSize = Math.max(0, Math.floor(size))
+  if (cappedSize === 0) return []
 
   const padded: number[] = []
-  for (let i = 0; i < size; i++) {
+  for (let i = 0; i < cappedSize; i++) {
     const value = Number(weights[i] ?? 0)
-    padded.push(Number.isFinite(value) ? Math.max(value, 0) : 0)
+    const finite = Number.isFinite(value) ? value : 0
+    padded.push(finite > 0 ? finite : 0)
   }
 
-  const adjusted = padded.map((value) => (value <= epsilon ? epsilon : value))
-  const total = adjusted.reduce((sum, value) => sum + value, 0)
-  if (total <= 0) {
-    const uniform = 1 / size
-    return Array(size).fill(uniform)
+  const lifted = padded.map((value) => (value <= epsilon ? epsilon : value))
+  const liftedTotal = lifted.reduce((sum, value) => sum + value, 0)
+  if (!Number.isFinite(liftedTotal) || liftedTotal <= 0) {
+    const uniform = 1 / cappedSize
+    return Array(cappedSize).fill(uniform)
   }
 
-  return adjusted.map((value) => value / total)
+  const preliminary = lifted.map((value) => value / liftedTotal)
+  const prelimTotal = preliminary.reduce((sum, value) => sum + value, 0)
+
+  if (!Number.isFinite(prelimTotal) || prelimTotal <= 0) {
+    const uniform = 1 / cappedSize
+    return Array(cappedSize).fill(uniform)
+  }
+
+  const correction = 1 - prelimTotal
+  let maxIndex = 0
+  for (let i = 1; i < preliminary.length; i++) {
+    if (preliminary[i] > preliminary[maxIndex]) {
+      maxIndex = i
+    }
+  }
+  preliminary[maxIndex] += correction
+
+  const nonNegative = preliminary.map((value) => (value <= epsilon ? epsilon : value))
+  const finalTotal = nonNegative.reduce((sum, value) => sum + value, 0)
+  if (!Number.isFinite(finalTotal) || finalTotal <= 0) {
+    const uniform = 1 / cappedSize
+    return Array(cappedSize).fill(uniform)
+  }
+
+  return nonNegative.map((value) => value / finalTotal)
 }
 
 export function rangesToCoefficients(
   ranges: [number, number][],
   domain: Domain,
   maxCoefficients = MAX_COEFFICIENTS,
+  pdf?: PdfPoint[],
 ): number[] {
   const domainRange = Math.max(domain.max - domain.min, 1)
   const cappedRanges = ranges.slice(0, maxCoefficients).map((range) => sanitizeRange(range, domain))
@@ -51,9 +82,23 @@ export function rangesToCoefficients(
     return normalizeAlpha([], maxCoefficients)
   }
 
-  const spans = cappedRanges.map(([min, max]) => Math.max(max - min, domainRange * MIN_WIDTH_RATIO))
-  const totalSpan = spans.reduce((sum, span) => sum + span, 0)
-  const weights = totalSpan > 0 ? spans.map((span) => span / totalSpan) : spans.map(() => 1 / spans.length)
+  const masses = cappedRanges.map(([min, max]) => {
+    const fallbackWidth = Math.max(max - min, domainRange * MIN_WIDTH_RATIO)
+    if (pdf && pdf.length > 1) {
+      const mass = calcRangeProb(pdf, [min, max])
+      if (Number.isFinite(mass) && mass > 0) {
+        return mass
+      }
+    }
+    return fallbackWidth / domainRange
+  })
+
+  const totalMass = masses.reduce((sum, value) => sum + value, 0)
+  if (!Number.isFinite(totalMass) || totalMass <= 0) {
+    return normalizeAlpha([], cappedRanges.length)
+  }
+
+  const weights = masses.map((mass) => mass / totalMass)
   return normalizeAlpha(weights, weights.length)
 }
 

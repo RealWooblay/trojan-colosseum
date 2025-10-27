@@ -150,7 +150,7 @@ export async function buyTransaction(
 ): Promise<{ success: true, transaction: Uint8Array } | { success: false, error: any }> {
     try {
         const coefficientsSum = coefficients.reduce((acc, curr) => acc + curr, 0);
-        if (coefficientsSum !== 1) {
+        if (!Number.isFinite(coefficientsSum) || Math.abs(coefficientsSum - 1) > 1e-9) {
             return {
                 success: false,
                 error: 'Coefficients must sum to 1'
