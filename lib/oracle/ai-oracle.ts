@@ -452,7 +452,7 @@ export class AiOracle {
               confidence: {
                 type: 'number',
                 minimum: 0,
-                maximum: 1,
+                maximum: 100,
               },
               reasoning: {
                 type: 'string',
