@@ -1,476 +1,379 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Navbar } from "@/components/navbar"
-import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
 import { PdfChart } from "@/components/pdf-chart"
-import { generateNormalPdf, generateLognormalPdf, generateBetaPdf, generateUniformPdf } from "@/lib/pdf-utils"
-import type { PdfPoint } from "@/lib/types"
-import { ArrowRight, ArrowLeft, CheckCircle } from "lucide-react"
-import { motion } from "framer-motion"
 import { useToast } from "@/hooks/use-toast"
-import { newMarket } from "@/lib/sonormal/program"
+import { generateUniformPdf, projectGhostFromRanges } from "@/lib/pdf-utils"
+import type { PdfPoint } from "@/lib/types"
+import { ArrowLeft, ArrowRight, CheckCircle, Plus, Minus } from "lucide-react"
+import { motion } from "framer-motion"
+import { MAX_RANGE_SLOTS, rangesToCoefficients } from "@/lib/trade-utils"
+
+const DOMAIN = { min: 0, max: 100 }
 
 export default function CreateMarketPage() {
-  const [step, setStep] = useState(1)
   const { toast } = useToast()
+  const router = useRouter()
 
-  // Step 1: Market Details
+  const [step, setStep] = useState(1)
   const [title, setTitle] = useState("")
-  const [unit, setUnit] = useState<"%" | "USD" | "°C" | "other">("%")
-  const [minBound, setMinBound] = useState("0")
-  const [maxBound, setMaxBound] = useState("100")
-  const [resolutionDate, setResolutionDate] = useState("")
-
-  // Step 2: Prior Distribution
-  const [priorKind, setPriorKind] = useState<"normal" | "lognormal" | "beta" | "uniform">("normal")
-  const [priorParams, setPriorParams] = useState<Record<string, string>>({
-    mean: "50",
-    variance: "100",
-  })
-  const [previewPdf, setPreviewPdf] = useState<PdfPoint[]>([])
-
-  // Step 3: Liquidity & Fees
-  const [liquiditySeed, setLiquiditySeed] = useState("10000")
-  const [feeBps, setFeeBps] = useState("30")
   const [category, setCategory] = useState("")
+  const [unit, setUnit] = useState<"%" | "USD" | "°C" | "other">("USD")
+  const [description, setDescription] = useState("")
+  const [expiry, setExpiry] = useState("")
+  const [ranges, setRanges] = useState<[number, number][]>([
+    [20, 40],
+    [55, 75],
+  ])
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const updatePreview = () => {
-    const min = Number.parseFloat(minBound)
-    const max = Number.parseFloat(maxBound)
-    if (isNaN(min) || isNaN(max)) return
+  const basePdf: PdfPoint[] = useMemo(() => generateUniformPdf(DOMAIN), [])
+  const ghostPdf: PdfPoint[] = useMemo(() => {
+    if (ranges.length === 0) return basePdf
+    return projectGhostFromRanges(basePdf, ranges, DOMAIN)
+  }, [basePdf, ranges])
 
-    let pdf: PdfPoint[] = []
-    switch (priorKind) {
-      case "normal":
-        pdf = generateNormalPdf(
-          Number.parseFloat(priorParams.mean || "50"),
-          Number.parseFloat(priorParams.variance || "100"),
-          { min, max },
-        )
-        break
-      case "lognormal":
-        pdf = generateLognormalPdf(
-          Number.parseFloat(priorParams.mu || "3"),
-          Number.parseFloat(priorParams.sigma || "0.5"),
-          { min, max },
-        )
-        break
-      case "beta":
-        pdf = generateBetaPdf(Number.parseFloat(priorParams.alpha || "2"), Number.parseFloat(priorParams.beta || "5"), {
-          min,
-          max,
-        })
-        break
-      case "uniform":
-        pdf = generateUniformPdf({ min, max })
-        break
-    }
-    setPreviewPdf(pdf)
+  const coefficients = useMemo(() => rangesToCoefficients(ranges, DOMAIN), [ranges])
+  const coefficientPairs = useMemo(
+    () =>
+      coefficients.reduce<Array<{ center: number; weight: number }>>((pairs, value, index) => {
+        if (index % 2 === 0) {
+          pairs.push({ center: value, weight: coefficients[index + 1] ?? 0 })
+        }
+        return pairs
+      }, []),
+    [coefficients],
+  )
+
+  const weightSum = useMemo(
+    () => coefficientPairs.reduce((sum, pair) => sum + pair.weight, 0),
+    [coefficientPairs],
+  )
+
+  const canProceedStepOne = title.trim().length > 2 && category.trim().length > 0 && expiry.length > 0
+
+  const addRange = () => {
+    if (ranges.length >= MAX_RANGE_SLOTS) return
+    const width = (DOMAIN.max - DOMAIN.min) * 0.2
+    const start = DOMAIN.min + ranges.length * 5
+    const newRange: [number, number] = [start, Math.min(DOMAIN.max, start + width)]
+    setRanges((prev) => [...prev, newRange])
   }
 
-  const handlePriorKindChange = (kind: "normal" | "lognormal" | "beta" | "uniform") => {
-    setPriorKind(kind)
-    switch (kind) {
-      case "normal":
-        setPriorParams({ mean: "50", variance: "100" })
-        break
-      case "lognormal":
-        setPriorParams({ mu: "3", sigma: "0.5" })
-        break
-      case "beta":
-        setPriorParams({ alpha: "2", beta: "5" })
-        break
-      case "uniform":
-        setPriorParams({})
-        break
-    }
+  const updateRange = (index: number, nextRange: [number, number]) => {
+    setRanges((prev) => {
+      const cloned = [...prev]
+      cloned[index] = [
+        Math.max(DOMAIN.min, Math.min(nextRange[0], nextRange[1])),
+        Math.min(DOMAIN.max, Math.max(nextRange[0], nextRange[1])),
+      ]
+      return cloned
+    })
   }
 
-  const handleCreate = async () => {
-    const alpha = [1.0, 1.0, 1.0, 1.0];
-    const expiry = new Date(resolutionDate).getTime() / 1000;
+  const removeRange = (index: number) => {
+    if (ranges.length <= 1) return
+    setRanges((prev) => prev.filter((_, i) => i !== index))
+  }
 
-    const result = await newMarket(alpha, expiry);
-    console.log(result);
-    if (result.success) {
+  const handleSubmit = async () => {
+    if (isSubmitting) return
+    if (!expiry || coefficients.length === 0) {
       toast({
-        title: "Market created",
-        description: `${title} has been created successfully`,
-      })
-    } else {
-      toast({
-        title: "Error creating market",
-        description: result.error.message,
+        title: "Missing data",
+        description: "Add an expiry and at least one range to generate coefficients.",
         variant: "destructive",
       })
+      return
     }
 
-    // Reset form
-    setStep(1)
-    setTitle("")
-    setCategory("")
+    setIsSubmitting(true)
+    try {
+      const response = await fetch("/api/markets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          category,
+          unit,
+          description,
+          expiry,
+          coefficients,
+          ranges,
+        }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}))
+        throw new Error(error.error || "Failed to create market")
+      }
+
+      const created = await response.json()
+
+      toast({
+        title: "Market created",
+        description: `${created.title} deployed on-chain.`,
+      })
+
+      router.push("/markets")
+    } catch (error: any) {
+      toast({
+        title: "Creation failed",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
     <div className="min-h-screen bg-black tron-grid">
       <Navbar />
 
-      <div className="container mx-auto px-4 py-12 max-w-4xl">
-        {/* TRON Header */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 mb-12">
-          <h1 className="text-5xl md:text-6xl font-bold text-white font-mono tracking-wider">CREATE CONTINUOUS MARKET</h1>
+      <div className="container mx-auto px-4 py-12 max-w-5xl">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4 mb-12">
+          <h1 className="text-5xl md:text-6xl font-bold text-white font-mono tracking-wider">LAUNCH A MARKET</h1>
           <div className="h-1 w-40 bg-gradient-to-r from-cyan-400 to-transparent"></div>
-          <p className="text-xl text-cyan-200 font-mono tracking-wide">LAUNCH A NEW PROBABILITY MASS TRADING MARKET</p>
+          <p className="text-xl text-cyan-200 font-mono tracking-wide">
+            Configure coefficients & expiry, then broadcast via the Sonormal program.
+          </p>
         </motion.div>
 
-        {/* TRON Stepper */}
         <div className="flex items-center justify-center gap-6 mb-16">
-          {[1, 2, 3].map((s) => (
+          {[1, 2].map((s) => (
             <div key={s} className="flex items-center gap-4">
               <div
-                className={`w-12 h-12 border-2 flex items-center justify-center font-bold font-mono tracking-wider transition-all duration-300 ${s === step
-                  ? "border-cyan-400 bg-cyan-400 text-black neon-glow"
-                  : s < step
-                    ? "border-cyan-400/50 bg-cyan-400/20 text-cyan-400"
-                    : "border-cyan-400/30 bg-black/50 text-cyan-300"
-                  }`}
+                className={`w-12 h-12 border-2 flex items-center justify-center font-bold font-mono tracking-wider transition-all duration-300 ${
+                  s === step
+                    ? "border-cyan-400 bg-cyan-400 text-black neon-glow"
+                    : s < step
+                      ? "border-cyan-400/50 bg-cyan-400/20 text-cyan-400"
+                      : "border-cyan-400/30 bg-black/50 text-cyan-300"
+                }`}
               >
                 {s < step ? <CheckCircle className="w-6 h-6" /> : s}
               </div>
-              {s < 3 && <div className="w-16 h-0.5 bg-gradient-to-r from-cyan-400/50 to-transparent" />}
+              {s < 2 && <div className="w-16 h-0.5 bg-gradient-to-r from-cyan-400/50 to-transparent" />}
             </div>
           ))}
         </div>
 
-        {/* Step Content */}
-        <div className="tron-card p-8 min-h-fit relative">
-          {/* Circuit pattern */}
+        <div className="tron-card p-8 relative overflow-hidden">
           <div className="absolute top-4 left-4 w-2 h-2 bg-cyan-400/60"></div>
           <div className="absolute top-4 right-4 w-2 h-2 bg-cyan-400/60"></div>
           <div className="absolute bottom-4 left-4 w-2 h-2 bg-cyan-400/60"></div>
           <div className="absolute bottom-4 right-4 w-2 h-2 bg-cyan-400/60"></div>
+
           {step === 1 && (
-            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
-              <div className="space-y-4">
-                <h2 className="text-3xl font-bold text-cyan-400 neon-glow font-mono tracking-wider">MARKET DETAILS</h2>
-                <div className="h-0.5 w-24 bg-gradient-to-r from-cyan-400 to-transparent"></div>
-                <p className="text-sm text-cyan-200 font-mono tracking-wide">DEFINE THE BASIC PARAMETERS OF YOUR MARKET</p>
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-8">
+              <div className="space-y-3">
+                <h2 className="text-3xl font-bold text-cyan-400 neon-glow font-mono tracking-wider">Market metadata</h2>
+                <p className="text-sm text-cyan-200 font-mono tracking-wide">
+                  Store the off-chain context—only coefficients + expiry hit chain.
+                </p>
               </div>
 
               <div className="space-y-4">
-                <div className="space-y-3">
-                  <Label htmlFor="title" className="text-cyan-300 font-mono tracking-wider text-sm uppercase">MARKET TITLE</Label>
+                <div className="space-y-2">
+                  <Label className="text-xs text-cyan-300 font-mono tracking-wide">Title</Label>
                   <Input
-                    id="title"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="E.G., BITCOIN PRICE ON DEC 31, 2025"
-                    className="bg-black/80 border-cyan-500/30 text-white placeholder:text-cyan-300 focus:border-cyan-400 transition-all duration-300 font-mono tracking-wide"
+                    placeholder="Bitcoin price on Dec 31, 2025"
+                    className="bg-black/70 border-cyan-400/30 text-white placeholder:text-cyan-200"
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid md:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="unit">Unit</Label>
-                    <Select value={unit} onValueChange={(v: any) => setUnit(v)}>
-                      <SelectTrigger id="unit" className="bg-white/5 border-white/10">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="%">Percentage (%)</SelectItem>
-                        <SelectItem value="USD">US Dollar (USD)</SelectItem>
-                        <SelectItem value="°C">Celsius (°C)</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="category">Category</Label>
+                    <Label className="text-xs text-cyan-300 font-mono tracking-wide">Category</Label>
                     <Input
-                      id="category"
                       value={category}
                       onChange={(e) => setCategory(e.target.value)}
                       placeholder="e.g., Crypto"
-                      className="bg-white/5 border-white/10"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="min">Min Bound</Label>
-                    <Input
-                      id="min"
-                      type="number"
-                      value={minBound}
-                      onChange={(e) => setMinBound(e.target.value)}
-                      className="font-mono bg-white/5 border-white/10"
+                      className="bg-black/70 border-cyan-400/30 text-white placeholder:text-cyan-200"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="max">Max Bound</Label>
+                    <Label className="text-xs text-cyan-300 font-mono tracking-wide">Unit</Label>
+                    <select
+                      value={unit}
+                      onChange={(e) => setUnit(e.target.value as any)}
+                      className="w-full bg-black/70 border border-cyan-400/30 text-white rounded-md px-3 py-2 font-mono text-sm focus:outline-none focus:border-cyan-400"
+                    >
+                      <option value="USD">USD</option>
+                      <option value="%">Percent</option>
+                      <option value="°C">°C</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs text-cyan-300 font-mono tracking-wide">Expiry</Label>
                     <Input
-                      id="max"
-                      type="number"
-                      value={maxBound}
-                      onChange={(e) => setMaxBound(e.target.value)}
-                      className="font-mono bg-white/5 border-white/10"
+                      type="datetime-local"
+                      value={expiry}
+                      onChange={(e) => setExpiry(e.target.value)}
+                      className="bg-black/70 border-cyan-400/30 text-white placeholder:text-cyan-200"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="resolution">Target Resolution Date</Label>
-                  <Input
-                    id="resolution"
-                    type="date"
-                    value={resolutionDate}
-                    onChange={(e) => setResolutionDate(e.target.value)}
-                    className="bg-white/5 border-white/10"
+                  <Label className="text-xs text-cyan-300 font-mono tracking-wide">Description</Label>
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Why does this market matter? What will resolve it?"
+                    className="w-full h-28 bg-black/70 border border-cyan-400/30 rounded-md px-3 py-2 text-sm text-white placeholder:text-cyan-200 focus:outline-none focus:border-cyan-400"
                   />
                 </div>
               </div>
 
-              <Button onClick={() => setStep(2)} className="w-full neon-border bg-cyan-400 text-black hover:bg-cyan-300 font-mono tracking-wider transition-all duration-300" size="lg">
-                NEXT: INITIAL PRIOR
-                <ArrowRight className="ml-2 w-4 h-4" />
-              </Button>
+              <div className="flex justify-between pt-4">
+                <span className="text-xs text-muted-foreground">Step 1 of 2</span>
+                <Button onClick={() => setStep(2)} disabled={!canProceedStepOne}>
+                  Continue
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
             </motion.div>
           )}
 
           {step === 2 && (
-            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
-              <div className="space-y-2">
-                <h2 className="text-2xl font-semibold">Initial Prior Distribution</h2>
-                <p className="text-sm text-muted-foreground">Choose the starting probability distribution</p>
+            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="space-y-8">
+              <div className="space-y-3">
+                <h2 className="text-3xl font-bold text-cyan-400 neon-glow font-mono tracking-wider">
+                  Shape your coefficients
+                </h2>
+                <p className="text-sm text-cyan-200 font-mono tracking-wide">
+                  Up to four ranges → eight coefficients. We normalize weights so they sum to 1.
+                </p>
               </div>
 
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Distribution Type</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                    {(["normal", "lognormal", "beta", "uniform"] as const).map((kind) => (
-                      <Button
-                        key={kind}
-                        variant={priorKind === kind ? "default" : "outline"}
-                        onClick={() => handlePriorKindChange(kind)}
-                        className={priorKind === kind ? "bg-primary" : ""}
-                      >
-                        {kind.charAt(0).toUpperCase() + kind.slice(1)}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Parameters based on distribution */}
-                {priorKind === "normal" && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Mean (μ)</Label>
-                      <Input
-                        type="number"
-                        value={priorParams.mean}
-                        onChange={(e) => {
-                          setPriorParams({ ...priorParams, mean: e.target.value })
-                          setTimeout(updatePreview, 100)
-                        }}
-                        className="font-mono bg-white/5 border-white/10"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Variance (σ²)</Label>
-                      <Input
-                        type="number"
-                        value={priorParams.variance}
-                        onChange={(e) => {
-                          setPriorParams({ ...priorParams, variance: e.target.value })
-                          setTimeout(updatePreview, 100)
-                        }}
-                        className="font-mono bg-white/5 border-white/10"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {priorKind === "lognormal" && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Mu (μ)</Label>
-                      <Input
-                        type="number"
-                        value={priorParams.mu}
-                        onChange={(e) => {
-                          setPriorParams({ ...priorParams, mu: e.target.value })
-                          setTimeout(updatePreview, 100)
-                        }}
-                        className="font-mono bg-white/5 border-white/10"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Sigma (σ)</Label>
-                      <Input
-                        type="number"
-                        value={priorParams.sigma}
-                        onChange={(e) => {
-                          setPriorParams({ ...priorParams, sigma: e.target.value })
-                          setTimeout(updatePreview, 100)
-                        }}
-                        className="font-mono bg-white/5 border-white/10"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {priorKind === "beta" && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Alpha (α)</Label>
-                      <Input
-                        type="number"
-                        value={priorParams.alpha}
-                        onChange={(e) => {
-                          setPriorParams({ ...priorParams, alpha: e.target.value })
-                          setTimeout(updatePreview, 100)
-                        }}
-                        className="font-mono bg-white/5 border-white/10"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Beta (β)</Label>
-                      <Input
-                        type="number"
-                        value={priorParams.beta}
-                        onChange={(e) => {
-                          setPriorParams({ ...priorParams, beta: e.target.value })
-                          setTimeout(updatePreview, 100)
-                        }}
-                        className="font-mono bg-white/5 border-white/10"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Live Preview */}
-                <div className="space-y-2">
-                  <Label>Live Preview</Label>
-                  <div className="min-h-[400px] rounded-lg border border-white/10 p-4">
-                    {previewPdf.length > 0 ? (
-                      <PdfChart
-                        data={previewPdf}
-                        domain={{ min: Number.parseFloat(minBound), max: Number.parseFloat(maxBound) }}
-                        unit={unit}
-                        liquidityDepth={10000}
-                      />
-                    ) : (
-                      <div className="flex items-center justify-center h-[400px] text-muted-foreground">
-                        <Button onClick={updatePreview} variant="outline">
-                          Generate Preview
+                {ranges.map((range, index) => (
+                  <div key={index} className="bg-black/60 border border-white/10 rounded-lg p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs text-cyan-300 font-mono">Range {index + 1}</div>
+                      {ranges.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeRange(index)}
+                          className="text-red-400 hover:text-red-300"
+                        >
+                          <Minus className="w-4 h-4" />
                         </Button>
+                      )}
+                    </div>
+                    <div className="grid md:grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Min</Label>
+                        <Input
+                          type="number"
+                          min={DOMAIN.min}
+                          max={range[1]}
+                          value={range[0]}
+                          onChange={(e) => {
+                            const next = Number(e.target.value)
+                            if (Number.isNaN(next)) return
+                            updateRange(index, [next, range[1]])
+                          }}
+                          className="bg-black/70 border-white/10 text-white"
+                        />
                       </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex gap-4">
-                <Button onClick={() => setStep(1)} variant="outline" size="lg" className="flex-1">
-                  <ArrowLeft className="mr-2 w-4 h-4" />
-                  Back
-                </Button>
-                <Button onClick={() => setStep(3)} className="flex-1 bg-primary hover:bg-primary/90" size="lg">
-                  Next: Liquidity
-                  <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
-              </div>
-            </motion.div>
-          )}
-
-          {step === 3 && (
-            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
-              <div className="space-y-2">
-                <h2 className="text-2xl font-semibold">Liquidity & Fees</h2>
-                <p className="text-sm text-muted-foreground">Set initial liquidity and trading fees</p>
-              </div>
-
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="liquidity">Initial Liquidity Seed (USDC)</Label>
-                  <Input
-                    id="liquidity"
-                    type="number"
-                    value={liquiditySeed}
-                    onChange={(e) => setLiquiditySeed(e.target.value)}
-                    className="font-mono bg-white/5 border-white/10"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="fee">Trading Fee (bps)</Label>
-                  <Input
-                    id="fee"
-                    type="number"
-                    value={feeBps}
-                    onChange={(e) => setFeeBps(e.target.value)}
-                    className="font-mono bg-white/5 border-white/10"
-                  />
-                  <p className="text-xs text-muted-foreground">30 bps = 0.3% fee</p>
-                </div>
-
-                {/* Preview Card */}
-                <div className="p-6 rounded-lg bg-white/5 border border-white/10 space-y-4">
-                  <div className="text-sm font-semibold">Market Preview</div>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Title</span>
-                      <span className="font-semibold">{title || "Untitled Market"}</span>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Max</Label>
+                        <Input
+                          type="number"
+                          min={range[0]}
+                          max={DOMAIN.max}
+                          value={range[1]}
+                          onChange={(e) => {
+                            const next = Number(e.target.value)
+                            if (Number.isNaN(next)) return
+                            updateRange(index, [range[0], next])
+                          }}
+                          className="bg-black/70 border-white/10 text-white"
+                        />
+                      </div>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Category</span>
-                      <Badge variant="outline">{category || "Uncategorized"}</Badge>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Domain</span>
-                      <span className="font-mono">
-                        [{minBound}, {maxBound}] {unit}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Prior</span>
-                      <span className="font-mono">{priorKind}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Initial Liquidity</span>
-                      <span className="font-mono">${liquiditySeed}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Fee</span>
-                      <span className="font-mono">{feeBps} bps</span>
+                    <div className="text-xs text-muted-foreground font-mono">
+                      Width: {((range[1] - range[0]) / (DOMAIN.max - DOMAIN.min) * 100).toFixed(1)}% of domain
                     </div>
                   </div>
-                </div>
+                ))}
+              </div>
 
-                <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
-                  <p className="text-xs text-muted-foreground">
-                    Note: Creators post bond; clean resolution refunds bond and shares 0.1% fees
-                  </p>
+              <div className="flex justify-end">
+                <Button
+                  type="button"
+                  onClick={addRange}
+                  disabled={ranges.length >= MAX_RANGE_SLOTS}
+                  variant="outline"
+                  className="border-cyan-400/40 text-cyan-300 hover:bg-cyan-400/10"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add range
+                </Button>
+              </div>
+
+              <div className="space-y-6">
+                <PdfChart
+                  data={basePdf}
+                  ghostData={ghostPdf}
+                  ghostType="range-prediction"
+                  selectedRanges={ranges}
+                  domain={DOMAIN}
+                  unit={unit}
+                  liquidityDepth={100000}
+                  onUpdateRange={updateRange}
+                />
+
+                <div className="space-y-2 bg-black/50 border border-white/10 rounded-lg p-4">
+                  <div className="text-xs text-muted-foreground uppercase font-mono tracking-widest">Coefficient table</div>
+                  {coefficientPairs.length > 0 ? (
+                    <div className="space-y-2">
+                      {coefficientPairs.map((pair, index) => (
+                        <div key={index} className="grid grid-cols-3 gap-3 text-sm font-mono">
+                          <span className="text-muted-foreground">Range {index + 1}</span>
+                          <span className="text-white">Center: {pair.center.toFixed(4)}</span>
+                          <span className="text-primary font-semibold">Weight: {(pair.weight * 100).toFixed(2)}%</span>
+                        </div>
+                      ))}
+                      <div className="text-xs text-muted-foreground font-mono">
+                        Weight sum:{" "}
+                        <span className={Math.abs(weightSum - 1) < 1e-6 ? "text-primary font-semibold" : "text-yellow-400"}>
+                          {(weightSum * 100).toFixed(2)}%
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-xs text-muted-foreground">
+                      Add at least one range to generate coefficient pairs.
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div className="flex gap-4">
-                <Button onClick={() => setStep(2)} variant="outline" size="lg" className="flex-1">
-                  <ArrowLeft className="mr-2 w-4 h-4" />
+              <div className="flex flex-col md:flex-row justify-between gap-4 pt-4">
+                <Button variant="outline" onClick={() => setStep(1)}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
                   Back
                 </Button>
-                <Button onClick={handleCreate} className="flex-1 bg-primary hover:bg-primary/90" size="lg">
-                  Create Market
-                  <CheckCircle className="ml-2 w-4 h-4" />
+                <Button
+                  onClick={handleSubmit}
+                  disabled={isSubmitting || coefficients.length === 0}
+                  className="bg-gradient-to-r from-cyan-500 to-primary hover:from-cyan-600 hover:to-primary/90"
+                >
+                  {isSubmitting ? "Creating..." : "Create Market"}
                 </Button>
               </div>
             </motion.div>

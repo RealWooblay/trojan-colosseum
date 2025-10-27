@@ -195,6 +195,28 @@ export default function MarketDetailPage() {
                 <span className="text-cyan-200 font-mono tracking-wide">UNIT: {market.unit}</span>
                 <span className="text-cyan-200 font-mono tracking-wide">LIQUIDITY: {fmtUSD(market.liquidityUSD)}</span>
               </div>
+              {(market.description || market.txSignature || market.expiry) && (
+                <div className="space-y-2 text-sm text-muted-foreground max-w-3xl">
+                  {market.description && <p>{market.description}</p>}
+                  <div className="flex flex-wrap items-center gap-4 text-xs font-mono">
+                    {market.expiry && (
+                      <span className="text-cyan-200">
+                        EXPIRY: {new Date(market.expiry).toLocaleString()}
+                      </span>
+                    )}
+                    {market.txSignature && (
+                      <a
+                        href={`https://solscan.io/tx/${market.txSignature}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-cyan-400 hover:text-cyan-200 underline decoration-dotted"
+                      >
+                        VIEW TX
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

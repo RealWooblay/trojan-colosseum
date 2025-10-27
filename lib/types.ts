@@ -13,6 +13,12 @@ export type Market = {
   vol24hUSD: number
   category: string
   resolvesAt?: string
+  description?: string
+  expiry?: string
+  coefficients?: number[]
+  ranges?: [number, number][]
+  createdAt?: string
+  txSignature?: string
   stats: {
     mean: number
     variance: number
