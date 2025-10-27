@@ -9,6 +9,11 @@ import { TrendingUp, TrendingDown, Plus, Minus } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import type { Market } from "@/lib/types"
 import { rangesToCoefficients, MAX_COEFFICIENTS, MAX_RANGE_SLOTS } from "@/lib/trade-utils"
+import { buyTransaction, getTotalTickets } from "@/lib/sonormal/program"
+import { useAppKitProvider, useAppKitAccount } from "@reown/appkit/react"
+import type { Provider } from "@reown/appkit-adapter-solana/react"
+import { VersionedTransaction, PublicKey, TransactionMessage, TransactionInstruction } from "@solana/web3.js"
+import { appendStoredTicket } from "@/lib/storage"
 
 interface TradePanelProps {
   market: Market
@@ -35,6 +40,9 @@ export function TradePanel({
   onUpdateRange,
   tradePreview,
 }: TradePanelProps) {
+  const { walletProvider } = useAppKitProvider<Provider>("solana");
+  const { address, isConnected } = useAppKitAccount();
+
   const domain = market.domain
   const ranges = selectedRanges || [[domain.min, domain.max]]
 
@@ -69,7 +77,7 @@ export function TradePanel({
     const needsCoefficients = isBuy
     const hasCoefficients = coefficients.length > 0
 
-    if (!isNaN(num) && num >= 10 && (!needsCoefficients || hasCoefficients)) {
+    if (!isNaN(num) && (!needsCoefficients || hasCoefficients)) {
       const timeoutId = setTimeout(() => {
         onTradePreview(side, num, isBuy ? coefficients : undefined)
       }, 150)
@@ -80,8 +88,8 @@ export function TradePanel({
   const handleAmountChange = (value: string) => {
     setAmount(value)
     const num = Number.parseFloat(value)
-    if (isNaN(num) || num < 10) {
-      setErrors((prev) => ({ ...prev, amount: "Minimum $10" }))
+    if (isNaN(num)) {
+      setErrors((prev) => ({ ...prev, amount: "Invalid amount" }))
     } else {
       setErrors((prev) => ({ ...prev, amount: undefined }))
     }
@@ -89,11 +97,19 @@ export function TradePanel({
 
   const adjustAmount = (delta: number) => {
     const current = Number.parseFloat(amount) || 0
-    const newValue = Math.max(10, current + delta)
-    setAmount(newValue.toString())
+    setAmount((current + delta).toString())
   }
 
-  const handleConfirm = async () => {
+  const handleConfirm = async () => {    
+    if (!address || !isConnected) {
+      toast({
+        title: "Not connected",
+        description: "Please connect your wallet to trade.",
+        variant: "destructive",
+      })
+      return
+    }
+
     const num = Number.parseFloat(amount)
 
     if (isBuy && coefficients.length === 0) {
@@ -105,41 +121,77 @@ export function TradePanel({
       return
     }
 
-    if (isNaN(num) || num < 10) {
+    if (isNaN(num)) {
       toast({
         title: "Invalid amount",
-        description: "Minimum amount is $10",
+        description: "Invalid amount provided",
         variant: "destructive",
       })
       return
     }
 
     try {
-      const response = await fetch("/api/trade", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          marketId: market.id,
-          side,
-          amountUSD: num,
-          ...(isBuy ? { coefficients, ranges } : {}),
-        }),
-      })
+      const transaction = await buyTransaction(
+        Number(market.id),
+        address,
+        address,
+        [0.0, 0.1, 0.4, 0.4, 0.1, 0.0, 0.0, 0.0],
+        10_000
+      )
+      if (!transaction.success) {
+        toast({
+          title: "Trade failed",
+          description: transaction.error,
+          variant: "destructive",
+        })
+        return
+      }
 
-      if (!response.ok) throw new Error("Trade failed")
+      const versionedTransaction = VersionedTransaction.deserialize(transaction.transaction);
 
-      const data = await response.json()
+      const result = await walletProvider.signAndSendTransaction(versionedTransaction, {
+        skipPreflight: false,
+      });
 
+      const totalTickets = await getTotalTickets(market.id);
+      if (!totalTickets) {
+        toast({
+          title: "Failed to retrieve ticket ID",
+          description: "Please try again",
+          variant: "destructive",
+        })
+        return
+      }
+
+      await appendStoredTicket({
+        id: (totalTickets - 1).toString(),
+        marketId: market.id,
+        authority: address,
+        coefficients: coefficients,
+        amount: Math.trunc(num * (10 ** 6)),
+        createdAt: new Date().toISOString(),
+        txSignature: result,
+      });
+      
       toast({
-        title: "Trade executed",
-        description: `${side === "buy" ? "Bought" : "Sold"} ${fmtPct(data.deltaMass * 100)} probability mass`,
+        title: "Buy successful",
+        description: (
+          <a 
+            href={`https://solscan.io/tx/${result}?cluster=devnet`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-cyan-400"
+          >
+            View on Solscan
+          </a>
+        ),
+        variant: "default",
       })
-
-      setAmount("500")
     } catch (error) {
+      console.error("Trade error:", error);
       toast({
         title: "Trade failed",
-        description: "Please try again",
+        description: error instanceof Error ? error.message : "Please try again",
         variant: "destructive",
       })
     }
@@ -380,6 +432,7 @@ export function TradePanel({
               <span className="text-muted-foreground">Est. {side === "buy" ? "Cost" : "Proceeds"}</span>
               <span className="font-mono font-bold">{fmtUSD(tradePreview.costUSD)}</span>
             </div>
+            {/*
             <div className="flex justify-between">
               <span className="text-muted-foreground">Implied Δμ</span>
               <span className="font-mono font-bold flex items-center gap-1">
@@ -391,10 +444,13 @@ export function TradePanel({
                 {fmtNum(tradePreview.impliedShift.deltaMean)}
               </span>
             </div>
+            */}
+            {/*
             <div className="flex justify-between">
               <span className="text-muted-foreground">Implied Δσ²</span>
               <span className="font-mono font-bold">{fmtNum(tradePreview.impliedShift.deltaVariance)}</span>
             </div>
+            */}
             <div className="flex justify-between pt-2 border-t border-white/5">
               <span className="text-muted-foreground">Range Prob After</span>
               <span className="font-mono font-bold text-primary">{fmtPct(tradePreview.rangeProbAfter * 100)}</span>

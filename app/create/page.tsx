@@ -13,6 +13,7 @@ import type { PdfPoint } from "@/lib/types"
 import { ArrowLeft, ArrowRight, CheckCircle, Plus, Minus } from "lucide-react"
 import { motion } from "framer-motion"
 import { MAX_RANGE_SLOTS, rangesToCoefficients } from "@/lib/trade-utils"
+import { newMarket } from "@/lib/sonormal/program"
 
 const DOMAIN = { min: 0, max: 100 }
 
@@ -83,53 +84,54 @@ export default function CreateMarketPage() {
 
   const handleSubmit = async () => {
     if (isSubmitting) return
-    if (!expiry || coefficients.length === 0) {
+
+    if (!expiry || coefficients.length !== 8) {
       toast({
         title: "Missing data",
-        description: "Add an expiry and at least one range to generate coefficients.",
+        description: "Add an expiry and 8 coefficients to create a market.",
         variant: "destructive",
       })
       return
     }
 
     setIsSubmitting(true)
-    try {
-      const response = await fetch("/api/markets", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title,
-          category,
-          unit,
-          description,
-          expiry,
-          coefficients,
-          ranges,
-        }),
-      })
 
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}))
-        throw new Error(error.error || "Failed to create market")
-      }
+    const result = await newMarket(
+      title,
+      description,
+      category,
+      unit,
+      coefficients,
+      Math.floor(new Date(expiry).getTime() / 1000)
+    )
 
-      const created = await response.json()
-
-      toast({
-        title: "Market created",
-        description: `${created.title} deployed on-chain.`,
-      })
-
-      router.push("/markets")
-    } catch (error: any) {
+    if (!result.success) {
       toast({
         title: "Creation failed",
-        description: error.message || "Please try again.",
+        description: result.error.message || "Please try again.",
         variant: "destructive",
       })
-    } finally {
       setIsSubmitting(false)
+      return
     }
+
+    toast({
+      title: "Market created",
+      description: (
+        <a 
+          href={`https://solscan.io/tx/${result.signature}?cluster=devnet`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline hover:text-cyan-400"
+        >
+          View on Solscan
+        </a>
+      ),
+      variant: "default",
+    })
+
+    setIsSubmitting(false)
+    router.push("/markets")
   }
 
   return (

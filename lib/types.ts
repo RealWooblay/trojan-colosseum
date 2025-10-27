@@ -32,6 +32,16 @@ export type PdfPoint = {
   y: number
 }
 
+export type Ticket = {
+  id: string
+  marketId: string
+  authority: string
+  coefficients: number[]
+  amount: number
+  createdAt: string
+  txSignature: string
+}
+
 export type Trade = {
   id: string
   marketId: string

@@ -87,6 +87,7 @@ export default function MarketDetailPage() {
           payload.ranges = selectedRangesRef.current
         }
 
+        /*
         const response = await fetch("/api/trade", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -108,6 +109,7 @@ export default function MarketDetailPage() {
         const cappedGhostPdf =
           data.newPdf?.filter((_: any, i: number) => i % Math.ceil(data.newPdf.length / 400) === 0) || undefined
         setGhostPdf(cappedGhostPdf)
+        */
       } catch (error) {
         console.error("[v0] Trade preview failed:", error)
       }

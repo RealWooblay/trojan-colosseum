@@ -1,9 +1,12 @@
+"use server";
+
 import { promises as fs } from "fs"
 import path from "path"
-import type { Market } from "./types"
+import type { Market, Ticket } from "./types"
 
 const DATA_DIR = path.join(process.cwd(), "data")
-const DB_PATH = path.join(DATA_DIR, "markets.json")
+const MARKETS_PATH = path.join(DATA_DIR, "markets.json")
+const TICKETS_PATH = path.join(DATA_DIR, "tickets.json")
 
 export type StoredMarket = Market & {
   coefficients: number[]
@@ -14,11 +17,7 @@ export type StoredMarket = Market & {
   description?: string
 }
 
-type MarketStore = {
-  markets: StoredMarket[]
-}
-
-async function ensureStore(): Promise<void> {
+async function ensureStore(path: string): Promise<void> {
   try {
     await fs.access(DATA_DIR)
   } catch {
@@ -26,24 +25,36 @@ async function ensureStore(): Promise<void> {
   }
 
   try {
-    await fs.access(DB_PATH)
+    await fs.access(path)
   } catch {
-    const seed: MarketStore = { markets: [] }
-    await fs.writeFile(DB_PATH, JSON.stringify(seed, null, 2), "utf8")
+    const seed = { data: [] }
+    await fs.writeFile(path, JSON.stringify(seed, null, 2), "utf8")
   }
 }
 
+async function readStore(path: string): Promise<any> {
+  const raw = await fs.readFile(path, "utf8")
+  return JSON.parse(raw).data || []
+}
+
 export async function readStoredMarkets(): Promise<StoredMarket[]> {
-  await ensureStore()
-  const raw = await fs.readFile(DB_PATH, "utf8")
-  const parsed: MarketStore = JSON.parse(raw)
-  return parsed.markets || []
+  await ensureStore(MARKETS_PATH)
+  return await readStore(MARKETS_PATH)
+}
+
+export async function readStoredTickets(): Promise<Ticket[]> {
+  await ensureStore(TICKETS_PATH)
+  return await readStore(TICKETS_PATH)
 }
 
 export async function writeStoredMarkets(markets: StoredMarket[]): Promise<void> {
-  await ensureStore()
-  const payload: MarketStore = { markets }
-  await fs.writeFile(DB_PATH, JSON.stringify(payload, null, 2), "utf8")
+  await ensureStore(MARKETS_PATH)
+  await fs.writeFile(MARKETS_PATH, JSON.stringify({ data: markets }, null, 2), "utf8")
+}
+
+export async function writeStoredTickets(tickets: Ticket[]): Promise<void> {
+  await ensureStore(TICKETS_PATH)
+  await fs.writeFile(TICKETS_PATH, JSON.stringify({ data: tickets }, null, 2), "utf8")
 }
 
 export async function appendStoredMarket(market: StoredMarket): Promise<StoredMarket> {
@@ -54,7 +65,25 @@ export async function appendStoredMarket(market: StoredMarket): Promise<StoredMa
   return market
 }
 
+export async function appendStoredTicket(ticket: Ticket): Promise<Ticket> {
+  const tickets = await readStoredTickets()
+  const filtered = tickets.filter((existing) => existing.id !== ticket.id)
+  filtered.push(ticket)
+  await writeStoredTickets(filtered)
+  return ticket
+}
+
 export async function findStoredMarket(id: string): Promise<StoredMarket | undefined> {
   const markets = await readStoredMarkets()
   return markets.find((market) => market.id === id)
+}
+
+export async function findStoredTicket(id: string): Promise<Ticket | undefined> {
+  const tickets = await readStoredTickets()
+  return tickets.find((ticket) => ticket.id === id)
+}
+
+export async function findStoredTicketsByAuthority(authority: string): Promise<Ticket[]> {
+  const tickets = await readStoredTickets()
+  return tickets.filter((ticket) => ticket.authority === authority)
 }

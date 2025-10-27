@@ -30,7 +30,7 @@ export function AppKitProvider({ children }: Props) {
         // Initialize modal once on mount
         createAppKit({
             adapters: [solanaWeb3JsAdapter],
-            networks: [solana, solanaTestnet, solanaDevnet],
+            networks: [solanaDevnet],
             metadata,
             projectId,
             features: { analytics: true },
