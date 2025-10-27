@@ -10,6 +10,7 @@ import { createDefaultAiOracleState } from "../oracle/market-oracle";
 import { findControllerPda, findMarketPda, findTicketPda } from "./pda";
 import { fetchSellMath } from "./math";
 import { ed25519 } from "@noble/curves/ed25519";
+import { Market } from "../types";
 
 const marketAuthorityKeypair = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(process.env.MARKET_AUTHORITY!)));
 const marketAuthorityWallet = new anchor.Wallet(marketAuthorityKeypair);
@@ -173,6 +174,20 @@ export async function newMarket(
             success: true,
             signature: result.signature
         };
+    } catch (error) {
+        console.error(error);
+        return {
+            success: false,
+            error: error
+        };
+    }
+}
+
+export async function settle(
+    marketId: string
+) {
+    try {
+
     } catch (error) {
         console.error(error);
         return {
@@ -357,12 +372,20 @@ export async function sellTransaction(
     }
 }
 
-export async function getTotalTickets(marketId: string): Promise<number | undefined> {
+export async function getMarket(marketId: string) {
     try {
         const marketPda = findMarketPda(marketId);
         const market = await sonormalProgram.account.market.fetch(marketPda);
+        return market;
+    } catch (error) {
+        console.error(error);
+        return undefined;
+    }
+}
 
-        return market.totalTickets.toNumber();
+export async function getTotalTickets(marketId: string): Promise<number | undefined> {
+    try {
+        return (await getMarket(marketId))?.totalTickets.toNumber();
     } catch (error) {
         console.error(error);
         return undefined;
