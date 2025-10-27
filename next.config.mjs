@@ -9,6 +9,7 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  serverExternalPackages: ["@coral-xyz/anchor"],
 }
 
 export default nextConfig

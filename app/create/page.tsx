@@ -14,6 +14,7 @@ import type { PdfPoint } from "@/lib/types"
 import { ArrowRight, ArrowLeft, CheckCircle } from "lucide-react"
 import { motion } from "framer-motion"
 import { useToast } from "@/hooks/use-toast"
+import { newMarket } from "@/lib/sonormal/program"
 
 export default function CreateMarketPage() {
   const [step, setStep] = useState(1)
@@ -91,11 +92,25 @@ export default function CreateMarketPage() {
     }
   }
 
-  const handleCreate = () => {
-    toast({
-      title: "Market created",
-      description: `${title} has been created successfully`,
-    })
+  const handleCreate = async () => {
+    const alpha = [1.0, 1.0, 1.0, 1.0];
+    const expiry = new Date(resolutionDate).getTime() / 1000;
+
+    const result = await newMarket(alpha, expiry);
+    console.log(result);
+    if (result.success) {
+      toast({
+        title: "Market created",
+        description: `${title} has been created successfully`,
+      })
+    } else {
+      toast({
+        title: "Error creating market",
+        description: result.error.message,
+        variant: "destructive",
+      })
+    }
+
     // Reset form
     setStep(1)
     setTitle("")
