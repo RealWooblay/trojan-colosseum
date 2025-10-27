@@ -174,13 +174,6 @@ export async function buyTransaction(
     amount: number
 ): Promise<{ success: true, transaction: Uint8Array } | { success: false, error: any }> {
     try {
-        if (coefficients.length !== 8) {
-            return {
-                success: false,
-                error: 'Coefficients length must be 8'
-            };
-        }
-
         const coefficientsSum = coefficients.reduce((acc, curr) => acc + curr, 0);
         if (coefficientsSum !== 1) {
             return {

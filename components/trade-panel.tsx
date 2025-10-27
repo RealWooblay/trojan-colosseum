@@ -100,7 +100,7 @@ export function TradePanel({
     setAmount((current + delta).toString())
   }
 
-  const handleConfirm = async () => {    
+  const handleConfirm = async () => {   
     if (!address || !isConnected) {
       toast({
         title: "Not connected",
@@ -135,8 +135,8 @@ export function TradePanel({
         Number(market.id),
         address,
         address,
-        [0.0, 0.1, 0.4, 0.4, 0.1, 0.0, 0.0, 0.0],
-        10_000
+        coefficients,
+        Math.trunc(num * (10 ** 6))
       )
       if (!transaction.success) {
         toast({
@@ -197,8 +197,8 @@ export function TradePanel({
     }
   }
 
-  const isValidAmount = !errors.amount && !isNaN(Number.parseFloat(amount)) && Number.parseFloat(amount) >= 10
-  const hasCoefficients = coefficients.length > 0
+  const isValidAmount = !errors.amount && !isNaN(Number.parseFloat(amount))
+  const hasCoefficients = coefficients.length === market.coefficients.length
 
   return (
     <div className="glass-card p-6 space-y-6 sticky top-20">
@@ -358,8 +358,6 @@ export function TradePanel({
             value={amount}
             onChange={(e) => handleAmountChange(e.target.value)}
             placeholder="500"
-            min={10}
-            step={10}
             className={`font-mono bg-white/5 border-white/10 flex-1 ${errors.amount ? "border-destructive" : ""}`}
           />
           <Button variant="outline" size="icon" onClick={() => adjustAmount(-100)}>

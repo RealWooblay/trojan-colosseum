@@ -8,15 +8,6 @@ const DATA_DIR = path.join(process.cwd(), "data")
 const MARKETS_PATH = path.join(DATA_DIR, "markets.json")
 const TICKETS_PATH = path.join(DATA_DIR, "tickets.json")
 
-export type StoredMarket = Market & {
-  coefficients: number[]
-  ranges: [number, number][]
-  expiry: string
-  createdAt: string
-  txSignature?: string
-  description?: string
-}
-
 async function ensureStore(path: string): Promise<void> {
   try {
     await fs.access(DATA_DIR)
@@ -37,7 +28,7 @@ async function readStore(path: string): Promise<any> {
   return JSON.parse(raw).data || []
 }
 
-export async function readStoredMarkets(): Promise<StoredMarket[]> {
+export async function readStoredMarkets(): Promise<Market[]> {
   await ensureStore(MARKETS_PATH)
   return await readStore(MARKETS_PATH)
 }
@@ -47,7 +38,7 @@ export async function readStoredTickets(): Promise<Ticket[]> {
   return await readStore(TICKETS_PATH)
 }
 
-export async function writeStoredMarkets(markets: StoredMarket[]): Promise<void> {
+export async function writeStoredMarkets(markets: Market[]): Promise<void> {
   await ensureStore(MARKETS_PATH)
   await fs.writeFile(MARKETS_PATH, JSON.stringify({ data: markets }, null, 2), "utf8")
 }
@@ -57,7 +48,7 @@ export async function writeStoredTickets(tickets: Ticket[]): Promise<void> {
   await fs.writeFile(TICKETS_PATH, JSON.stringify({ data: tickets }, null, 2), "utf8")
 }
 
-export async function appendStoredMarket(market: StoredMarket): Promise<StoredMarket> {
+export async function appendStoredMarket(market: Market): Promise<Market> {
   const markets = await readStoredMarkets()
   const filtered = markets.filter((existing) => existing.id !== market.id)
   filtered.push(market)
@@ -73,7 +64,7 @@ export async function appendStoredTicket(ticket: Ticket): Promise<Ticket> {
   return ticket
 }
 
-export async function findStoredMarket(id: string): Promise<StoredMarket | undefined> {
+export async function findStoredMarket(id: string): Promise<Market | undefined> {
   const markets = await readStoredMarkets()
   return markets.find((market) => market.id === id)
 }

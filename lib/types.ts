@@ -14,11 +14,11 @@ export type Market = {
   category: string
   resolvesAt?: string
   description?: string
-  expiry?: string
-  coefficients?: number[]
+  expiry: string
+  coefficients: number[]
   ranges?: [number, number][]
-  createdAt?: string
-  txSignature?: string
+  createdAt: string
+  txSignature: string
   stats: {
     mean: number
     variance: number
