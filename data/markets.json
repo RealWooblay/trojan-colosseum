@@ -1,20 +1,50 @@
 {
   "data": [
     {
-      "id": "20",
-      "title": "Solana price on 31st of December 2025",
-      "description": "",
+      "id": "btc-mh8tpdgf",
+      "title": "BTC",
       "unit": "USD",
+      "category": "Crypto",
       "domain": {
         "min": 0,
-        "max": 0
+        "max": 100
       },
       "prior": {
-        "kind": "normal",
+        "kind": "uniform",
         "params": {}
       },
       "liquidityUSD": 0,
       "vol24hUSD": 0,
+      "stats": {
+        "mean": 50,
+        "variance": 833.3333333333334,
+        "skew": 0,
+        "kurtosis": 3
+      },
+      "resolvesAt": "2026-01-13T14:02:00.000Z",
+      "coefficients": [
+        0.5,
+        0.5
+      ],
+      "ranges": [
+        [
+          20,
+          40
+        ],
+        [
+          5,
+          25
+        ]
+      ],
+      "expiry": "2026-01-13T14:02:00.000Z",
+      "createdAt": "2025-10-27T07:35:31.935Z",
+      "txSignature": "4Jro2rNjPZVouNiPB7FEw1BjqMJmy6gGHAvMYo4ba3R3hpGnu8n1KejxUm3cpC2JZ355SxqQJwgT6qJzPx4FR5QA",
+      "description": "Because"
+    },
+    {
+      "id": "bitcoin-price-2026-mh8uxaa7",
+      "title": "Bitcoin price 2026",
+      "unit": "USD",
       "category": "Crypto",
       "expiry": "2026-01-01T04:59:00.000Z",
       "alpha": [
@@ -27,15 +57,51 @@
         0.25,
         0.25
       ],
-      "ranges": [],
-      "createdAt": "2025-10-27T04:34:02.691Z",
-      "stats": {
-        "mean": 0,
-        "variance": 0,
-        "skew": 0,
-        "kurtosis": 0
+      "expiry": "2027-12-08T01:01:00.000Z",
+      "createdAt": "2025-10-27T08:11:19.752Z",
+      "txSignature": "2SKMMACymkkXnu96XavtfPNUFiRAFpT2JFWnr3fDnmy2qXGBwUBHegnjQKA4oWMi9ku3q5yLFjdQfqbZwRE1DEd9",
+      "description": "Because why?"
+    },
+    {
+      "id": "test-mh8v2rhb",
+      "title": "Test",
+      "unit": "USD",
+      "category": "Crypto",
+      "domain": {
+        "min": 0,
+        "max": 100
       },
-      "txSignature": "2sED1bnZKZXw6HuTRAkQXruSg7FMaNZEA7PFEFTe2TqZS5Q1Mz3A6yFPjLgKYbuUfBFpfreVZEstHcMEkSC1uEo9"
+      "prior": {
+        "kind": "uniform",
+        "params": {}
+      },
+      "liquidityUSD": 0,
+      "vol24hUSD": 0,
+      "stats": {
+        "mean": 50,
+        "variance": 833.3333333333334,
+        "skew": 0,
+        "kurtosis": 3
+      },
+      "resolvesAt": "2027-03-11T15:42:00.000Z",
+      "coefficients": [
+        0.09691629955947162,
+        0.9030837004405284
+      ],
+      "ranges": [
+        [
+          59.531772575250834,
+          66.88963210702342
+        ],
+        [
+          5.016722408026756,
+          73.57859531772576
+        ]
+      ],
+      "expiry": "2027-03-11T15:42:00.000Z",
+      "createdAt": "2025-10-27T08:13:56.255Z",
+      "txSignature": "4PAPWo6AN9Zd3Ce6UE2vTmtJij2WTqMZrRZkbYSLjnXYeh5j7M5q44fggTekzkzmKXvpufQxX6mPtpMWKoz3iyst",
+      "description": "wadawd"
     }
   ]
 }

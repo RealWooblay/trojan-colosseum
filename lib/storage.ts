@@ -25,7 +25,11 @@ async function ensureStore(path: string): Promise<void> {
 
 async function readStore(path: string): Promise<any> {
   const raw = await fs.readFile(path, "utf8")
-  return JSON.parse(raw).data || []
+  const parsed = JSON.parse(raw)
+  if (Array.isArray(parsed)) return parsed
+  if (Array.isArray(parsed.data)) return parsed.data
+  if (Array.isArray(parsed.markets)) return parsed.markets
+  return []
 }
 
 export async function readStoredMarkets(): Promise<Market[]> {

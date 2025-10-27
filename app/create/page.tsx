@@ -13,7 +13,6 @@ import type { PdfPoint } from "@/lib/types"
 import { ArrowLeft, ArrowRight, CheckCircle, Plus, Minus } from "lucide-react"
 import { motion } from "framer-motion"
 import { MAX_RANGE_SLOTS, rangesToCoefficients } from "@/lib/trade-utils"
-import { newMarket } from "@/lib/sonormal/program"
 
 const DOMAIN = { min: 0, max: 100 }
 
@@ -27,10 +26,7 @@ export default function CreateMarketPage() {
   const [unit, setUnit] = useState<"%" | "USD" | "°C" | "other">("USD")
   const [description, setDescription] = useState("")
   const [expiry, setExpiry] = useState("")
-  const [ranges, setRanges] = useState<[number, number][]>([
-    [20, 40],
-    [55, 75],
-  ])
+  const [ranges, setRanges] = useState<[number, number][]>([[20, 40]])
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const basePdf: PdfPoint[] = useMemo(() => generateUniformPdf(DOMAIN), [])
@@ -39,22 +35,11 @@ export default function CreateMarketPage() {
     return projectGhostFromRanges(basePdf, ranges, DOMAIN)
   }, [basePdf, ranges])
 
-  const coefficients = useMemo(() => rangesToCoefficients(ranges, DOMAIN), [ranges])
-  const coefficientPairs = useMemo(
-    () =>
-      coefficients.reduce<Array<{ center: number; weight: number }>>((pairs, value, index) => {
-        if (index % 2 === 0) {
-          pairs.push({ center: value, weight: coefficients[index + 1] ?? 0 })
-        }
-        return pairs
-      }, []),
-    [coefficients],
+  const coefficients = useMemo(
+    () => rangesToCoefficients(ranges, DOMAIN, MAX_RANGE_SLOTS, basePdf),
+    [ranges, basePdf],
   )
-
-  const weightSum = useMemo(
-    () => coefficientPairs.reduce((sum, pair) => sum + pair.weight, 0),
-    [coefficientPairs],
-  )
+  const weightSum = useMemo(() => coefficients.reduce((sum, weight) => sum + weight, 0), [coefficients])
 
   const canProceedStepOne = title.trim().length > 2 && category.trim().length > 0 && expiry.length > 0
 
@@ -85,10 +70,10 @@ export default function CreateMarketPage() {
   const handleSubmit = async () => {
     if (isSubmitting) return
 
-    if (!expiry || coefficients.length !== 8) {
+    if (!expiry || coefficients.length === 0 || !coefficients.some((value) => value > 0)) {
       toast({
         title: "Missing data",
-        description: "Add an expiry and 8 coefficients to create a market.",
+        description: "Add an expiry and at least one non-zero coefficient.",
         variant: "destructive",
       })
       return
@@ -96,42 +81,61 @@ export default function CreateMarketPage() {
 
     setIsSubmitting(true)
 
-    const result = await newMarket(
-      title,
-      description,
-      category,
-      unit,
-      coefficients,
-      Math.floor(new Date(expiry).getTime() / 1000)
-    )
+    try {
+      const response = await fetch("/api/markets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          description,
+          category,
+          unit,
+          expiry,
+          coefficients,
+          ranges,
+        }),
+      })
 
-    if (!result.success) {
+      const created = await response.json().catch(() => null)
+
+      if (!response.ok || !created) {
+        throw created || { error: "Failed to create market" }
+      }
+
+      toast({
+        title: "Market created",
+        description: created.txSignature ? (
+          <a
+            href={`https://solscan.io/tx/${created.txSignature}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-cyan-400"
+          >
+            View on Solscan
+          </a>
+        ) : "Stored locally.",
+      })
+
+      router.push("/markets")
+    } catch (error: any) {
       toast({
         title: "Creation failed",
-        description: result.error.message || "Please try again.",
+        description: (
+          <div className="space-y-1">
+            <div>{error?.error || error?.message || "Please try again."}</div>
+            {error?.logs && Array.isArray(error.logs) && error.logs.length > 0 && (
+              <details className="text-xs text-muted-foreground">
+                <summary>View logs</summary>
+                <pre className="whitespace-pre-wrap break-words max-h-40 overflow-y-auto">{error.logs.join("\n")}</pre>
+              </details>
+            )}
+          </div>
+        ),
         variant: "destructive",
       })
+    } finally {
       setIsSubmitting(false)
-      return
     }
-
-    toast({
-      title: "Market created",
-      description: (
-        <a 
-          href={`https://solscan.io/tx/${result.signature}?cluster=devnet`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="underline hover:text-cyan-400"
-        >
-          View on Solscan
-        </a>
-      ),
-      variant: "default",
-    })
-
-    setIsSubmitting(false)
-    router.push("/markets")
   }
 
   return (
@@ -254,7 +258,7 @@ export default function CreateMarketPage() {
                   Shape your coefficients
                 </h2>
                 <p className="text-sm text-cyan-200 font-mono tracking-wide">
-                  Up to four ranges → eight coefficients. We normalize weights so they sum to 1.
+                  Up to eight ranges → eight coefficients. We normalize weights so they sum to 1.
                 </p>
               </div>
 
@@ -340,14 +344,13 @@ export default function CreateMarketPage() {
                 />
 
                 <div className="space-y-2 bg-black/50 border border-white/10 rounded-lg p-4">
-                  <div className="text-xs text-muted-foreground uppercase font-mono tracking-widest">Coefficient table</div>
-                  {coefficientPairs.length > 0 ? (
+                  <div className="text-xs text-muted-foreground uppercase font-mono tracking-widest">Coefficient weights</div>
+                  {coefficients.some((value) => value > 0) ? (
                     <div className="space-y-2">
-                      {coefficientPairs.map((pair, index) => (
-                        <div key={index} className="grid grid-cols-3 gap-3 text-sm font-mono">
-                          <span className="text-muted-foreground">Range {index + 1}</span>
-                          <span className="text-white">Center: {pair.center.toFixed(4)}</span>
-                          <span className="text-primary font-semibold">Weight: {(pair.weight * 100).toFixed(2)}%</span>
+                      {coefficients.map((value, index) => (
+                        <div key={index} className="flex justify-between text-sm font-mono">
+                          <span className="text-muted-foreground">c{index + 1}</span>
+                          <span className="text-primary font-semibold">{(value * 100).toFixed(2)}%</span>
                         </div>
                       ))}
                       <div className="text-xs text-muted-foreground font-mono">
@@ -359,7 +362,7 @@ export default function CreateMarketPage() {
                     </div>
                   ) : (
                     <div className="text-xs text-muted-foreground">
-                      Add at least one range to generate coefficient pairs.
+                      Add at least one range to generate coefficients.
                     </div>
                   )}
                 </div>

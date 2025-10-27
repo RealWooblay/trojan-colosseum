@@ -1,6 +1,6 @@
 "use server";
 
-import { ComputeBudgetProgram, Connection, Keypair, PublicKey, Signer, Transaction, TransactionInstruction, TransactionMessage, VersionedTransaction } from "@solana/web3.js";
+import { ComputeBudgetProgram, Connection, Keypair, PublicKey, Signer, TransactionInstruction, TransactionMessage, VersionedTransaction, SendTransactionError } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 import { Sonormal } from "../../sonormal";
 import SonormalIdl from "../../sonormal.json";
@@ -27,18 +27,10 @@ const sonormalProgram = new anchor.Program<Sonormal>(idl, provider);
 
 /**
  * Create a new market
- * @param title - The title of the market
- * @param description - The description of the market
- * @param category - The category of the market
- * @param unit - The unit of the market
  * @param alpha - The alpha values for the market (length must be 8)
  * @param expiry - The expiry date of the market (seconds since unix epoch)
  */
 export async function newMarket(
-    title: string,
-    description: string,
-    category: string,
-    unit: "%" | "USD" | "°C" | "other",
     alpha: number[],
     expiry: number
 ): Promise<{ success: true, signature: string } | { success: false, error: any }> {
@@ -167,7 +159,23 @@ export async function newMarket(
             signature: result.signature
         };
     } catch (error) {
-        console.error(error);
+        console.error("[sonormal] newMarket failed", error)
+        if (error instanceof SendTransactionError) {
+            let logs: string[] | null = null
+            try {
+                logs = await error.getLogs(solanaRpc)
+            } catch (logError) {
+                console.error("[sonormal] failed fetching logs for newMarket", logError)
+            }
+            return {
+                success: false,
+                error: {
+                    message: error.message,
+                    logs,
+                    cause: error,
+                }
+            }
+        }
         return {
             success: false,
             error: error
@@ -184,7 +192,7 @@ export async function buyTransaction(
 ): Promise<{ success: true, transaction: Uint8Array } | { success: false, error: any }> {
     try {
         const coefficientsSum = coefficients.reduce((acc, curr) => acc + curr, 0);
-        if (coefficientsSum !== 1) {
+        if (!Number.isFinite(coefficientsSum) || Math.abs(coefficientsSum - 1) > 1e-9) {
             return {
                 success: false,
                 error: 'Coefficients must sum to 1'
@@ -240,6 +248,36 @@ export async function buyTransaction(
             success: true,
             transaction: transaction.versionedTransaction.serialize()
         };
+    } catch (error) {
+        console.error(error);
+        if (error instanceof SendTransactionError) {
+            let logs: string[] | null = null
+            try {
+                logs = await error.getLogs(solanaRpc)
+            } catch (logError) {
+                console.error("[sonormal] failed fetching logs for buyTransaction", logError)
+            }
+            return {
+                success: false,
+                error: {
+                    message: error.message,
+                    logs,
+                    cause: error,
+                }
+            }
+        }
+        return {
+            success: false,
+            error: error
+        };
+    }
+}
+
+export async function sellTransaction(
+
+) {
+    try {
+
     } catch (error) {
         console.error(error);
         return {
@@ -342,9 +380,14 @@ async function sendTransaction(
             lastValidBlockHeight: lastValidBlockHeight
         }, 'confirmed');
         if (confirmation.value.err) {
+            const logs = confirmation.value?.logs
             return {
                 success: false,
-                error: confirmation.value.err
+                error: {
+                    message: "Transaction confirmation error",
+                    logs,
+                    cause: confirmation.value.err,
+                }
             };
         }
 
@@ -353,7 +396,23 @@ async function sendTransaction(
             signature: signature
         };
     } catch (error) {
-        console.error(error);
+        console.error("[sonormal] sendTransaction failed", error)
+        if (error instanceof SendTransactionError) {
+            let logs: string[] | null = null
+            try {
+                logs = await error.getLogs(solanaRpc)
+            } catch (logError) {
+                console.error("[sonormal] failed to fetch transaction logs", logError)
+            }
+            return {
+                success: false,
+                error: {
+                    message: error.message,
+                    logs,
+                    cause: error,
+                }
+            }
+        }
         return {
             success: false,
             error: error

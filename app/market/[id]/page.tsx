@@ -18,7 +18,7 @@ import type { Market, PdfPoint, Trade } from "@/lib/types"
 import { ArrowLeft, Info } from "lucide-react"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { rangesToCoefficients, MAX_RANGE_SLOTS } from "@/lib/trade-utils"
+import { rangesToCoefficients, MAX_RANGE_SLOTS, coefficientsToRanges, MAX_COEFFICIENTS } from "@/lib/trade-utils"
 
 export default function MarketDetailPage() {
   const params = useParams()
@@ -47,16 +47,25 @@ export default function MarketDetailPage() {
     fetch(`/api/markets/${marketId}`)
       .then((res) => res.json())
       .then((data) => {
-        setMarket(data.market)
+        setMarket({ ...data.market, stats: data.stats })
         setPdf(data.pdf)
         setRecentTrades(data.recentTrades)
 
-        const mode = findMode(data.pdf)
-        const bandwidth = (data.market.domain.max - data.market.domain.min) * 0.1
-        setSelectedRanges([[
-          Math.max(data.market.domain.min, mode - bandwidth / 2),
-          Math.min(data.market.domain.max, mode + bandwidth / 2),
-        ]])
+        if (data.market.ranges && data.market.ranges.length > 0) {
+          setSelectedRanges(data.market.ranges)
+        } else if (data.market.coefficients && data.market.coefficients.length > 0) {
+          const derivedRanges = coefficientsToRanges(data.market.coefficients, data.market.domain)
+          if (derivedRanges.length > 0) {
+            setSelectedRanges(derivedRanges)
+          }
+        } else {
+          const mode = findMode(data.pdf)
+          const bandwidth = (data.market.domain.max - data.market.domain.min) * 0.1
+          setSelectedRanges([[
+            Math.max(data.market.domain.min, mode - bandwidth / 2),
+            Math.min(data.market.domain.max, mode + bandwidth / 2),
+          ]])
+        }
 
         setLoading(false)
       })
@@ -81,13 +90,12 @@ export default function MarketDetailPage() {
           const payloadCoefficients =
             coefficients && coefficients.length > 0
               ? coefficients
-              : rangesToCoefficients(selectedRangesRef.current, market.domain)
+              : rangesToCoefficients(selectedRangesRef.current, market.domain, MAX_COEFFICIENTS, pdf)
 
           payload.coefficients = payloadCoefficients
           payload.ranges = selectedRangesRef.current
         }
 
-        /*
         const response = await fetch("/api/trade", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -109,7 +117,6 @@ export default function MarketDetailPage() {
         const cappedGhostPdf =
           data.newPdf?.filter((_: any, i: number) => i % Math.ceil(data.newPdf.length / 400) === 0) || undefined
         setGhostPdf(cappedGhostPdf)
-        */
       } catch (error) {
         console.error("[v0] Trade preview failed:", error)
       }
@@ -351,6 +358,7 @@ export default function MarketDetailPage() {
             <div data-trade-panel>
               <TradePanel
                 market={market}
+                marketPdf={pdf}
                 selectedRanges={selectedRanges}
                 onTradePreview={handleTradePreview}
                 tradePreview={tradePreview}

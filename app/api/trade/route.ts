@@ -2,33 +2,55 @@ import { NextResponse } from "next/server"
 import { calculateMean, calculateVariance, projectGhostFromRanges, generateNormalPdf, generateLognormalPdf, generateBetaPdf, generateUniformPdf } from "@/lib/pdf-utils"
 import { MOCK_MARKETS } from "@/lib/mock-data"
 import { coefficientsToRanges } from "@/lib/trade-utils"
+import { findStoredMarket } from "@/lib/storage"
 
 export async function POST(request: Request) {
   const body = await request.json()
   const { marketId, side, range, ranges, notionalUSD, amountUSD, coefficients } = body
 
-  const market = MOCK_MARKETS.find((m) => m.id === marketId)
+  const storedMarket = await findStoredMarket(marketId)
+  const mockMarket = storedMarket ? null : MOCK_MARKETS.find((m) => m.id === marketId)
+  const market = storedMarket ?? mockMarket
   if (!market) {
     return NextResponse.json({ error: "Market not found" }, { status: 404 })
   }
 
-  // Generate current PDF
   let pdf
-  switch (market.prior.kind) {
-    case "normal":
-      pdf = generateNormalPdf(market.prior.params.mean, market.prior.params.variance, market.domain)
-      break
-    case "lognormal":
-      pdf = generateLognormalPdf(market.prior.params.mu, market.prior.params.sigma, market.domain)
-      break
-    case "beta":
-      pdf = generateBetaPdf(market.prior.params.alpha, market.prior.params.beta, market.domain)
-      break
-    case "uniform":
-      pdf = generateUniformPdf(market.domain)
-      break
-    default:
-      pdf = generateNormalPdf(market.stats.mean, market.stats.variance, market.domain)
+  let baseStats = market.stats
+  if (storedMarket) {
+    const baseRanges = storedMarket.ranges && storedMarket.ranges.length > 0
+      ? storedMarket.ranges
+      : coefficientsToRanges(storedMarket.coefficients ?? [], storedMarket.domain)
+    const basePdf = baseRanges.length > 0
+      ? projectGhostFromRanges(generateUniformPdf(storedMarket.domain), baseRanges, storedMarket.domain)
+      : generateUniformPdf(storedMarket.domain)
+    pdf = basePdf
+    const mean = calculateMean(basePdf)
+    baseStats = {
+      mean,
+      variance: calculateVariance(basePdf, mean),
+      skew: storedMarket.stats?.skew ?? 0,
+      kurtosis: storedMarket.stats?.kurtosis ?? 3,
+    }
+  } else if (mockMarket) {
+    switch (mockMarket.prior.kind) {
+      case "normal":
+        pdf = generateNormalPdf(mockMarket.prior.params.mean, mockMarket.prior.params.variance, mockMarket.domain)
+        break
+      case "lognormal":
+        pdf = generateLognormalPdf(mockMarket.prior.params.mu, mockMarket.prior.params.sigma, mockMarket.domain)
+        break
+      case "beta":
+        pdf = generateBetaPdf(mockMarket.prior.params.alpha, mockMarket.prior.params.beta, mockMarket.domain)
+        break
+      case "uniform":
+        pdf = generateUniformPdf(mockMarket.domain)
+        break
+      default:
+        pdf = generateNormalPdf(mockMarket.stats.mean, mockMarket.stats.variance, mockMarket.domain)
+    }
+  } else {
+    pdf = generateUniformPdf(market.domain)
   }
 
   const amount = typeof amountUSD === "number" ? amountUSD : typeof notionalUSD === "number" ? notionalUSD : 0
@@ -86,12 +108,12 @@ export async function POST(request: Request) {
     newStats: {
       mean: newMean,
       variance: newVariance,
-      skew: market.stats.skew + deltaMass * 0.1,
-      kurtosis: market.stats.kurtosis,
+      skew: baseStats.skew + deltaMass * 0.1,
+      kurtosis: baseStats.kurtosis,
     },
     impliedShift: {
-      deltaMean: newMean - market.stats.mean,
-      deltaVariance: newVariance - market.stats.variance,
+      deltaMean: newMean - baseStats.mean,
+      deltaVariance: newVariance - baseStats.variance,
     },
   })
 }

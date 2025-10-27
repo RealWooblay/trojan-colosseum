@@ -1,4 +1,5 @@
 "use client"
+"use client"
 
 import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
@@ -7,8 +8,8 @@ import { Label } from "@/components/ui/label"
 import { fmtPct, fmtUSD, fmtNum } from "@/lib/formatters"
 import { TrendingUp, TrendingDown, Plus, Minus } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import type { Market, Ticket } from "@/lib/types"
-import { rangesToCoefficients, MAX_COEFFICIENTS, MAX_RANGE_SLOTS } from "@/lib/trade-utils"
+import type { Market, PdfPoint, Ticket } from "@/lib/types"
+import { rangesToCoefficients, MAX_COEFFICIENTS, MAX_RANGE_SLOTS, normalizeAlpha } from "@/lib/trade-utils"
 import { buyTransaction, getTicket, getTotalTickets } from "@/lib/sonormal/program"
 import { useAppKitProvider, useAppKitAccount } from "@reown/appkit/react"
 import type { Provider } from "@reown/appkit-adapter-solana/react"
@@ -18,6 +19,7 @@ import { fetchSellMath } from "@/lib/sonormal/math"
 
 interface TradePanelProps {
   market: Market
+  marketPdf?: PdfPoint[]
   selectedRanges?: [number, number][]
   onTradePreview: (side: "buy" | "sell", amount: number, coefficients?: number[]) => void
   onAddRange?: () => void
@@ -34,6 +36,7 @@ interface TradePanelProps {
 
 export function TradePanel({
   market,
+  marketPdf,
   selectedRanges,
   onTradePreview,
   onAddRange,
@@ -58,24 +61,10 @@ export function TradePanel({
   const isBuy = side === "buy"
 
   const coefficients = useMemo(() => {
-    return rangesToCoefficients(ranges, domain, MAX_COEFFICIENTS)
-  }, [ranges, domain.min, domain.max])
+    return rangesToCoefficients(ranges, domain, MAX_COEFFICIENTS, marketPdf)
+  }, [ranges, domain.min, domain.max, marketPdf])
 
-  const coefficientPairs = useMemo(
-    () =>
-      coefficients.reduce<Array<{ center: number; weight: number }>>((pairs, value, index) => {
-        if (index % 2 === 0) {
-          pairs.push({ center: value, weight: coefficients[index + 1] ?? 0 })
-        }
-        return pairs
-      }, []),
-    [coefficients],
-  )
-
-  const weightSum = useMemo(
-    () => coefficientPairs.reduce((sum, pair) => sum + pair.weight, 0),
-    [coefficientPairs],
-  )
+  const weightSum = useMemo(() => coefficients.reduce((sum, weight) => sum + weight, 0), [coefficients])
 
   useEffect(() => {
     if (isBuy) {
@@ -154,6 +143,7 @@ export function TradePanel({
   }
 
   const handleConfirm = async () => {
+  const handleConfirm = async () => {
     if (!address || !isConnected) {
       toast({
         title: "Not connected",
@@ -173,7 +163,9 @@ export function TradePanel({
   const handleBuy = async (address: string) => {
     const num = Number.parseFloat(amount)
 
-    if (coefficients.length === 0) {
+    const alpha = normalizeAlpha(coefficients)
+
+    if (!alpha.some((value) => value > 0)) {
       toast({
         title: "Add a coefficient",
         description: "Create at least one range to generate coefficients.",
@@ -246,9 +238,11 @@ export function TradePanel({
         txSignature: result,
       });
 
+
       toast({
         title: "Buy successful",
         description: (
+          <a
           <a
             href={`https://solscan.io/tx/${result}?cluster=devnet`}
             target="_blank"
@@ -327,8 +321,7 @@ export function TradePanel({
         </p>
         {isBuy ? (
           <p className="text-xs text-muted-foreground">
-            Each range maps to a center/weight coefficient pair. We send up to eight coefficients plus your total
-            amount.
+            Each range contributes a weight coefficient. We send up to eight coefficients plus your total amount.
           </p>
         ) : (
           <p className="text-xs text-muted-foreground">
@@ -628,23 +621,17 @@ export function TradePanel({
       {isBuy && (
         <div className="space-y-2">
           <Label>Coefficient Payload ({coefficients.length}/{MAX_COEFFICIENTS})</Label>
-          {coefficientPairs.length > 0 ? (
+          {coefficients.some((value) => value > 0) ? (
             <div className="space-y-2">
-              <div className="grid grid-cols-2 gap-2 text-[11px] uppercase text-muted-foreground tracking-wide">
-                <span>Center (c1, c3…)</span>
-                <span>Weight (c2, c4…)</span>
-              </div>
-              <div className="space-y-1">
-                {coefficientPairs.map((pair, index) => (
-                  <div
-                    key={index}
-                    className="grid grid-cols-2 gap-2 bg-black/60 border border-white/10 rounded-md p-2 text-xs font-mono text-white/90"
-                  >
-                    <span>{pair.center.toFixed(4)}</span>
-                    <span className="text-primary">{(pair.weight * 100).toFixed(2)}%</span>
-                  </div>
-                ))}
-              </div>
+              {coefficients.map((value, index) => (
+                <div
+                  key={index}
+                  className="flex justify-between bg-black/60 border border-white/10 rounded-md p-2 text-xs font-mono text-white/90"
+                >
+                  <span>c{index + 1}</span>
+                  <span className="text-primary">{(value * 100).toFixed(2)}%</span>
+                </div>
+              ))}
               <div className="text-[11px] text-muted-foreground">
                 Weight sum:{" "}
                 <span className={`font-semibold ${Math.abs(weightSum - 1) < 1e-6 ? "text-primary" : "text-yellow-400"}`}>
@@ -653,12 +640,12 @@ export function TradePanel({
                 (auto-normalized)
               </div>
               <p className="text-xs text-muted-foreground">
-                Centers locate each hump along the domain; weights share the total probability mass and always sum to 1.
+                We send up to eight weights to the program. Adjust your ranges to rebalance them.
               </p>
             </div>
           ) : (
             <div className="text-xs text-muted-foreground">
-              Add a range to generate center/weight pairs. We can transmit up to four ranges (eight coefficients).
+              Add a range to generate coefficients. We can transmit up to eight ranges.
             </div>
           )}
         </div>
