@@ -6,25 +6,40 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import type { Position, PortfolioSummary } from "@/lib/types"
+import type { Position, PortfolioSummary, Ticket, Market } from "@/lib/types"
 import { TrendingUp, TrendingDown, Plus, Minus, X, PieChart } from "lucide-react"
 import Link from "next/link"
 import { motion } from "framer-motion"
+import { findStoredTicketsByAuthority, readStoredMarkets, readStoredTickets } from "@/lib/storage"
+import { useAppKitAccount } from "@reown/appkit/react"
 
 export default function PortfolioPage() {
-  const [positions, setPositions] = useState<Position[]>([])
+  const { address } = useAppKitAccount();
+
+  const [tickets, setTickets] = useState<Ticket[]>([])
+  const [markets, setMarkets] = useState<Map<string, Market>>(new Map())
   const [summary, setSummary] = useState<PortfolioSummary | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch("/api/portfolio")
-      .then((res) => res.json())
-      .then((data) => {
-        setPositions(data.positions)
-        setSummary(data.summary)
+    if (!address) return;
+
+    findStoredTicketsByAuthority(address)
+    .then((tickets) => {
+      setTickets(tickets)
+      readStoredMarkets().then((storedMarkets) => {
+        storedMarkets.forEach((market) => {
+          setMarkets((prev) => prev.set(market.id, market))
+        })
         setLoading(false)
+      }).catch((error) => {
+        console.error(error)
       })
-  }, [])
+    })
+    .catch((error) => {
+      console.error(error)
+    })
+  }, [address])
 
   if (loading) {
     return (
@@ -153,7 +168,7 @@ export default function PortfolioPage() {
               </Link>
             </div>
 
-            {positions.length === 0 ? (
+            {tickets.length === 0 ? (
               <div className="text-center py-20 space-y-8">
                 <div className="relative mx-auto w-24 h-24">
                   <div className="absolute inset-0 border-2 border-cyan-400/50 transform rotate-45"></div>
@@ -180,8 +195,6 @@ export default function PortfolioPage() {
                   <TableHeader>
                     <TableRow className="border-cyan-400/30 hover:bg-transparent">
                       <TableHead className="text-cyan-300 font-mono tracking-wider py-6 px-6 text-xs uppercase">MARKET</TableHead>
-                      <TableHead className="text-cyan-300 font-mono tracking-wider py-6 px-6 text-xs uppercase">RANGE</TableHead>
-                      <TableHead className="text-cyan-300 font-mono tracking-wider py-6 px-6 text-xs uppercase">MASS OWNED</TableHead>
                       <TableHead className="text-cyan-300 font-mono tracking-wider py-6 px-6 text-xs uppercase">COST BASIS</TableHead>
                       <TableHead className="text-cyan-300 font-mono tracking-wider py-6 px-6 text-xs uppercase">MARK VALUE</TableHead>
                       <TableHead className="text-cyan-300 font-mono tracking-wider py-6 px-6 text-xs uppercase">UNREALIZED PNL</TableHead>
@@ -189,9 +202,9 @@ export default function PortfolioPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {positions.map((position, index) => (
+                    {tickets.map((ticket, index) => (
                       <motion.tr
-                        key={position.id}
+                        key={ticket.id}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.3 + index * 0.1 }}
@@ -199,35 +212,25 @@ export default function PortfolioPage() {
                       >
                         <TableCell className="py-4 px-6">
                           <Link
-                            href={`/market/${position.marketId}`}
+                            href={`/market/${ticket.marketId}`}
                             className="hover:text-cyan-300 transition-colors text-white font-mono tracking-wide"
                           >
-                            {position.marketTitle}
+                            {markets.get(ticket.marketId)?.title}
                           </Link>
                         </TableCell>
-                        <TableCell className="font-mono text-sm text-cyan-200 py-4 px-6">
-                          [{position.range[0].toFixed(0)}, {position.range[1].toFixed(0)}]
+                        <TableCell className="font-mono text-sm text-white py-4 px-6">
+                          ${(ticket.amount / (10 ** 6)).toFixed(2)}
                         </TableCell>
                         <TableCell className="font-mono text-sm text-white py-4 px-6">
-                          {(position.massOwned * 100).toFixed(2)}%
-                        </TableCell>
-                        <TableCell className="font-mono text-sm text-white py-4 px-6">
-                          ${position.costUSD.toFixed(0)}
-                        </TableCell>
-                        <TableCell className="font-mono text-sm text-white py-4 px-6">
-                          ${position.markValueUSD.toFixed(0)}
+                          ${(ticket.amount / (10 ** 6)).toFixed(2)}
                         </TableCell>
                         <TableCell className="py-4 px-6">
                           <div className="flex items-center gap-2">
-                            {position.pnlUSD >= 0 ? (
-                              <TrendingUp className="w-4 h-4 text-green-400" />
-                            ) : (
-                              <TrendingDown className="w-4 h-4 text-red-400" />
-                            )}
+                            <TrendingDown className="w-4 h-4 text-red-400" />
                             <span
-                              className={`font-mono text-sm font-bold neon-glow ${position.pnlUSD >= 0 ? "text-green-400" : "text-red-400"}`}
+                              className={`font-mono text-sm font-bold neon-glow text-red-400`}
                             >
-                              {position.pnlUSD >= 0 ? "+" : ""}${position.pnlUSD.toFixed(0)}
+                              0
                             </span>
                           </div>
                         </TableCell>
