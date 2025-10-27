@@ -1,11 +1,10 @@
 "use server";
 
-import { ComputeBudgetProgram, Connection, Keypair, PublicKey, Signer, Transaction, TransactionInstruction, TransactionMessage, VersionedTransaction } from "@solana/web3.js";
+import { ComputeBudgetProgram, Connection, Keypair, PublicKey, Signer, TransactionInstruction, TransactionMessage, VersionedTransaction, SendTransactionError } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 import { Sonormal } from "../../sonormal";
 import SonormalIdl from "../../sonormal.json";
 import { getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { appendStoredMarket } from "../storage";
 import { findControllerPda, findMarketPda } from "./pda";
 
 const marketAuthorityKeypair = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(process.env.MARKET_AUTHORITY!)));
@@ -27,18 +26,10 @@ const sonormalProgram = new anchor.Program<Sonormal>(idl, provider);
 
 /**
  * Create a new market
- * @param title - The title of the market
- * @param description - The description of the market
- * @param category - The category of the market
- * @param unit - The unit of the market
  * @param alpha - The alpha values for the market (length must be 8)
  * @param expiry - The expiry date of the market (seconds since unix epoch)
  */
 export async function newMarket(
-    title: string,
-    description: string,
-    category: string,
-    unit: "%" | "USD" | "°C" | "other",
     alpha: number[],
     expiry: number
 ): Promise<{ success: true, signature: string } | { success: false, error: any }> {
@@ -121,44 +112,28 @@ export async function newMarket(
             };
         }
 
-        const controllerPda = findControllerPda();
-        const controller = await sonormalProgram.account.controller.fetch(controllerPda);
-
-        await appendStoredMarket({
-            id: (controller.totalMarkets.toNumber() - 1).toString(),
-            title: title,
-            description: description,
-            unit: unit,
-            domain: {
-                min: 0,
-                max: 0
-            },
-            prior: {
-                kind: "normal",
-                params: {}
-            },
-            liquidityUSD: 0,
-            vol24hUSD: 0,
-            category: category,
-            expiry: new Date(expiry * 1000).toISOString(),
-            coefficients: alpha,
-            ranges: [],
-            createdAt: new Date().toISOString(),
-            stats: {
-                mean: 0,
-                variance: 0,
-                skew: 0,
-                kurtosis: 0
-            },
-            txSignature: result.signature
-        });
-
         return {
             success: true,
             signature: result.signature
         };
     } catch (error) {
-        console.error(error);
+        console.error("[sonormal] newMarket failed", error)
+        if (error instanceof SendTransactionError) {
+            let logs: string[] | null = null
+            try {
+                logs = await error.getLogs(solanaRpc)
+            } catch (logError) {
+                console.error("[sonormal] failed fetching logs for newMarket", logError)
+            }
+            return {
+                success: false,
+                error: {
+                    message: error.message,
+                    logs,
+                    cause: error,
+                }
+            }
+        }
         return {
             success: false,
             error: error
@@ -233,6 +208,22 @@ export async function buyTransaction(
         };
     } catch (error) {
         console.error(error);
+        if (error instanceof SendTransactionError) {
+            let logs: string[] | null = null
+            try {
+                logs = await error.getLogs(solanaRpc)
+            } catch (logError) {
+                console.error("[sonormal] failed fetching logs for buyTransaction", logError)
+            }
+            return {
+                success: false,
+                error: {
+                    message: error.message,
+                    logs,
+                    cause: error,
+                }
+            }
+        }
         return {
             success: false,
             error: error
@@ -308,9 +299,14 @@ async function sendTransaction(
             lastValidBlockHeight: lastValidBlockHeight
         }, 'confirmed');
         if (confirmation.value.err) {
+            const logs = confirmation.value?.logs
             return {
                 success: false,
-                error: confirmation.value.err
+                error: {
+                    message: "Transaction confirmation error",
+                    logs,
+                    cause: confirmation.value.err,
+                }
             };
         }
 
@@ -319,7 +315,23 @@ async function sendTransaction(
             signature: signature
         };
     } catch (error) {
-        console.error(error);
+        console.error("[sonormal] sendTransaction failed", error)
+        if (error instanceof SendTransactionError) {
+            let logs: string[] | null = null
+            try {
+                logs = await error.getLogs(solanaRpc)
+            } catch (logError) {
+                console.error("[sonormal] failed to fetch transaction logs", logError)
+            }
+            return {
+                success: false,
+                error: {
+                    message: error.message,
+                    logs,
+                    cause: error,
+                }
+            }
+        }
         return {
             success: false,
             error: error
