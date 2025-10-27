@@ -1,107 +1,39 @@
 {
   "data": [
     {
-      "id": "btc-mh8tpdgf",
-      "title": "BTC",
+      "id": "27",
+      "title": "Solana Price on Dec 31st 2025",
+      "description": "",
       "unit": "USD",
-      "category": "Crypto",
       "domain": {
         "min": 0,
-        "max": 100
+        "max": 0
       },
       "prior": {
-        "kind": "uniform",
+        "kind": "normal",
         "params": {}
       },
       "liquidityUSD": 0,
       "vol24hUSD": 0,
-      "stats": {
-        "mean": 50,
-        "variance": 833.3333333333334,
-        "skew": 0,
-        "kurtosis": 3
-      },
-      "resolvesAt": "2026-01-13T14:02:00.000Z",
-      "coefficients": [
-        0.5,
-        0.5
-      ],
-      "ranges": [
-        [
-          20,
-          40
-        ],
-        [
-          5,
-          25
-        ]
-      ],
-      "expiry": "2026-01-13T14:02:00.000Z",
-      "createdAt": "2025-10-27T07:35:31.935Z",
-      "txSignature": "4Jro2rNjPZVouNiPB7FEw1BjqMJmy6gGHAvMYo4ba3R3hpGnu8n1KejxUm3cpC2JZ355SxqQJwgT6qJzPx4FR5QA",
-      "description": "Because"
-    },
-    {
-      "id": "bitcoin-price-2026-mh8uxaa7",
-      "title": "Bitcoin price 2026",
-      "unit": "USD",
       "category": "Crypto",
       "expiry": "2026-01-01T04:59:00.000Z",
       "alpha": [
-        0.3,
-        0.25,
-        0.65,
-        0.25,
-        0.2,
-        0.25,
-        0.25,
-        0.25
+        0.5,
+        0.49999999999999994
       ],
-      "expiry": "2027-12-08T01:01:00.000Z",
-      "createdAt": "2025-10-27T08:11:19.752Z",
-      "txSignature": "2SKMMACymkkXnu96XavtfPNUFiRAFpT2JFWnr3fDnmy2qXGBwUBHegnjQKA4oWMi9ku3q5yLFjdQfqbZwRE1DEd9",
-      "description": "Because why?"
-    },
-    {
-      "id": "test-mh8v2rhb",
-      "title": "Test",
-      "unit": "USD",
-      "category": "Crypto",
-      "domain": {
-        "min": 0,
-        "max": 100
-      },
-      "prior": {
-        "kind": "uniform",
-        "params": {}
-      },
-      "liquidityUSD": 0,
-      "vol24hUSD": 0,
+      "k": 1,
+      "tolCoeffSum": 1e-10,
+      "epsAlpha": 1e-8,
+      "muDefault": 1,
+      "ranges": [],
+      "createdAt": "2025-10-27T10:36:38.734Z",
       "stats": {
-        "mean": 50,
-        "variance": 833.3333333333334,
+        "mean": 0,
+        "variance": 0,
         "skew": 0,
-        "kurtosis": 3
+        "kurtosis": 0
       },
-      "resolvesAt": "2027-03-11T15:42:00.000Z",
-      "coefficients": [
-        0.09691629955947162,
-        0.9030837004405284
-      ],
-      "ranges": [
-        [
-          59.531772575250834,
-          66.88963210702342
-        ],
-        [
-          5.016722408026756,
-          73.57859531772576
-        ]
-      ],
-      "expiry": "2027-03-11T15:42:00.000Z",
-      "createdAt": "2025-10-27T08:13:56.255Z",
-      "txSignature": "4PAPWo6AN9Zd3Ce6UE2vTmtJij2WTqMZrRZkbYSLjnXYeh5j7M5q44fggTekzkzmKXvpufQxX6mPtpMWKoz3iyst",
-      "description": "wadawd"
+      "txSignature": "3awSYL8BC7S2xFSa8Chq9SRafQ8obM3bK89uUaWAKiSoZFjGKFvgscho3pntZrVT2JU8cFXmv4XSBBMKTc71nVCC"
     }
   ]
 }

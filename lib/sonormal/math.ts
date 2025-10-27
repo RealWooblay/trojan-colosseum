@@ -1,3 +1,5 @@
+"use server"
+
 export async function fetchSellMath(
     k: number,
     tolCoeffSum: number,
@@ -8,8 +10,11 @@ export async function fetchSellMath(
     claimAmount: number,
 ): Promise<{ success: true, alphaPrime: number[], tStar: number } | { success: false, error: any }> {
     try {
-        const result = await fetch(`${process.env.MATH_SERVER!}/math/sell`, {
+        const result = await fetch(`${process.env.NEXT_PUBLIC_MATH_SERVER!}/math/sell`, {
             method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
             body: JSON.stringify({
                 k: k,
                 tol_coeff_sum: tolCoeffSum,

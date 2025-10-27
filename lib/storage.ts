@@ -52,20 +52,27 @@ export async function writeStoredTickets(tickets: Ticket[]): Promise<void> {
   await fs.writeFile(TICKETS_PATH, JSON.stringify({ data: tickets }, null, 2), "utf8")
 }
 
-export async function appendStoredMarket(market: Market): Promise<Market> {
+export async function appendStoredMarket(market: Market): Promise<void> {
   const markets = await readStoredMarkets()
   const filtered = markets.filter((existing) => existing.id !== market.id)
   filtered.push(market)
   await writeStoredMarkets(filtered)
-  return market
 }
 
-export async function appendStoredTicket(ticket: Ticket): Promise<Ticket> {
+export async function appendStoredTicket(ticket: Ticket): Promise<void> {
   const tickets = await readStoredTickets()
   const filtered = tickets.filter((existing) => existing.id !== ticket.id)
   filtered.push(ticket)
   await writeStoredTickets(filtered)
-  return ticket
+}
+
+export async function updateStoredTicket(ticket: Ticket): Promise<void> {
+  const tickets = await readStoredTickets()
+  const index = tickets.findIndex((existing) => existing.id === ticket.id);
+  if (index !== -1) {
+    tickets[index] = ticket
+    await writeStoredTickets(tickets)
+  }
 }
 
 export async function findStoredMarket(id: string): Promise<Market | undefined> {

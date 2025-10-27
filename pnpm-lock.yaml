@@ -128,6 +128,9 @@ importers:
       date-fns:
         specifier: 4.1.0
         version: 4.1.0
+      ed25519:
+        specifier: link:@noble/curves/ed25519
+        version: link:@noble/curves/ed25519
       embla-carousel-react:
         specifier: 8.5.1
         version: 8.5.1(react@19.0.0)

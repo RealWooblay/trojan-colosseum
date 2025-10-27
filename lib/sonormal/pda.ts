@@ -12,7 +12,7 @@ export function findControllerPda() {
 
 export function findMarketPda(marketId: string) {    
     return PublicKey.findProgramAddressSync(
-        [Buffer.from('MARKET'), new BN(marketId).toArrayLike(Buffer, "le")],
+        [Buffer.from('MARKET'), new BN(marketId).toArrayLike(Buffer, "le", 8)],
         programId
     )[0];
 }
@@ -22,6 +22,6 @@ export function findTicketPda(marketId: string, ticketId: string) {
     return PublicKey.findProgramAddressSync([
         Buffer.from('TICKET'), 
         marketPda.toBuffer(), 
-        new BN(ticketId).toArrayLike(Buffer, "le")
+        new BN(ticketId).toArrayLike(Buffer, "le", 8)
     ], programId)[0];
 }

@@ -228,13 +228,6 @@ export default function MarketDetailPage() {
               )}
             </div>
           </div>
-
-          <StatsStrip
-            mean={market.stats.mean}
-            variance={market.stats.variance}
-            skew={market.stats.skew}
-            kurtosis={market.stats.kurtosis}
-          />
         </motion.div>
 
         <div className="grid lg:grid-cols-[1fr_400px] gap-6">

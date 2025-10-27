@@ -43,6 +43,7 @@ export type Ticket = {
   pTrade: number[]
   collateralAmount: number
   claimAmount: number
+  realizedAmount: number
   createdAt: string
   txSignature: string
 }

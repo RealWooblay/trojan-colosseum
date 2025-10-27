@@ -10,11 +10,11 @@ import { TrendingUp, TrendingDown, Plus, Minus } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import type { Market, PdfPoint, Ticket } from "@/lib/types"
 import { rangesToCoefficients, MAX_COEFFICIENTS, MAX_RANGE_SLOTS, normalizeAlpha } from "@/lib/trade-utils"
-import { buyTransaction, getTicket, getTotalTickets } from "@/lib/sonormal/program"
+import { buyTransaction, getTicket, getTotalTickets, sellTransaction } from "@/lib/sonormal/program"
 import { useAppKitProvider, useAppKitAccount } from "@reown/appkit/react"
 import type { Provider } from "@reown/appkit-adapter-solana/react"
-import { VersionedTransaction, PublicKey, TransactionMessage, TransactionInstruction } from "@solana/web3.js"
-import { appendStoredTicket, findStoredTicket, findStoredTicketsByAuthorityAndMarketId } from "@/lib/storage"
+import { VersionedTransaction, PublicKey, TransactionMessage, TransactionInstruction, Connection, Transaction } from "@solana/web3.js"
+import { appendStoredTicket, findStoredTicket, findStoredTicketsByAuthorityAndMarketId, updateStoredTicket } from "@/lib/storage"
 import { fetchSellMath } from "@/lib/sonormal/math"
 
 interface TradePanelProps {
@@ -52,11 +52,11 @@ export function TradePanel({
   const domain = market.domain
   const ranges = selectedRanges || [[domain.min, domain.max]]
 
-  const [amount, setAmount] = useState("500")
+  const [buyAmount, setBuyAmount] = useState("500")
   const [side, setSide] = useState<"buy" | "sell">("buy")
   const [selectedTicketId, setSelectedTicketId] = useState<string>("")
-  const [sellAmount, setSellAmount] = useState("")
-  const [errors, setErrors] = useState<{ amount?: string; ticket?: string; sellAmount?: string }>({})
+  const [sellPercent, setSellPercent] = useState("")
+  const [errors, setErrors] = useState<{ amount?: string; ticket?: string; sellPercent?: string }>({})
   const { toast } = useToast()
   const isBuy = side === "buy"
 
@@ -68,7 +68,7 @@ export function TradePanel({
 
   useEffect(() => {
     if (isBuy) {
-      const num = Number.parseFloat(amount)
+      const num = Number.parseFloat(buyAmount)
       const needsCoefficients = isBuy
       const hasCoefficients = coefficients.length > 0
 
@@ -79,21 +79,25 @@ export function TradePanel({
         return () => clearTimeout(timeoutId)
       }
     } else {
-      const num = Number.parseFloat(sellAmount)
+      const num = Number.parseFloat(sellPercent)
       if (!isNaN(num) && selectedTicketId) {
-        const timeoutId = setTimeout(() => {
-          onTradePreview(side, num)
-        }, 150)
-        return () => clearTimeout(timeoutId)
+        const selectedTicket = tickets.find(t => t.id === selectedTicketId)
+        if (selectedTicket) {
+          const sellAmount = (selectedTicket.collateralAmount / (10 ** 6)) * (num / 100)
+          const timeoutId = setTimeout(() => {
+            onTradePreview(side, sellAmount)
+          }, 150)
+          return () => clearTimeout(timeoutId)
+        }
       }
     }
-  }, [amount, sellAmount, side, coefficients, isBuy, onTradePreview, selectedTicketId])
+  }, [buyAmount, sellPercent, side, coefficients, isBuy, onTradePreview, selectedTicketId, tickets])
 
   useEffect(() => {
     if (!address) return;
     findStoredTicketsByAuthorityAndMarketId(address, market.id)
       .then((tickets) => {
-        setTickets(tickets)
+        setTickets(tickets.filter(ticket => ticket.claimAmount > 0))
       })
       .catch((error) => {
         console.error(error)
@@ -101,7 +105,7 @@ export function TradePanel({
   }, [address, market.id])
 
   const handleAmountChange = (value: string) => {
-    setAmount(value)
+    setBuyAmount(value)
     const num = Number.parseFloat(value)
     if (isNaN(num)) {
       setErrors((prev) => ({ ...prev, amount: "Invalid amount" }))
@@ -111,35 +115,35 @@ export function TradePanel({
   }
 
   const adjustAmount = (delta: number) => {
-    const current = Number.parseFloat(amount) || 0
-    setAmount((current + delta).toString())
+    const current = Number.parseFloat(buyAmount) || 0
+    setBuyAmount((current + delta).toString())
   }
 
-  const adjustSellAmount = (delta: number) => {
-    const current = Number.parseFloat(sellAmount) || 0
-    setSellAmount((current + delta).toString())
+  const adjustSellPercent = (delta: number) => {
+    const current = Number.parseFloat(sellPercent) || 0
+    setSellPercent((current + delta).toString())
   }
 
-  const handleSellAmountChange = (value: string) => {
-    setSellAmount(value)
+  const handleSellPercentChange = (value: string) => {
+    setSellPercent(value)
     const num = Number.parseFloat(value)
-    const selectedTicket = tickets.find(t => t.id === selectedTicketId)
-    const maxAmount = selectedTicket ? selectedTicket.collateralAmount / (10 ** 6) : 0
 
     if (isNaN(num)) {
-      setErrors((prev) => ({ ...prev, sellAmount: "Invalid amount" }))
-    } else if (num > maxAmount) {
-      setErrors((prev) => ({ ...prev, sellAmount: `Cannot sell more than ${maxAmount < 0.01 ? maxAmount.toFixed(6) : maxAmount.toFixed(2)} USDC` }))
+      setErrors((prev) => ({ ...prev, sellPercent: "Invalid percentage" }))
+    } else if (num < 0) {
+      setErrors((prev) => ({ ...prev, sellPercent: "Percentage cannot be negative" }))
+    } else if (num > 100) {
+      setErrors((prev) => ({ ...prev, sellPercent: "Percentage cannot exceed 100%" }))
     } else {
-      setErrors((prev) => ({ ...prev, sellAmount: undefined }))
+      setErrors((prev) => ({ ...prev, sellPercent: undefined }))
     }
   }
 
   const handleTicketSelect = (ticketId: string) => {
     setSelectedTicketId(ticketId)
     setErrors((prev) => ({ ...prev, ticket: undefined }))
-    // Reset sell amount when ticket changes
-    setSellAmount("")
+    // Reset sell percent when ticket changes
+    setSellPercent("")
   }
 
   const handleConfirm = async () => {
@@ -160,7 +164,7 @@ export function TradePanel({
   }
 
   const handleBuy = async (address: string) => {
-    const num = Number.parseFloat(amount)
+    const num = Number.parseFloat(buyAmount)
 
     const alpha = normalizeAlpha(coefficients)
 
@@ -183,7 +187,7 @@ export function TradePanel({
     }
 
     try {
-      const transactionAmount = isBuy ? Number.parseFloat(amount) : Number.parseFloat(sellAmount)
+      const transactionAmount = Number.parseFloat(buyAmount);
       const transaction = await buyTransaction(
         Number(market.id),
         address,
@@ -233,10 +237,10 @@ export function TradePanel({
         pTrade: coefficients,
         collateralAmount: Math.trunc(transactionAmount * (10 ** 6)),
         claimAmount: ticket.claim,
+        realizedAmount: 0,
         createdAt: new Date().toISOString(),
         txSignature: result,
       });
-
 
       toast({
         title: "Buy successful",
@@ -263,49 +267,94 @@ export function TradePanel({
   }
 
   const handleSell = async (address: string) => {
-    if (!selectedTicketId) {
+    try {
+      if (!selectedTicketId) {
+        toast({
+          title: "Select a ticket",
+          description: "Please select a ticket to sell from.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      const sellPercentValue = Number.parseFloat(sellPercent);
+      if (isNaN(sellPercentValue) || sellPercentValue <= 0 || sellPercentValue > 100) {
+        toast({
+          title: "Invalid percentage",
+          description: "Please enter a valid percentage between 0 and 100",
+          variant: "destructive",
+        })
+        return
+      }
+  
+      const ticket = await findStoredTicket(selectedTicketId);
+      if (!ticket) {
+        toast({
+          title: "Failed to retrieve ticket",
+          description: "Please try again",
+          variant: "destructive",
+        })
+        return
+      }
+
+      const claimAmount = (sellPercentValue / 100) * ticket.claimAmount;
+
+      const transactionResult = await sellTransaction(
+        Number(market.id),
+        Number(ticket.id),
+        address,
+        address,
+        claimAmount
+      );
+      if (!transactionResult.success) {
+        toast({
+          title: "Trade failed",
+          description: transactionResult.error,
+          variant: "destructive",
+        })
+        return
+      }
+
+      const transaction = VersionedTransaction.deserialize(transactionResult.transaction);
+
+      const signature = await walletProvider.signAndSendTransaction(transaction, {
+        skipPreflight: false,
+        maxRetries: 3,
+        preflightCommitment: 'confirmed',
+      });
+
+      const updatedTicket = {
+        ...ticket,
+        claimAmount: ticket.claimAmount - claimAmount,
+        realizedAmount: Math.trunc((Number(ticket.realizedAmount) + (Number(transactionResult.tStar) * (10 ** 6)))),
+      }
+      await updateStoredTicket(updatedTicket);
+
       toast({
-        title: "Select a ticket",
-        description: "Please select a ticket to sell from.",
+        title: "Buy successful",
+        description: (
+          <a
+            href={`https://solscan.io/tx/${signature}?cluster=devnet`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-cyan-400"
+          >
+            View on Solscan
+          </a>
+        ),
+        variant: "default",
+      })
+    } catch (error) {
+      console.error("Trade error:", error);
+      toast({
+        title: "Trade failed",
+        description: error instanceof Error ? error.message : "Please try again",
         variant: "destructive",
       })
-      return
     }
-
-    const num = Number.parseFloat(sellAmount)
-    if (isNaN(num)) {
-      toast({
-        title: "Invalid amount",
-        description: "Invalid sell amount provided",
-        variant: "destructive",
-      })
-      return
-    }
-
-    const ticket = await findStoredTicket(selectedTicketId);
-    if (!ticket) {
-      toast({
-        title: "Failed to retrieve ticket",
-        description: "Please try again",
-        variant: "destructive",
-      })
-      return
-    }
-
-    const sellMath = await fetchSellMath(
-      market.k,
-      market.tolCoeffSum,
-      market.epsAlpha,
-      market.muDefault,
-      market.alpha,
-      ticket.pTrade,
-      ticket.claimAmount
-    )
-
-    console.log(sellMath);
   }
 
-  const isValidAmount = isBuy ? (!errors.amount && !isNaN(Number.parseFloat(amount))) : (!errors.sellAmount && !isNaN(Number.parseFloat(sellAmount)) && selectedTicketId)
+  const isValidAmount = isBuy ? (!errors.amount && !isNaN(Number.parseFloat(buyAmount))) : (!errors.sellPercent && !isNaN(Number.parseFloat(sellPercent)) && selectedTicketId && Number.parseFloat(sellPercent) > 0 && Number.parseFloat(sellPercent) <= 100)
   const hasCoefficients = coefficients.length === market.alpha.length
 
   return (
@@ -363,8 +412,8 @@ export function TradePanel({
                 <div
                   key={ticket.id}
                   className={`p-3 rounded-lg border cursor-pointer transition-all ${selectedTicketId === ticket.id
-                      ? 'border-cyan-400 bg-cyan-400/10'
-                      : 'border-white/10 hover:border-white/20'
+                    ? 'border-cyan-400 bg-cyan-400/10'
+                    : 'border-white/10 hover:border-white/20'
                     }`}
                   onClick={() => handleTicketSelect(ticket.id)}
                 >
@@ -503,7 +552,7 @@ export function TradePanel({
           <div className="flex gap-2">
             <Input
               type="number"
-              value={amount}
+              value={buyAmount}
               onChange={(e) => handleAmountChange(e.target.value)}
               placeholder="500"
               className={`font-mono bg-white/5 border-white/10 flex-1 ${errors.amount ? "border-destructive" : ""}`}
@@ -516,10 +565,10 @@ export function TradePanel({
             </Button>
           </div>
           <div className="flex gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setAmount("250")} className="text-xs">
+            <Button variant="ghost" size="sm" onClick={() => setBuyAmount("250")} className="text-xs">
               Quick $250
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => setAmount("1000")} className="text-xs">
+            <Button variant="ghost" size="sm" onClick={() => setBuyAmount("1000")} className="text-xs">
               Reset $1k
             </Button>
           </div>
@@ -527,21 +576,23 @@ export function TradePanel({
         </div>
       ) : (
         <div className="space-y-2">
-          <Label>Sell Amount (USDC)</Label>
+          <Label>Sell Percentage (%)</Label>
           {selectedTicketId ? (
             <>
               <div className="flex gap-2">
                 <Input
                   type="number"
-                  value={sellAmount}
-                  onChange={(e) => handleSellAmountChange(e.target.value)}
+                  value={sellPercent}
+                  onChange={(e) => handleSellPercentChange(e.target.value)}
                   placeholder="0"
-                  className={`font-mono bg-white/5 border-white/10 flex-1 ${errors.sellAmount ? "border-destructive" : ""}`}
+                  min="0"
+                  max="100"
+                  className={`font-mono bg-white/5 border-white/10 flex-1 ${errors.sellPercent ? "border-destructive" : ""}`}
                 />
-                <Button variant="outline" size="icon" onClick={() => adjustSellAmount(-50)}>
+                <Button variant="outline" size="icon" onClick={() => adjustSellPercent(-10)}>
                   <Minus className="w-4 h-4" />
                 </Button>
-                <Button variant="outline" size="icon" onClick={() => adjustSellAmount(50)}>
+                <Button variant="outline" size="icon" onClick={() => adjustSellPercent(10)}>
                   <Plus className="w-4 h-4" />
                 </Button>
               </div>
@@ -549,14 +600,7 @@ export function TradePanel({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => {
-                    const selectedTicket = tickets.find(t => t.id === selectedTicketId)
-                    if (selectedTicket) {
-                      const amount = selectedTicket.collateralAmount / (10 ** 6)
-                      const percent25 = amount * 0.25
-                      setSellAmount(percent25 < 0.01 ? percent25.toFixed(6) : percent25.toFixed(2))
-                    }
-                  }}
+                  onClick={() => setSellPercent("25")}
                   className="text-xs"
                 >
                   25%
@@ -564,14 +608,7 @@ export function TradePanel({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => {
-                    const selectedTicket = tickets.find(t => t.id === selectedTicketId)
-                    if (selectedTicket) {
-                      const amount = selectedTicket.collateralAmount / (10 ** 6)
-                      const percent50 = amount * 0.5
-                      setSellAmount(percent50 < 0.01 ? percent50.toFixed(6) : percent50.toFixed(2))
-                    }
-                  }}
+                  onClick={() => setSellPercent("50")}
                   className="text-xs"
                 >
                   50%
@@ -579,14 +616,7 @@ export function TradePanel({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => {
-                    const selectedTicket = tickets.find(t => t.id === selectedTicketId)
-                    if (selectedTicket) {
-                      const amount = selectedTicket.collateralAmount / (10 ** 6)
-                      const percent75 = amount * 0.75
-                      setSellAmount(percent75 < 0.01 ? percent75.toFixed(6) : percent75.toFixed(2))
-                    }
-                  }}
+                  onClick={() => setSellPercent("75")}
                   className="text-xs"
                 >
                   75%
@@ -594,23 +624,22 @@ export function TradePanel({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => {
-                    const selectedTicket = tickets.find(t => t.id === selectedTicketId)
-                    if (selectedTicket) {
-                      const amount = selectedTicket.collateralAmount / (10 ** 6)
-                      setSellAmount(amount < 0.01 ? amount.toFixed(6) : amount.toFixed(2))
-                    }
-                  }}
+                  onClick={() => setSellPercent("100")}
                   className="text-xs"
                 >
                   Max
                 </Button>
               </div>
-              {errors.sellAmount && <p className="text-xs text-destructive">{errors.sellAmount}</p>}
+              {errors.sellPercent && <p className="text-xs text-destructive">{errors.sellPercent}</p>}
+              {selectedTicketId && !errors.sellPercent && sellPercent && (
+                <p className="text-xs text-muted-foreground">
+                  Selling: {(tickets.find(t => t.id === selectedTicketId)?.collateralAmount || 0) / (10 ** 6) * (Number.parseFloat(sellPercent) / 100)} USDC
+                </p>
+              )}
             </>
           ) : (
             <div className="text-center py-4 text-muted-foreground">
-              <p className="text-sm">Select a ticket above to specify sell amount</p>
+              <p className="text-sm">Select a ticket above to specify sell percentage</p>
             </div>
           )}
         </div>

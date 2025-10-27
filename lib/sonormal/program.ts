@@ -7,6 +7,8 @@ import SonormalIdl from "../../sonormal.json";
 import { getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { appendStoredMarket } from "../storage";
 import { findControllerPda, findMarketPda, findTicketPda } from "./pda";
+import { fetchSellMath } from "./math";
+import { ed25519 } from "@noble/curves/ed25519";
 
 const marketAuthorityKeypair = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(process.env.MARKET_AUTHORITY!)));
 const marketAuthorityWallet = new anchor.Wallet(marketAuthorityKeypair);
@@ -43,13 +45,6 @@ export async function newMarket(
     expiry: number
 ): Promise<{ success: true, signature: string } | { success: false, error: any }> {
     try {
-        if (alpha.length !== 8) {
-            return {
-                success: false,
-                error: 'Alpha length must be 8'
-            };
-        }
-
         if (expiry <= Date.now() / 1000) {
             return {
                 success: false,
@@ -57,7 +52,7 @@ export async function newMarket(
             };
         }
 
-        const k = 7;
+        const k = alpha.length - 1;
         const tolCoeffSum = 1e-10;
         const epsAlpha = 1e-8;
         const muDefault = 1.0;
@@ -102,8 +97,8 @@ export async function newMarket(
         const blockhash = await solanaRpc.getLatestBlockhash('confirmed');
 
         const transaction = await buildTransaction(
-            [instruction], 
-            blockhash.blockhash, 
+            [instruction],
+            blockhash.blockhash,
             marketAuthorityKeypair.publicKey,
             [marketAuthoritySigner]
         );
@@ -224,8 +219,8 @@ export async function buyTransaction(
         const blockhash = await solanaRpc.getLatestBlockhash('confirmed');
 
         const transaction = await buildTransaction(
-            [instruction], 
-            blockhash.blockhash, 
+            [instruction],
+            blockhash.blockhash,
             new PublicKey(payer),
             []
         );
@@ -250,10 +245,97 @@ export async function buyTransaction(
 }
 
 export async function sellTransaction(
-
-) {
+    marketId: number,
+    ticketId: number,
+    sellerAuthority: string,
+    payer: string,
+    claimAmount: number
+): Promise<{ success: true, transaction: Uint8Array, tStar: number } | { success: false, error: any }> {
     try {
+        const [market, ticket] = await Promise.all([
+            sonormalProgram.account.market.fetch(findMarketPda(marketId.toString())),
+            sonormalProgram.account.ticket.fetch(findTicketPda(marketId.toString(), ticketId.toString()))
+        ]);
+        if (!market || !ticket) {
+            return {
+                success: false,
+                error: 'Market or ticket not found'
+            };
+        }
 
+        const sellMath = await fetchSellMath(
+            new anchor.BN(market.params.k).toNumber(),
+            market.params.tolCoeffSum,
+            market.params.epsAlpha,
+            market.params.muDefault,
+            market.alpha,
+            ticket.coefficients,
+            claimAmount
+        );
+        if (!sellMath.success) {
+            return {
+                success: false,
+                error: sellMath.error
+            };
+        }
+
+        const liquidityMint = new PublicKey(process.env.USDC_MINT!);
+
+        const sellerAta = getAssociatedTokenAddressSync(
+            liquidityMint,
+            new PublicKey(sellerAuthority)
+        );
+
+        const protocolFeeReceiverAta = getAssociatedTokenAddressSync(
+            liquidityMint,
+            marketAuthorityKeypair.publicKey
+        );
+
+        const marketFeeReceiverAta = getAssociatedTokenAddressSync(
+            liquidityMint,
+            marketAuthorityKeypair.publicKey
+        );
+        
+        const instruction = await sonormalProgram.methods
+            .sell(
+                new anchor.BN(marketId),
+                new anchor.BN(ticketId),
+                claimAmount,
+                new anchor.BN(Math.trunc(sellMath.tStar * (10 ** 6))),
+                sellMath.alphaPrime
+            )
+            .accounts({
+                sellerAuthority: new PublicKey(sellerAuthority),
+                marketAuthority: marketAuthorityKeypair.publicKey,
+                payer: new PublicKey(payer),
+                liquidityMint: liquidityMint,
+                sellerAta: sellerAta,
+                protocolFeeReceiverAta: protocolFeeReceiverAta,
+                marketFeeReceiverAta: marketFeeReceiverAta,
+                tokenProgram: TOKEN_PROGRAM_ID,
+            })
+            .instruction();
+
+        const blockhash = await solanaRpc.getLatestBlockhash('confirmed');
+
+        const transaction = await buildTransaction(
+            [instruction],
+            blockhash.blockhash,
+            new PublicKey(payer),
+            [marketAuthoritySigner]
+        );
+        if (!transaction.success) {
+            return {
+                success: false,
+                error: transaction.error
+            };
+        }
+
+        return {
+            success: true,
+            transaction: transaction.versionedTransaction.serialize(),
+            tStar: sellMath.tStar
+        };
     } catch (error) {
         console.error(error);
         return {
@@ -272,7 +354,7 @@ export async function getTotalTickets(marketId: string): Promise<number | undefi
     } catch (error) {
         console.error(error);
         return undefined;
-    }    
+    }
 }
 
 export async function getTicket(marketId: string, ticketId: string) {
@@ -308,7 +390,7 @@ async function buildTransaction(
         }).compileToV0Message();
 
         const versionedTransaction = new VersionedTransaction(message);
-        if(signers.length > 0) {
+        if (signers.length > 0) {
             versionedTransaction.sign(signers);
         }
 
