@@ -198,7 +198,7 @@ export default function PortfolioPage() {
                       <TableHead className="text-cyan-300 font-mono tracking-wider py-6 px-6 text-xs uppercase">COST BASIS</TableHead>
                       <TableHead className="text-cyan-300 font-mono tracking-wider py-6 px-6 text-xs uppercase">MARK VALUE</TableHead>
                       <TableHead className="text-cyan-300 font-mono tracking-wider py-6 px-6 text-xs uppercase">UNREALIZED PNL</TableHead>
-                      <TableHead className="text-cyan-300 font-mono tracking-wider py-6 px-6 text-xs uppercase">ACTIONS</TableHead>
+                      <TableHead className="text-cyan-300 font-mono tracking-wider py-6 px-6 text-xs uppercase">DATE</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -219,10 +219,10 @@ export default function PortfolioPage() {
                           </Link>
                         </TableCell>
                         <TableCell className="font-mono text-sm text-white py-4 px-6">
-                          ${(ticket.amount / (10 ** 6)).toFixed(2)}
+                          ${(ticket.collateralAmount / (10 ** 6)).toFixed(2)}
                         </TableCell>
                         <TableCell className="font-mono text-sm text-white py-4 px-6">
-                          ${(ticket.amount / (10 ** 6)).toFixed(2)}
+                          ${(ticket.collateralAmount / (10 ** 6)).toFixed(2)}
                         </TableCell>
                         <TableCell className="py-4 px-6">
                           <div className="flex items-center gap-2">
@@ -235,17 +235,7 @@ export default function PortfolioPage() {
                           </div>
                         </TableCell>
                         <TableCell className="py-4 px-6">
-                          <div className="flex items-center gap-1">
-                            <Button size="sm" variant="outline" className="h-7 w-7 p-0 border-slate-700 hover:bg-slate-800">
-                              <Plus className="w-3 h-3" />
-                            </Button>
-                            <Button size="sm" variant="outline" className="h-7 w-7 p-0 border-slate-700 hover:bg-slate-800">
-                              <Minus className="w-3 h-3" />
-                            </Button>
-                            <Button size="sm" variant="outline" className="h-7 w-7 p-0 border-slate-700 hover:bg-slate-800 text-red-400">
-                              <X className="w-3 h-3" />
-                            </Button>
-                          </div>
+                          {new Date(ticket.createdAt).toLocaleString()}
                         </TableCell>
                       </motion.tr>
                     ))}

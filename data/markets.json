@@ -17,7 +17,7 @@
       "vol24hUSD": 0,
       "category": "Crypto",
       "expiry": "2026-01-01T04:59:00.000Z",
-      "coefficients": [
+      "alpha": [
         0.3,
         0.25,
         0.65,

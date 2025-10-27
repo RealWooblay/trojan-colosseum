@@ -78,3 +78,8 @@ export async function findStoredTicketsByAuthority(authority: string): Promise<T
   const tickets = await readStoredTickets()
   return tickets.filter((ticket) => ticket.authority === authority)
 }
+
+export async function findStoredTicketsByAuthorityAndMarketId(authority: string, marketId: string): Promise<Ticket[]> {
+  const tickets = await readStoredTickets()
+  return tickets.filter((ticket) => ticket.authority === authority && ticket.marketId === marketId)
+}

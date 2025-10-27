@@ -6,7 +6,7 @@ import { Sonormal } from "../../sonormal";
 import SonormalIdl from "../../sonormal.json";
 import { getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { appendStoredMarket } from "../storage";
-import { findControllerPda, findMarketPda } from "./pda";
+import { findControllerPda, findMarketPda, findTicketPda } from "./pda";
 
 const marketAuthorityKeypair = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(process.env.MARKET_AUTHORITY!)));
 const marketAuthorityWallet = new anchor.Wallet(marketAuthorityKeypair);
@@ -57,18 +57,23 @@ export async function newMarket(
             };
         }
 
+        const k = 7;
+        const tolCoeffSum = 1e-10;
+        const epsAlpha = 1e-8;
+        const muDefault = 1.0;
+
         const marketFee = 0;
         const params = {
-            k: Buffer.from([7]),
+            k: Buffer.from([k]),
             l: 0.0,
             h: 100.0,
             unitMapKind: { linear: {} },
-            epsAlpha: 1e-8,
-            tolCoeffSum: 1e-10,
+            epsAlpha: epsAlpha,
+            tolCoeffSum: tolCoeffSum,
             tolProbSum: 1e-6,
             boundaryMarginEta: 1e-4,
             epsDens: 1e-10,
-            muDefault: 1.0,
+            muDefault: muDefault,
         };
 
         const liquidityMint = new PublicKey(process.env.USDC_MINT!);
@@ -141,7 +146,11 @@ export async function newMarket(
             vol24hUSD: 0,
             category: category,
             expiry: new Date(expiry * 1000).toISOString(),
-            coefficients: alpha,
+            alpha: alpha,
+            k: k,
+            tolCoeffSum: tolCoeffSum,
+            epsAlpha: epsAlpha,
+            muDefault: muDefault,
             ranges: [],
             createdAt: new Date().toISOString(),
             stats: {
@@ -240,6 +249,20 @@ export async function buyTransaction(
     }
 }
 
+export async function sellTransaction(
+
+) {
+    try {
+
+    } catch (error) {
+        console.error(error);
+        return {
+            success: false,
+            error: error
+        };
+    }
+}
+
 export async function getTotalTickets(marketId: string): Promise<number | undefined> {
     try {
         const marketPda = findMarketPda(marketId);
@@ -250,6 +273,17 @@ export async function getTotalTickets(marketId: string): Promise<number | undefi
         console.error(error);
         return undefined;
     }    
+}
+
+export async function getTicket(marketId: string, ticketId: string) {
+    try {
+        const ticketPda = findTicketPda(marketId, ticketId);
+        const ticket = await sonormalProgram.account.ticket.fetch(ticketPda);
+        return ticket;
+    } catch (error) {
+        console.error(error);
+        return undefined;
+    }
 }
 
 async function buildTransaction(

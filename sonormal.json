@@ -325,6 +325,10 @@
         {
           "name": "ticket_id",
           "type": "u64"
+        },
+        {
+          "name": "payout",
+          "type": "u64"
         }
       ]
     },
@@ -684,8 +688,12 @@
           "type": "u64"
         },
         {
-          "name": "t_star",
+          "name": "claim_amount",
           "type": "f64"
+        },
+        {
+          "name": "t_star",
+          "type": "u64"
         },
         {
           "name": "alpha_prime",
@@ -749,16 +757,6 @@
         {
           "name": "market_id",
           "type": "u64"
-        },
-        {
-          "name": "weights",
-          "type": {
-            "vec": "f64"
-          }
-        },
-        {
-          "name": "max_weight",
-          "type": "f64"
         }
       ]
     }
@@ -931,7 +929,7 @@
           },
           {
             "name": "total_pool_amount",
-            "type": "f64"
+            "type": "u64"
           },
           {
             "name": "market_fee",
@@ -970,16 +968,6 @@
           {
             "name": "expiry",
             "type": "i64"
-          },
-          {
-            "name": "weights",
-            "type": {
-              "vec": "f64"
-            }
-          },
-          {
-            "name": "max_weight",
-            "type": "f64"
           },
           {
             "name": "settled",

@@ -331,6 +331,10 @@ export type Sonormal = {
         {
           "name": "ticketId",
           "type": "u64"
+        },
+        {
+          "name": "payout",
+          "type": "u64"
         }
       ]
     },
@@ -690,8 +694,12 @@ export type Sonormal = {
           "type": "u64"
         },
         {
-          "name": "tStar",
+          "name": "claimAmount",
           "type": "f64"
+        },
+        {
+          "name": "tStar",
+          "type": "u64"
         },
         {
           "name": "alphaPrime",
@@ -755,16 +763,6 @@ export type Sonormal = {
         {
           "name": "marketId",
           "type": "u64"
-        },
-        {
-          "name": "weights",
-          "type": {
-            "vec": "f64"
-          }
-        },
-        {
-          "name": "maxWeight",
-          "type": "f64"
         }
       ]
     }
@@ -937,7 +935,7 @@ export type Sonormal = {
           },
           {
             "name": "totalPoolAmount",
-            "type": "f64"
+            "type": "u64"
           },
           {
             "name": "marketFee",
@@ -976,16 +974,6 @@ export type Sonormal = {
           {
             "name": "expiry",
             "type": "i64"
-          },
-          {
-            "name": "weights",
-            "type": {
-              "vec": "f64"
-            }
-          },
-          {
-            "name": "maxWeight",
-            "type": "f64"
           },
           {
             "name": "settled",

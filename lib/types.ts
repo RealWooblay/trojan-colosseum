@@ -15,7 +15,11 @@ export type Market = {
   resolvesAt?: string
   description?: string
   expiry: string
-  coefficients: number[]
+  k: number
+  tolCoeffSum: number
+  epsAlpha: number
+  muDefault: number
+  alpha: number[]
   ranges?: [number, number][]
   createdAt: string
   txSignature: string
@@ -36,8 +40,9 @@ export type Ticket = {
   id: string
   marketId: string
   authority: string
-  coefficients: number[]
-  amount: number
+  pTrade: number[]
+  collateralAmount: number
+  claimAmount: number
   createdAt: string
   txSignature: string
 }

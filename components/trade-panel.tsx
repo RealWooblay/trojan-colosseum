@@ -1,4 +1,4 @@
- "use client"
+"use client"
 
 import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
@@ -7,13 +7,14 @@ import { Label } from "@/components/ui/label"
 import { fmtPct, fmtUSD, fmtNum } from "@/lib/formatters"
 import { TrendingUp, TrendingDown, Plus, Minus } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import type { Market } from "@/lib/types"
+import type { Market, Ticket } from "@/lib/types"
 import { rangesToCoefficients, MAX_COEFFICIENTS, MAX_RANGE_SLOTS } from "@/lib/trade-utils"
-import { buyTransaction, getTotalTickets } from "@/lib/sonormal/program"
+import { buyTransaction, getTicket, getTotalTickets } from "@/lib/sonormal/program"
 import { useAppKitProvider, useAppKitAccount } from "@reown/appkit/react"
 import type { Provider } from "@reown/appkit-adapter-solana/react"
 import { VersionedTransaction, PublicKey, TransactionMessage, TransactionInstruction } from "@solana/web3.js"
-import { appendStoredTicket } from "@/lib/storage"
+import { appendStoredTicket, findStoredTicket, findStoredTicketsByAuthorityAndMarketId } from "@/lib/storage"
+import { fetchSellMath } from "@/lib/sonormal/math"
 
 interface TradePanelProps {
   market: Market
@@ -43,12 +44,16 @@ export function TradePanel({
   const { walletProvider } = useAppKitProvider<Provider>("solana");
   const { address, isConnected } = useAppKitAccount();
 
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+
   const domain = market.domain
   const ranges = selectedRanges || [[domain.min, domain.max]]
 
   const [amount, setAmount] = useState("500")
   const [side, setSide] = useState<"buy" | "sell">("buy")
-  const [errors, setErrors] = useState<{ amount?: string }>({})
+  const [selectedTicketId, setSelectedTicketId] = useState<string>("")
+  const [sellAmount, setSellAmount] = useState("")
+  const [errors, setErrors] = useState<{ amount?: string; ticket?: string; sellAmount?: string }>({})
   const { toast } = useToast()
   const isBuy = side === "buy"
 
@@ -73,17 +78,38 @@ export function TradePanel({
   )
 
   useEffect(() => {
-    const num = Number.parseFloat(amount)
-    const needsCoefficients = isBuy
-    const hasCoefficients = coefficients.length > 0
+    if (isBuy) {
+      const num = Number.parseFloat(amount)
+      const needsCoefficients = isBuy
+      const hasCoefficients = coefficients.length > 0
 
-    if (!isNaN(num) && (!needsCoefficients || hasCoefficients)) {
-      const timeoutId = setTimeout(() => {
-        onTradePreview(side, num, isBuy ? coefficients : undefined)
-      }, 150)
-      return () => clearTimeout(timeoutId)
+      if (!isNaN(num) && (!needsCoefficients || hasCoefficients)) {
+        const timeoutId = setTimeout(() => {
+          onTradePreview(side, num, isBuy ? coefficients : undefined)
+        }, 150)
+        return () => clearTimeout(timeoutId)
+      }
+    } else {
+      const num = Number.parseFloat(sellAmount)
+      if (!isNaN(num) && selectedTicketId) {
+        const timeoutId = setTimeout(() => {
+          onTradePreview(side, num)
+        }, 150)
+        return () => clearTimeout(timeoutId)
+      }
     }
-  }, [amount, side, coefficients, isBuy, onTradePreview])
+  }, [amount, sellAmount, side, coefficients, isBuy, onTradePreview, selectedTicketId])
+
+  useEffect(() => {
+    if (!address) return;
+    findStoredTicketsByAuthorityAndMarketId(address, market.id)
+      .then((tickets) => {
+        setTickets(tickets)
+      })
+      .catch((error) => {
+        console.error(error)
+      })
+  }, [address, market.id])
 
   const handleAmountChange = (value: string) => {
     setAmount(value)
@@ -100,7 +126,34 @@ export function TradePanel({
     setAmount((current + delta).toString())
   }
 
-  const handleConfirm = async () => {   
+  const adjustSellAmount = (delta: number) => {
+    const current = Number.parseFloat(sellAmount) || 0
+    setSellAmount((current + delta).toString())
+  }
+
+  const handleSellAmountChange = (value: string) => {
+    setSellAmount(value)
+    const num = Number.parseFloat(value)
+    const selectedTicket = tickets.find(t => t.id === selectedTicketId)
+    const maxAmount = selectedTicket ? selectedTicket.collateralAmount / (10 ** 6) : 0
+
+    if (isNaN(num)) {
+      setErrors((prev) => ({ ...prev, sellAmount: "Invalid amount" }))
+    } else if (num > maxAmount) {
+      setErrors((prev) => ({ ...prev, sellAmount: `Cannot sell more than ${maxAmount < 0.01 ? maxAmount.toFixed(6) : maxAmount.toFixed(2)} USDC` }))
+    } else {
+      setErrors((prev) => ({ ...prev, sellAmount: undefined }))
+    }
+  }
+
+  const handleTicketSelect = (ticketId: string) => {
+    setSelectedTicketId(ticketId)
+    setErrors((prev) => ({ ...prev, ticket: undefined }))
+    // Reset sell amount when ticket changes
+    setSellAmount("")
+  }
+
+  const handleConfirm = async () => {
     if (!address || !isConnected) {
       toast({
         title: "Not connected",
@@ -110,9 +163,17 @@ export function TradePanel({
       return
     }
 
+    if (isBuy) {
+      await handleBuy(address)
+    } else {
+      await handleSell(address)
+    }
+  }
+
+  const handleBuy = async (address: string) => {
     const num = Number.parseFloat(amount)
 
-    if (isBuy && coefficients.length === 0) {
+    if (coefficients.length === 0) {
       toast({
         title: "Add a coefficient",
         description: "Create at least one range to generate coefficients.",
@@ -131,12 +192,13 @@ export function TradePanel({
     }
 
     try {
+      const transactionAmount = isBuy ? Number.parseFloat(amount) : Number.parseFloat(sellAmount)
       const transaction = await buyTransaction(
         Number(market.id),
         address,
         address,
         coefficients,
-        Math.trunc(num * (10 ** 6))
+        Math.trunc(transactionAmount * (10 ** 6))
       )
       if (!transaction.success) {
         toast({
@@ -163,20 +225,31 @@ export function TradePanel({
         return
       }
 
+      const ticket = await getTicket(market.id, (totalTickets - 1).toString());
+      if (!ticket) {
+        toast({
+          title: "Failed to retrieve ticket",
+          description: "Please try again",
+          variant: "destructive",
+        })
+        return
+      }
+
       await appendStoredTicket({
         id: (totalTickets - 1).toString(),
         marketId: market.id,
         authority: address,
-        coefficients: coefficients,
-        amount: Math.trunc(num * (10 ** 6)),
+        pTrade: coefficients,
+        collateralAmount: Math.trunc(transactionAmount * (10 ** 6)),
+        claimAmount: ticket.claim,
         createdAt: new Date().toISOString(),
         txSignature: result,
       });
-      
+
       toast({
         title: "Buy successful",
         description: (
-          <a 
+          <a
             href={`https://solscan.io/tx/${result}?cluster=devnet`}
             target="_blank"
             rel="noopener noreferrer"
@@ -197,8 +270,51 @@ export function TradePanel({
     }
   }
 
-  const isValidAmount = !errors.amount && !isNaN(Number.parseFloat(amount))
-  const hasCoefficients = coefficients.length === market.coefficients.length
+  const handleSell = async (address: string) => {
+    if (!selectedTicketId) {
+      toast({
+        title: "Select a ticket",
+        description: "Please select a ticket to sell from.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    const num = Number.parseFloat(sellAmount)
+    if (isNaN(num)) {
+      toast({
+        title: "Invalid amount",
+        description: "Invalid sell amount provided",
+        variant: "destructive",
+      })
+      return
+    }
+
+    const ticket = await findStoredTicket(selectedTicketId);
+    if (!ticket) {
+      toast({
+        title: "Failed to retrieve ticket",
+        description: "Please try again",
+        variant: "destructive",
+      })
+      return
+    }
+
+    const sellMath = await fetchSellMath(
+      market.k,
+      market.tolCoeffSum,
+      market.epsAlpha,
+      market.muDefault,
+      market.alpha,
+      ticket.pTrade,
+      ticket.claimAmount
+    )
+
+    console.log(sellMath);
+  }
+
+  const isValidAmount = isBuy ? (!errors.amount && !isNaN(Number.parseFloat(amount))) : (!errors.sellAmount && !isNaN(Number.parseFloat(sellAmount)) && selectedTicketId)
+  const hasCoefficients = coefficients.length === market.alpha.length
 
   return (
     <div className="glass-card p-6 space-y-6 sticky top-20">
@@ -240,6 +356,45 @@ export function TradePanel({
           </Button>
         </div>
       </div>
+
+      {/* Ticket Selection for Sell */}
+      {!isBuy && (
+        <div className="space-y-3">
+          <Label className="text-sm font-semibold">Select Ticket</Label>
+          {tickets.length === 0 ? (
+            <div className="text-center py-6 text-muted-foreground">
+              <p className="text-sm">No tickets found for this market</p>
+              <p className="text-xs mt-1">You need to buy tickets first before you can sell</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {tickets.map((ticket) => (
+                <div
+                  key={ticket.id}
+                  className={`p-3 rounded-lg border cursor-pointer transition-all ${selectedTicketId === ticket.id
+                      ? 'border-cyan-400 bg-cyan-400/10'
+                      : 'border-white/10 hover:border-white/20'
+                    }`}
+                  onClick={() => handleTicketSelect(ticket.id)}
+                >
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <div className="text-sm font-mono">Ticket #{ticket.id}</div>
+                      <div className="text-xs text-muted-foreground">
+                        ${(ticket.collateralAmount / (10 ** 6)).toFixed(2)} • {new Date(ticket.createdAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {selectedTicketId === ticket.id ? '✓' : ''}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {errors.ticket && <p className="text-xs text-destructive">{errors.ticket}</p>}
+        </div>
+      )}
 
       {/* Multi-Range Management */}
       {isBuy && selectedRanges && (
@@ -350,33 +505,125 @@ export function TradePanel({
         </div>
       )}
 
-      <div className="space-y-2">
-        <Label>Total Amount (USDC)</Label>
-        <div className="flex gap-2">
-          <Input
-            type="number"
-            value={amount}
-            onChange={(e) => handleAmountChange(e.target.value)}
-            placeholder="500"
-            className={`font-mono bg-white/5 border-white/10 flex-1 ${errors.amount ? "border-destructive" : ""}`}
-          />
-          <Button variant="outline" size="icon" onClick={() => adjustAmount(-100)}>
-            <Minus className="w-4 h-4" />
-          </Button>
-          <Button variant="outline" size="icon" onClick={() => adjustAmount(100)}>
-            <Plus className="w-4 h-4" />
-          </Button>
+      {/* Amount Input - Different for Buy vs Sell */}
+      {isBuy ? (
+        <div className="space-y-2">
+          <Label>Total Amount (USDC)</Label>
+          <div className="flex gap-2">
+            <Input
+              type="number"
+              value={amount}
+              onChange={(e) => handleAmountChange(e.target.value)}
+              placeholder="500"
+              className={`font-mono bg-white/5 border-white/10 flex-1 ${errors.amount ? "border-destructive" : ""}`}
+            />
+            <Button variant="outline" size="icon" onClick={() => adjustAmount(-100)}>
+              <Minus className="w-4 h-4" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={() => adjustAmount(100)}>
+              <Plus className="w-4 h-4" />
+            </Button>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setAmount("250")} className="text-xs">
+              Quick $250
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setAmount("1000")} className="text-xs">
+              Reset $1k
+            </Button>
+          </div>
+          {errors.amount && <p className="text-xs text-destructive">{errors.amount}</p>}
         </div>
-        <div className="flex gap-2">
-          <Button variant="ghost" size="sm" onClick={() => setAmount("250")} className="text-xs">
-            Quick $250
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => setAmount("1000")} className="text-xs">
-            Reset $1k
-          </Button>
+      ) : (
+        <div className="space-y-2">
+          <Label>Sell Amount (USDC)</Label>
+          {selectedTicketId ? (
+            <>
+              <div className="flex gap-2">
+                <Input
+                  type="number"
+                  value={sellAmount}
+                  onChange={(e) => handleSellAmountChange(e.target.value)}
+                  placeholder="0"
+                  className={`font-mono bg-white/5 border-white/10 flex-1 ${errors.sellAmount ? "border-destructive" : ""}`}
+                />
+                <Button variant="outline" size="icon" onClick={() => adjustSellAmount(-50)}>
+                  <Minus className="w-4 h-4" />
+                </Button>
+                <Button variant="outline" size="icon" onClick={() => adjustSellAmount(50)}>
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    const selectedTicket = tickets.find(t => t.id === selectedTicketId)
+                    if (selectedTicket) {
+                      const amount = selectedTicket.collateralAmount / (10 ** 6)
+                      const percent25 = amount * 0.25
+                      setSellAmount(percent25 < 0.01 ? percent25.toFixed(6) : percent25.toFixed(2))
+                    }
+                  }}
+                  className="text-xs"
+                >
+                  25%
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    const selectedTicket = tickets.find(t => t.id === selectedTicketId)
+                    if (selectedTicket) {
+                      const amount = selectedTicket.collateralAmount / (10 ** 6)
+                      const percent50 = amount * 0.5
+                      setSellAmount(percent50 < 0.01 ? percent50.toFixed(6) : percent50.toFixed(2))
+                    }
+                  }}
+                  className="text-xs"
+                >
+                  50%
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    const selectedTicket = tickets.find(t => t.id === selectedTicketId)
+                    if (selectedTicket) {
+                      const amount = selectedTicket.collateralAmount / (10 ** 6)
+                      const percent75 = amount * 0.75
+                      setSellAmount(percent75 < 0.01 ? percent75.toFixed(6) : percent75.toFixed(2))
+                    }
+                  }}
+                  className="text-xs"
+                >
+                  75%
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    const selectedTicket = tickets.find(t => t.id === selectedTicketId)
+                    if (selectedTicket) {
+                      const amount = selectedTicket.collateralAmount / (10 ** 6)
+                      setSellAmount(amount < 0.01 ? amount.toFixed(6) : amount.toFixed(2))
+                    }
+                  }}
+                  className="text-xs"
+                >
+                  Max
+                </Button>
+              </div>
+              {errors.sellAmount && <p className="text-xs text-destructive">{errors.sellAmount}</p>}
+            </>
+          ) : (
+            <div className="text-center py-4 text-muted-foreground">
+              <p className="text-sm">Select a ticket above to specify sell amount</p>
+            </div>
+          )}
         </div>
-        {errors.amount && <p className="text-xs text-destructive">{errors.amount}</p>}
-      </div>
+      )}
 
       {isBuy && (
         <div className="space-y-2">
@@ -463,7 +710,7 @@ export function TradePanel({
         size="lg"
         disabled={!isValidAmount || (isBuy && !hasCoefficients)}
       >
-        Confirm {side === "buy" ? "Buy" : "Sell"}
+        {side === "buy" ? "Confirm Buy" : selectedTicketId ? "Confirm Sell" : "Select Ticket First"}
       </Button>
     </div>
   )

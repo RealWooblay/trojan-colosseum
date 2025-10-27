@@ -10,13 +10,18 @@ export function findControllerPda() {
     )[0];
 }
 
-export function findMarketPda(marketId: string) {
-    // marketId is a u64, needs to be serialized as 8 bytes in little-endian format
-    const marketIdBN = new BN(marketId);
-    const marketIdBuffer = marketIdBN.toArrayLike(Buffer, "le", 8);
-    
+export function findMarketPda(marketId: string) {    
     return PublicKey.findProgramAddressSync(
-        [Buffer.from('MARKET'), marketIdBuffer],
+        [Buffer.from('MARKET'), new BN(marketId).toArrayLike(Buffer, "le")],
         programId
     )[0];
+}
+
+export function findTicketPda(marketId: string, ticketId: string) {
+    const marketPda = findMarketPda(marketId);
+    return PublicKey.findProgramAddressSync([
+        Buffer.from('TICKET'), 
+        marketPda.toBuffer(), 
+        new BN(ticketId).toArrayLike(Buffer, "le")
+    ], programId)[0];
 }
