@@ -143,7 +143,6 @@ export function TradePanel({
   }
 
   const handleConfirm = async () => {
-  const handleConfirm = async () => {
     if (!address || !isConnected) {
       toast({
         title: "Not connected",
@@ -242,7 +241,6 @@ export function TradePanel({
       toast({
         title: "Buy successful",
         description: (
-          <a
           <a
             href={`https://solscan.io/tx/${result}?cluster=devnet`}
             target="_blank"

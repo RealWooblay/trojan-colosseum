@@ -13,6 +13,7 @@ import type { PdfPoint } from "@/lib/types"
 import { ArrowLeft, ArrowRight, CheckCircle, Plus, Minus } from "lucide-react"
 import { motion } from "framer-motion"
 import { MAX_RANGE_SLOTS, rangesToCoefficients } from "@/lib/trade-utils"
+import { newMarket } from "@/lib/sonormal/program"
 
 const DOMAIN = { min: 0, max: 100 }
 
@@ -82,38 +83,36 @@ export default function CreateMarketPage() {
     setIsSubmitting(true)
 
     try {
-      const response = await fetch("/api/markets", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title,
-          description,
-          category,
-          unit,
-          expiry,
-          coefficients,
-          ranges,
-        }),
-      })
+      const result = await newMarket(
+        title, 
+        description, 
+        unit, 
+        category, 
+        coefficients, 
+        Number(expiry) / 1000
+      )
 
-      const created = await response.json().catch(() => null)
-
-      if (!response.ok || !created) {
-        throw created || { error: "Failed to create market" }
+      if (!result.success) {
+        toast({
+          title: "Creation failed",
+          description: result.error,
+          variant: "destructive",
+        })
+        return
       }
 
       toast({
         title: "Market created",
-        description: created.txSignature ? (
+        description: (
           <a
-            href={`https://solscan.io/tx/${created.txSignature}`}
+            href={`https://solscan.io/tx/${result.signature}`}
             target="_blank"
             rel="noopener noreferrer"
             className="underline hover:text-cyan-400"
           >
             View on Solscan
           </a>
-        ) : "Stored locally.",
+        )
       })
 
       router.push("/markets")

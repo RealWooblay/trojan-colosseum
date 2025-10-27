@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import type { Market } from "@/lib/types"
 import { Search, Filter } from "lucide-react"
 import { motion } from "framer-motion"
+import { readStoredMarkets } from "@/lib/storage"
 
 export default function MarketsPage() {
   const [markets, setMarkets] = useState<Market[]>([])
@@ -16,12 +17,10 @@ export default function MarketsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
 
   useEffect(() => {
-    fetch("/api/markets")
-      .then((res) => res.json())
-      .then((data) => {
-        setMarkets(data)
-        setLoading(false)
-      })
+    readStoredMarkets().then((markets) => {
+      setMarkets(markets)
+      setLoading(false)
+    })
   }, [])
 
   const categories = Array.from(new Set(markets.map((m) => m.category)))

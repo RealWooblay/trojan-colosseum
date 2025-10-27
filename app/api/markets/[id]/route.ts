@@ -23,7 +23,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
     const domain = storedMarket.domain
     const baseRanges = storedMarket.ranges && storedMarket.ranges.length > 0
       ? storedMarket.ranges
-      : coefficientsToRanges(storedMarket.coefficients ?? [], domain)
+      : coefficientsToRanges(storedMarket.alpha ?? [], domain)
     const basePdf = baseRanges.length > 0
       ? projectGhostFromRanges(generateUniformPdf(domain), baseRanges, domain)
       : generateUniformPdf(domain)
