@@ -105,9 +105,32 @@ export function fmtAxis(x: number, unit: string): string {
  * Calculate range probability from PDF data
  */
 export function calcRangeProb(data: { x: number; y: number }[], range: [number, number]): number {
+  if (!data || data.length < 2) return 0
   const [min, max] = range
-  const filtered = data.filter((p) => p.x >= min && p.x <= max)
-  const sum = filtered.reduce((acc, p) => acc + p.y, 0)
-  const dx = data.length > 1 ? data[1].x - data[0].x : 1
-  return sum * dx
+  if (min >= max) return 0
+
+  let mass = 0
+
+  for (let i = 0; i < data.length - 1; i++) {
+    const p1 = data[i]
+    const p2 = data[i + 1]
+    const segmentWidth = p2.x - p1.x
+    if (segmentWidth <= 0) continue
+
+    if (p2.x <= min || p1.x >= max) continue
+
+    const segmentStart = Math.max(p1.x, min)
+    const segmentEnd = Math.min(p2.x, max)
+    if (segmentEnd <= segmentStart) continue
+
+    const startRatio = (segmentStart - p1.x) / segmentWidth
+    const endRatio = (segmentEnd - p1.x) / segmentWidth
+
+    const startY = p1.y + (p2.y - p1.y) * startRatio
+    const endY = p1.y + (p2.y - p1.y) * endRatio
+
+    mass += ((startY + endY) * 0.5) * (segmentEnd - segmentStart)
+  }
+
+  return mass
 }

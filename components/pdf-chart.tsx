@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useMemo } from "react"
+import React, { useMemo } from "react"
 import {
   AreaChart,
   Area,
@@ -50,7 +50,6 @@ export function PdfChart({
 }: PdfChartProps) {
   // Use selectedRanges if available, otherwise fall back to selectedRange for backward compatibility
   const ranges = selectedRanges || (selectedRange ? [selectedRange] : [])
-  const [localRange, setLocalRange] = useState<[number, number]>(ranges[0] || [domain.min, domain.max])
 
   const mode = useMemo(() => findMode(data), [data])
   const calculatedMean = useMemo(() => {
@@ -60,9 +59,16 @@ export function PdfChart({
   }, [data])
 
   const rangeProb = useMemo(() => {
-    return calcRangeProb(data, selectedRange || localRange)
-  }, [data, selectedRange, localRange])
+    if (!ranges.length) return 0
+    const total = ranges.reduce((sum, range) => sum + calcRangeProb(data, range), 0)
+    return Math.min(1, total)
+  }, [data, ranges])
 
+  const maxDensity = useMemo(() => {
+    const baseMax = data.reduce((max, point) => Math.max(max, point.y), 0)
+    const ghostMax = ghostData?.reduce((max, point) => Math.max(max, point.y), 0) ?? 0
+    return Math.max(baseMax, ghostMax)
+  }, [data, ghostData])
 
   return (
     <div className="space-y-4">
@@ -78,9 +84,11 @@ export function PdfChart({
           <div className="text-sm text-muted-foreground mb-1">Market Price</div>
           <div className="font-bold text-white text-lg">{fmtOutcome(calculatedMean, unit)}</div>
         </div>
-        {localRange && (
+        {ranges.length > 0 && (
           <div className="text-center">
-            <div className="text-sm text-muted-foreground mb-1">Your Range</div>
+            <div className="text-sm text-muted-foreground mb-1">
+              {ranges.length > 1 ? "Your Ranges" : "Your Range"}
+            </div>
             <div className="font-bold text-green-400 text-lg">{fmtPct(rangeProb * 100)}</div>
           </div>
         )}
@@ -183,12 +191,12 @@ export function PdfChart({
                 fill: "rgba(255,255,255,0.95)",
                 fontSize: 12,
               }}
-              domain={[0, 'dataMax']}
+              domain={maxDensity > 0 ? [0, maxDensity * 1.15] : [0, 'dataMax']}
               scale="linear"
             />
 
             <Tooltip
-              content={<CustomTooltip unit={unit} selectedRange={selectedRange} allData={data} />}
+              content={<CustomTooltip unit={unit} selectedRange={selectedRange} selectedRanges={ranges} allData={data} />}
               cursor={{ stroke: "rgba(0,224,255,0.5)", strokeWidth: 2 }}
             />
 

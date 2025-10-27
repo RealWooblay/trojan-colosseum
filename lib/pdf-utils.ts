@@ -156,7 +156,7 @@ export function calculateMassInRange(pdf: PdfPoint[], range: [number, number]): 
 
 // Simulate reweighting PDF after a trade with smooth transitions
 export function reweightPdf(pdf: PdfPoint[], range: [number, number], deltaMass: number): PdfPoint[] {
-  const rangeWidth = range[1] - range[0]
+  const rangeWidth = Math.max(range[1] - range[0], 1e-6)
   const rangeCenter = (range[0] + range[1]) / 2
 
   // Create a smooth transition function using sigmoid-like curve
@@ -167,16 +167,19 @@ export function reweightPdf(pdf: PdfPoint[], range: [number, number], deltaMass:
     return 0.5 * (1 + Math.cos(Math.PI * distance))
   }
 
-  return pdf.map((point) => {
+  const reweighted = pdf.map((point) => {
     // Calculate smooth weight based on distance from range center
     const weight = smoothTransition(point.x, rangeCenter, rangeWidth)
 
     // Apply density change with smooth transition
-    const densityChange = deltaMass * weight / rangeWidth
+    const densityChange = (deltaMass * weight) / rangeWidth
     const newY = Math.max(0, point.y + densityChange)
 
     return { x: point.x, y: newY }
   })
+
+  // Renormalize so the resulting PDF still integrates to 1
+  return normalizePdf(reweighted)
 }
 
 // Convert PDF to CDF
@@ -194,4 +197,102 @@ export function pdfToCdf(pdf: PdfPoint[]): PdfPoint[] {
   }
 
   return cdf
+}
+
+type PreparedRange = {
+  min: number
+  max: number
+  span: number
+  center: number
+  weight: number
+}
+
+/**
+ * Blend the live PDF with a user-crafted mixture derived from their ranges.
+ * The base curve stays untouched; we only compute the hypothetical overlay.
+ */
+export function projectGhostFromRanges(
+  pdf: PdfPoint[],
+  ranges: [number, number][],
+  domain: { min: number; max: number },
+): PdfPoint[] {
+  if (!pdf.length || !ranges.length) return []
+
+  const normalizedPdf = normalizePdf(pdf)
+  const preparedRanges = prepareRanges(ranges, domain)
+  if (!preparedRanges.length) return []
+
+  const domainRange = Math.max(domain.max - domain.min, 1)
+  const totalCoverage = preparedRanges.reduce((sum, range) => sum + range.span, 0) / domainRange
+  const influenceStrength = Math.min(0.85, 0.25 + totalCoverage * 0.5 + preparedRanges.length * 0.05)
+
+  const ghost = normalizedPdf.map((point) => {
+    const mixtureDensity = preparedRanges.reduce(
+      (sum, range) => sum + gaussianBump(point.x, range) * range.weight,
+      0,
+    )
+    const blended = (1 - influenceStrength) * point.y + influenceStrength * mixtureDensity
+    return { x: point.x, y: Math.max(0, blended) }
+  })
+
+  return normalizePdf(ghost)
+}
+
+function normalizePdf(points: PdfPoint[]): PdfPoint[] {
+  if (points.length < 2) return points
+
+  let mass = 0
+  for (let i = 1; i < points.length; i++) {
+    const dx = points[i].x - points[i - 1].x
+    const avgY = (points[i].y + points[i - 1].y) / 2
+    mass += avgY * dx
+  }
+
+  if (!isFinite(mass) || mass <= 0) {
+    return points
+  }
+
+  return points.map((point) => ({
+    x: point.x,
+    y: point.y / mass,
+  }))
+}
+
+function prepareRanges(ranges: [number, number][], domain: { min: number; max: number }): PreparedRange[] {
+  const domainRange = Math.max(domain.max - domain.min, 1)
+  const sanitized = ranges
+    .map(([a, b]) => {
+      const rawMin = Math.min(a, b)
+      const rawMax = Math.max(a, b)
+      const min = Math.max(domain.min, rawMin)
+      const max = Math.min(domain.max, rawMax)
+      return { min, max }
+    })
+    .map(({ min, max }) => {
+      const rawSpan = Math.max(max - min, domainRange * 0.005)
+      const cappedMax = Math.min(domain.max, min + rawSpan)
+      const span = Math.max(cappedMax - min, domainRange * 0.003)
+      return {
+        min,
+        max: cappedMax,
+        span,
+        center: min + span / 2,
+      }
+    })
+    .filter((range) => range.max > range.min && Number.isFinite(range.span))
+
+  if (!sanitized.length) return []
+
+  const spanSum = sanitized.reduce((sum, range) => sum + range.span, 0)
+
+  return sanitized.map((range) => ({
+    ...range,
+    weight: spanSum > 0 ? range.span / spanSum : 1 / sanitized.length,
+  }))
+}
+
+function gaussianBump(x: number, range: PreparedRange): number {
+  const sigma = Math.max(range.span / 2.8, range.span * 0.2)
+  const diff = (x - range.center) / sigma
+  return Math.exp(-0.5 * diff * diff) / (sigma * Math.sqrt(2 * Math.PI))
 }

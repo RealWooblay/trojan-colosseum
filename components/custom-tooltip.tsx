@@ -9,17 +9,32 @@ interface CustomTooltipProps {
   label?: number
   unit: string
   selectedRange?: [number, number]
+  selectedRanges?: [number, number][]
   allData: PdfPoint[]
 }
 
-export function CustomTooltip({ active, payload, label, unit, selectedRange, allData }: CustomTooltipProps) {
+export function CustomTooltip({
+  active,
+  payload,
+  label,
+  unit,
+  selectedRange,
+  selectedRanges,
+  allData,
+}: CustomTooltipProps) {
   if (!active || !payload || !payload.length || label === undefined) {
     return null
   }
 
   const density = payload[0].value
-  const cumulativeProb = selectedRange ? calculateCumulativeProbability(allData, selectedRange) : 0
+  const ranges =
+    (selectedRanges && selectedRanges.length > 0 ? selectedRanges : selectedRange ? [selectedRange] : []) ?? []
+  const matchingRange = ranges.find((range) => label >= range[0] && label <= range[1])
+  const matchingRangeProb = matchingRange ? calculateCumulativeProbability(allData, matchingRange) : 0
+  const matchingRangeIndex = matchingRange ? ranges.findIndex((range) => range === matchingRange) : -1
   const liquidityDepth = assessLiquidityDepth(allData, label)
+  const rangeLabel =
+    matchingRange && matchingRangeIndex >= 0 && ranges.length > 1 ? `Range ${matchingRangeIndex + 1} Prob:` : "Range Prob:"
 
   return (
     <div
@@ -34,10 +49,10 @@ export function CustomTooltip({ active, payload, label, unit, selectedRange, all
           <span className="font-mono font-semibold">{density.toFixed(3)}</span>
         </div>
 
-        {selectedRange && label >= selectedRange[0] && label <= selectedRange[1] && (
+        {matchingRange && (
           <div className="flex justify-between gap-6">
-            <span className="text-muted-foreground">Range Prob:</span>
-            <span className="font-mono font-semibold text-primary">{(cumulativeProb * 100).toFixed(1)}%</span>
+            <span className="text-muted-foreground">{rangeLabel}</span>
+            <span className="font-mono font-semibold text-primary">{(matchingRangeProb * 100).toFixed(1)}%</span>
           </div>
         )}
 
