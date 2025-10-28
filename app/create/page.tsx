@@ -84,18 +84,18 @@ export default function CreateMarketPage() {
 
     try {
       const result = await newMarket(
-        title, 
-        description, 
-        unit, 
-        category, 
-        coefficients, 
+        title,
+        description,
+        unit,
+        category,
+        coefficients,
         new Date(expiry).getTime() / 1000
       )
 
       if (!result.success) {
         toast({
           title: "Creation failed",
-          description: result.error,
+          description: typeof result.error === 'string' ? result.error : result.error?.message || 'Unknown error occurred',
           variant: "destructive",
         })
         return
@@ -154,13 +154,12 @@ export default function CreateMarketPage() {
           {[1, 2].map((s) => (
             <div key={s} className="flex items-center gap-4">
               <div
-                className={`w-12 h-12 border-2 flex items-center justify-center font-bold font-mono tracking-wider transition-all duration-300 ${
-                  s === step
-                    ? "border-cyan-400 bg-cyan-400 text-black neon-glow"
-                    : s < step
-                      ? "border-cyan-400/50 bg-cyan-400/20 text-cyan-400"
-                      : "border-cyan-400/30 bg-black/50 text-cyan-300"
-                }`}
+                className={`w-12 h-12 border-2 flex items-center justify-center font-bold font-mono tracking-wider transition-all duration-300 ${s === step
+                  ? "border-cyan-400 bg-cyan-400 text-black neon-glow"
+                  : s < step
+                    ? "border-cyan-400/50 bg-cyan-400/20 text-cyan-400"
+                    : "border-cyan-400/30 bg-black/50 text-cyan-300"
+                  }`}
               >
                 {s < step ? <CheckCircle className="w-6 h-6" /> : s}
               </div>

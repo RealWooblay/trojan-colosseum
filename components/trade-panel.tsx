@@ -198,7 +198,7 @@ export function TradePanel({
       if (!transaction.success) {
         toast({
           title: "Trade failed",
-          description: transaction.error,
+          description: typeof transaction.error === 'string' ? transaction.error : transaction.error?.message || 'Transaction failed',
           variant: "destructive",
         })
         return
@@ -286,7 +286,7 @@ export function TradePanel({
         })
         return
       }
-  
+
       const ticket = await findStoredTicket(selectedTicketId);
       if (!ticket) {
         toast({
@@ -309,7 +309,7 @@ export function TradePanel({
       if (!transactionResult.success) {
         toast({
           title: "Trade failed",
-          description: transactionResult.error,
+          description: typeof transactionResult.error === 'string' ? transactionResult.error : transactionResult.error?.message || 'Transaction failed',
           variant: "destructive",
         })
         return

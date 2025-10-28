@@ -32,6 +32,7 @@ export type Market = {
   epsAlpha: number
   muDefault: number
   alpha: number[]
+  coefficients?: number[]
   ranges?: [number, number][]
   createdAt: string
   txSignature: string

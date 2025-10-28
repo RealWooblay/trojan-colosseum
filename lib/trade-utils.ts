@@ -95,11 +95,11 @@ export function rangesToCoefficients(
 
   const totalMass = masses.reduce((sum, value) => sum + value, 0)
   if (!Number.isFinite(totalMass) || totalMass <= 0) {
-    return normalizeAlpha([], cappedRanges.length)
+    return normalizeAlpha([], maxCoefficients)
   }
 
   const weights = masses.map((mass) => mass / totalMass)
-  return normalizeAlpha(weights, weights.length)
+  return normalizeAlpha(weights, maxCoefficients)
 }
 
 export function coefficientsToRanges(coefficients: number[], domain: Domain): [number, number][] {

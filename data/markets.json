@@ -1,13 +1,13 @@
 {
   "data": [
     {
-      "id": "27",
-      "title": "Solana Price on Dec 31st 2025",
-      "description": "",
+      "id": "29",
+      "title": "ETH in 2027",
+      "description": "Because",
       "unit": "USD",
       "domain": {
         "min": 0,
-        "max": 0
+        "max": 100
       },
       "prior": {
         "kind": "normal",
@@ -16,24 +16,124 @@
       "liquidityUSD": 0,
       "vol24hUSD": 0,
       "category": "Crypto",
-      "expiry": "2026-01-01T04:59:00.000Z",
+      "expiry": "2027-01-14T12:00:00.000Z",
+      "resolvesAt": "2027-01-14T12:00:00.000Z",
       "alpha": [
-        0.5,
-        0.49999999999999994
+        0.49663296683501684,
+        0.5033669731649828,
+        9.99999999999996e-9,
+        9.99999999999996e-9,
+        9.99999999999996e-9,
+        9.99999999999996e-9,
+        9.99999999999996e-9,
+        9.99999999999996e-9
       ],
-      "k": 1,
+      "k": 7,
       "tolCoeffSum": 1e-10,
       "epsAlpha": 1e-8,
       "muDefault": 1,
-      "ranges": [],
-      "createdAt": "2025-10-27T10:36:38.734Z",
+      "coefficients": [
+        0.49663296683501684,
+        0.5033669731649828,
+        9.99999999999996e-9,
+        9.99999999999996e-9,
+        9.99999999999996e-9,
+        9.99999999999996e-9,
+        9.99999999999996e-9,
+        9.99999999999996e-9
+      ],
+      "ranges": [
+        [
+          0,
+          49.663296683501684
+        ],
+        [
+          49.663296683501684,
+          99.99999399999996
+        ],
+        [
+          99.99999399999996,
+          99.99999499999996
+        ],
+        [
+          99.99999499999996,
+          99.99999599999995
+        ],
+        [
+          99.99999599999995,
+          99.99999699999995
+        ],
+        [
+          99.99999699999995,
+          99.99999799999995
+        ],
+        [
+          99.99999799999995,
+          99.99999899999995
+        ],
+        [
+          99.99999899999995,
+          99.99999999999994
+        ]
+      ],
+      "createdAt": "2025-10-28T02:34:17.821Z",
       "stats": {
         "mean": 0,
         "variance": 0,
         "skew": 0,
         "kurtosis": 0
       },
-      "txSignature": "3awSYL8BC7S2xFSa8Chq9SRafQ8obM3bK89uUaWAKiSoZFjGKFvgscho3pntZrVT2JU8cFXmv4XSBBMKTc71nVCC"
+      "txSignature": "2Xu1Kp6XxfLrbEqdkj3ybR19wdZBaJChBRhBNxaF8ivMi71g6eXpaR4mb9RRKToFjHnN5hDnGzrRmpxTYf8LCzpG",
+      "oracle": {
+        "type": "ai",
+        "status": "pending",
+        "request": {
+          "marketId": "29",
+          "question": "ETH in 2027",
+          "resolutionCriteria": "Because",
+          "resolutionDeadline": "2027-01-14T12:00:00.000Z",
+          "locale": "en-US",
+          "options": [
+            {
+              "id": "yes",
+              "label": "YES",
+              "keywords": [
+                "eth",
+                "2027",
+                "crypto",
+                "confirmed",
+                "announced",
+                "completed",
+                "approved",
+                "successful"
+              ]
+            },
+            {
+              "id": "no",
+              "label": "NO",
+              "keywords": [
+                "eth",
+                "2027",
+                "crypto",
+                "no eth",
+                "no 2027",
+                "no crypto",
+                "not eth",
+                "not 2027",
+                "not crypto",
+                "not",
+                "cancelled",
+                "canceled",
+                "denied",
+                "failed",
+                "postponed",
+                "delayed",
+                "refused"
+              ]
+            }
+          ]
+        }
+      }
     }
   ]
 }

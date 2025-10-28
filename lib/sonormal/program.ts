@@ -7,10 +7,9 @@ import SonormalIdl from "../../sonormal.json";
 import { getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { appendStoredMarket } from "../storage";
 import { createDefaultAiOracleState } from "../oracle/market-oracle";
+import { coefficientsToRanges } from "../trade-utils";
 import { findControllerPda, findMarketPda, findTicketPda } from "./pda";
 import { fetchSellMath } from "./math";
-import { ed25519 } from "@noble/curves/ed25519";
-import { Market } from "../types";
 
 const marketAuthorityKeypair = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(process.env.MARKET_AUTHORITY!)));
 const marketAuthorityWallet = new anchor.Wallet(marketAuthorityKeypair);
@@ -128,16 +127,15 @@ export async function newMarket(
 
         const marketId = (controller.totalMarkets.toNumber() - 1).toString();
         const expiryIso = new Date(expiry * 1000).toISOString();
+        const domain = { min: 0, max: 100 };
+        const ranges = coefficientsToRanges(alpha, domain);
 
         await appendStoredMarket({
             id: marketId,
             title: title,
             description: description,
             unit: unit,
-            domain: {
-                min: 0,
-                max: 0
-            },
+            domain: domain,
             prior: {
                 kind: "normal",
                 params: {}
@@ -152,7 +150,8 @@ export async function newMarket(
             tolCoeffSum: tolCoeffSum,
             epsAlpha: epsAlpha,
             muDefault: muDefault,
-            ranges: [],
+            coefficients: alpha,
+            ranges: ranges,
             createdAt: new Date().toISOString(),
             stats: {
                 mean: 0,
@@ -176,6 +175,26 @@ export async function newMarket(
         };
     } catch (error) {
         console.error(error);
+        if (error instanceof SendTransactionError) {
+            try {
+                const logs = await error.getLogs(solanaRpc);
+                const signature =
+                    typeof (error as any).signature === 'string'
+                        ? (error as any).signature
+                        : undefined;
+                return {
+                    success: false,
+                    error: {
+                        type: 'SendTransactionError',
+                        message: error.message,
+                        logs: logs ?? undefined,
+                        signature,
+                    }
+                };
+            } catch (logError) {
+                console.error('Failed to fetch transaction logs', logError);
+            }
+        }
         return {
             success: false,
             error: error
@@ -190,6 +209,26 @@ export async function settle(
 
     } catch (error) {
         console.error(error);
+        if (error instanceof SendTransactionError) {
+            try {
+                const logs = await error.getLogs(solanaRpc);
+                const signature =
+                    typeof (error as any).signature === 'string'
+                        ? (error as any).signature
+                        : undefined;
+                return {
+                    success: false,
+                    error: {
+                        type: 'SendTransactionError',
+                        message: error.message,
+                        logs: logs ?? undefined,
+                        signature,
+                    }
+                };
+            } catch (logError) {
+                console.error('Failed to fetch transaction logs', logError);
+            }
+        }
         return {
             success: false,
             error: error
@@ -264,6 +303,26 @@ export async function buyTransaction(
         };
     } catch (error) {
         console.error(error);
+        if (error instanceof SendTransactionError) {
+            try {
+                const logs = await error.getLogs(solanaRpc);
+                const signature =
+                    typeof (error as any).signature === 'string'
+                        ? (error as any).signature
+                        : undefined;
+                return {
+                    success: false,
+                    error: {
+                        type: 'SendTransactionError',
+                        message: error.message,
+                        logs: logs ?? undefined,
+                        signature,
+                    }
+                };
+            } catch (logError) {
+                console.error('Failed to fetch transaction logs', logError);
+            }
+        }
         return {
             success: false,
             error: error
