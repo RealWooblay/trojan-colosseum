@@ -5,8 +5,15 @@ import os from "os"
 import path from "path"
 import type { Market, Ticket } from "./types"
 
-const KV_REST_API_URL = process.env.KV_REST_API_URL
-const KV_REST_API_TOKEN = process.env.KV_REST_API_TOKEN
+const KV_REST_API_URL =
+  process.env.KV_REST_API_URL ??
+  process.env.UPSTASH_REDIS_REST_URL ??
+  process.env.UPSTASH_KV_REST_URL
+
+const KV_REST_API_TOKEN =
+  process.env.KV_REST_API_TOKEN ??
+  process.env.UPSTASH_REDIS_REST_TOKEN ??
+  process.env.UPSTASH_KV_REST_TOKEN
 const KV_NAMESPACE = process.env.KV_NAMESPACE ?? "trojan-colosseum"
 const USE_KV = Boolean(KV_REST_API_URL && KV_REST_API_TOKEN)
 
