@@ -5,73 +5,42 @@ import os from "os"
 import path from "path"
 import type { Market, Ticket } from "./types"
 
-const DEFAULT_DATA_DIR = process.env.DATA_DIR ?? path.join(process.cwd(), "data")
-const FALLBACK_DATA_DIR = path.join(os.tmpdir(), "trojan-colosseum")
-let activeDataDir = DEFAULT_DATA_DIR
+const KV_REST_API_URL = process.env.KV_REST_API_URL
+const KV_REST_API_TOKEN = process.env.KV_REST_API_TOKEN
+const KV_NAMESPACE = process.env.KV_NAMESPACE ?? "trojan-colosseum"
+const USE_KV = Boolean(KV_REST_API_URL && KV_REST_API_TOKEN)
 
-function isReadOnlyError(error: unknown): boolean {
-  if (typeof error !== "object" || error === null) return false
-  const code = (error as { code?: string }).code
-  return code === "EROFS" || code === "EACCES" || code === "EPERM" || code === "ENOENT"
-}
+const PRIMARY_LOCAL_DIR = process.env.DATA_DIR ?? path.join(process.cwd(), "data")
+const FALLBACK_LOCAL_DIR = path.join(os.tmpdir(), "trojan-colosseum")
+let activeLocalDir = PRIMARY_LOCAL_DIR
 
-async function ensureDataDir(): Promise<void> {
-  try {
-    await fs.mkdir(activeDataDir, { recursive: true })
-  } catch (error) {
-    if (isReadOnlyError(error) && activeDataDir !== FALLBACK_DATA_DIR) {
-      activeDataDir = FALLBACK_DATA_DIR
-      await fs.mkdir(activeDataDir, { recursive: true })
-      return
-    }
-    throw error
-  }
-}
+const MARKETS_FILE = "markets.json"
+const TICKETS_FILE = "tickets.json"
 
-async function ensureStore(filename: string): Promise<string> {
-  await ensureDataDir()
-  let filePath = path.join(activeDataDir, filename)
+async function readJsonFromKv(key: string): Promise<any[]> {
+  if (!USE_KV) return []
+  const fullKey = `${KV_NAMESPACE}:${key}`
+  const response = await fetch(`${KV_REST_API_URL}/get/${encodeURIComponent(fullKey)}`, {
+    headers: {
+      Authorization: `Bearer ${KV_REST_API_TOKEN}`,
+    },
+    cache: "no-store",
+  })
 
-  const ensureSeed = async (targetPath: string) => {
-    const seed = { data: [] }
-    await fs.writeFile(targetPath, JSON.stringify(seed, null, 2), "utf8")
+  if (response.status === 404) {
+    return []
   }
 
-  const attemptFileSetup = async (): Promise<string> => {
-    try {
-      await fs.access(filePath)
-      return filePath
-    } catch (error) {
-      if (isReadOnlyError(error) && activeDataDir !== FALLBACK_DATA_DIR) {
-        activeDataDir = FALLBACK_DATA_DIR
-        await ensureDataDir()
-        filePath = path.join(activeDataDir, filename)
-      }
-      try {
-        await fs.access(filePath)
-      } catch {
-        await ensureSeed(filePath)
-      }
-      return filePath
-    }
+  if (!response.ok) {
+    throw new Error(`KV get failed (${response.status}): ${await response.text()}`)
   }
 
-  try {
-    return await attemptFileSetup()
-  } catch (error) {
-    if (isReadOnlyError(error) && activeDataDir !== FALLBACK_DATA_DIR) {
-      activeDataDir = FALLBACK_DATA_DIR
-      await ensureDataDir()
-      filePath = path.join(activeDataDir, filename)
-      await ensureSeed(filePath)
-      return filePath
-    }
-    throw error
+  const payload = await response.json()
+  const raw = payload?.result
+  if (typeof raw !== "string") {
+    return []
   }
-}
 
-async function readStore(pathname: string): Promise<any> {
-  const raw = await fs.readFile(pathname, "utf8")
   const parsed = JSON.parse(raw)
   if (Array.isArray(parsed)) return parsed
   if (Array.isArray(parsed.data)) return parsed.data
@@ -79,24 +48,107 @@ async function readStore(pathname: string): Promise<any> {
   return []
 }
 
+async function writeJsonToKv(key: string, value: any): Promise<void> {
+  if (!USE_KV) return
+  const fullKey = `${KV_NAMESPACE}:${key}`
+  const body = new URLSearchParams({
+    value: JSON.stringify({ data: value }),
+  })
+
+  const response = await fetch(`${KV_REST_API_URL}/set/${encodeURIComponent(fullKey)}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${KV_REST_API_TOKEN}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: body.toString(),
+  })
+
+  if (!response.ok) {
+    throw new Error(`KV set failed (${response.status}): ${await response.text()}`)
+  }
+}
+
+async function ensureLocalDir(): Promise<string> {
+  try {
+    await fs.mkdir(activeLocalDir, { recursive: true })
+    return activeLocalDir
+  } catch (error) {
+    if (activeLocalDir !== FALLBACK_LOCAL_DIR) {
+      activeLocalDir = FALLBACK_LOCAL_DIR
+      await fs.mkdir(activeLocalDir, { recursive: true })
+      return activeLocalDir
+    }
+    throw error
+  }
+}
+
+async function ensureLocalFile(filename: string): Promise<string> {
+  const dir = await ensureLocalDir()
+  const filePath = path.join(dir, filename)
+
+  try {
+    await fs.access(filePath)
+  } catch {
+    const seed = { data: [] }
+    await fs.writeFile(filePath, JSON.stringify(seed, null, 2), "utf8")
+  }
+
+  return filePath
+}
+
+async function readJsonLocally(filename: string): Promise<any[]> {
+  const filePath = await ensureLocalFile(filename)
+  const raw = await fs.readFile(filePath, "utf8")
+  const parsed = JSON.parse(raw)
+  if (Array.isArray(parsed)) return parsed
+  if (Array.isArray(parsed.data)) return parsed.data
+  if (Array.isArray(parsed.markets)) return parsed.markets
+  return []
+}
+
+async function writeJsonLocally(filename: string, value: any): Promise<void> {
+  const filePath = await ensureLocalFile(filename)
+  await fs.writeFile(filePath, JSON.stringify({ data: value }, null, 2), "utf8")
+}
+
+async function readStore(filename: string): Promise<any[]> {
+  if (USE_KV) {
+    try {
+      return await readJsonFromKv(filename)
+    } catch (error) {
+      console.error("[storage] KV read failed, falling back to local file:", error)
+    }
+  }
+  return await readJsonLocally(filename)
+}
+
+async function writeStore(filename: string, value: any): Promise<void> {
+  if (USE_KV) {
+    try {
+      await writeJsonToKv(filename, value)
+      return
+    } catch (error) {
+      console.error("[storage] KV write failed, falling back to local file:", error)
+    }
+  }
+  await writeJsonLocally(filename, value)
+}
+
 export async function readStoredMarkets(): Promise<Market[]> {
-  const filePath = await ensureStore("markets.json")
-  return await readStore(filePath)
+  return await readStore(MARKETS_FILE)
 }
 
 export async function readStoredTickets(): Promise<Ticket[]> {
-  const filePath = await ensureStore("tickets.json")
-  return await readStore(filePath)
+  return await readStore(TICKETS_FILE)
 }
 
 export async function writeStoredMarkets(markets: Market[]): Promise<void> {
-  const filePath = await ensureStore("markets.json")
-  await fs.writeFile(filePath, JSON.stringify({ data: markets }, null, 2), "utf8")
+  await writeStore(MARKETS_FILE, markets)
 }
 
 export async function writeStoredTickets(tickets: Ticket[]): Promise<void> {
-  const filePath = await ensureStore("tickets.json")
-  await fs.writeFile(filePath, JSON.stringify({ data: tickets }, null, 2), "utf8")
+  await writeStore(TICKETS_FILE, tickets)
 }
 
 export async function appendStoredMarket(market: Market): Promise<void> {
