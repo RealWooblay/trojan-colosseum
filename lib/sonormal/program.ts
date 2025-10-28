@@ -43,7 +43,8 @@ export async function newMarket(
     unit: "%" | "USD" | "°C" | "other",
     category: string,
     alpha: number[],
-    expiry: number
+    expiry: number,
+    ranges?: [number, number][]
 ): Promise<{ success: true, signature: string } | { success: false, error: any }> {
     try {
         if (expiry <= Date.now() / 1000) {
@@ -128,7 +129,35 @@ export async function newMarket(
         const marketId = (controller.totalMarkets.toNumber() - 1).toString();
         const expiryIso = new Date(expiry * 1000).toISOString();
         const domain = { min: 0, max: 100 };
-        const ranges = coefficientsToRanges(alpha, domain);
+        const normalizeInputRange = (value: any): [number, number] | null => {
+            if (!value) return null;
+            const raw = Array.isArray(value)
+                ? value
+                : typeof value === 'object' && value !== null
+                    ? [value['0' as keyof typeof value], value['1' as keyof typeof value]]
+                    : null;
+            if (!raw) return null;
+            const start = Number(raw[0]);
+            const end = Number(raw[1]);
+            if (!Number.isFinite(start) || !Number.isFinite(end)) return null;
+            return [start, end];
+        };
+
+        const normalizedRanges = (ranges ?? [])
+            .map(normalizeInputRange)
+            .filter((tuple): tuple is [number, number] => Array.isArray(tuple))
+            .map(([startRaw, endRaw]) => {
+            const start = startRaw ?? domain.min;
+            const end = endRaw ?? startRaw ?? domain.min;
+            const low = Math.max(domain.min, Math.min(start, end));
+            const high = Math.min(domain.max, Math.max(start, end));
+            if (high - low <= 0) {
+                const epsilon = (domain.max - domain.min) * 0.01;
+                return [low, Math.min(domain.max, low + epsilon)] as [number, number];
+            }
+            return [low, high] as [number, number];
+        });
+        const storedRanges = normalizedRanges.length > 0 ? normalizedRanges : coefficientsToRanges(alpha, domain);
 
         await appendStoredMarket({
             id: marketId,
@@ -151,7 +180,7 @@ export async function newMarket(
             epsAlpha: epsAlpha,
             muDefault: muDefault,
             coefficients: alpha,
-            ranges: ranges,
+            ranges: storedRanges,
             createdAt: new Date().toISOString(),
             stats: {
                 mean: 0,

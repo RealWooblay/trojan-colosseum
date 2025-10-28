@@ -89,7 +89,8 @@ export default function CreateMarketPage() {
         unit,
         category,
         coefficients,
-        new Date(expiry).getTime() / 1000
+        new Date(expiry).getTime() / 1000,
+        ranges
       )
 
       if (!result.success) {
