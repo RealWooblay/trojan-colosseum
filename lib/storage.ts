@@ -12,7 +12,7 @@ let activeDataDir = DEFAULT_DATA_DIR
 function isReadOnlyError(error: unknown): boolean {
   if (typeof error !== "object" || error === null) return false
   const code = (error as { code?: string }).code
-  return code === "EROFS" || code === "EACCES" || code === "EPERM"
+  return code === "EROFS" || code === "EACCES" || code === "EPERM" || code === "ENOENT"
 }
 
 async function ensureDataDir(): Promise<void> {
