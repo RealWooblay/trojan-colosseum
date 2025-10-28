@@ -48,7 +48,26 @@ async function readJsonFromKv(key: string): Promise<any[]> {
     return []
   }
 
-  const parsed = JSON.parse(raw)
+  let candidate = raw
+
+  // Support legacy payloads that were stored as "value=..."
+  if (candidate.startsWith("value=")) {
+    candidate = candidate.slice("value=".length)
+  }
+
+  try {
+    candidate = decodeURIComponent(candidate)
+  } catch {
+    // ignore URI decode errors
+  }
+
+  let parsed: any
+  try {
+    parsed = JSON.parse(candidate)
+  } catch {
+    parsed = JSON.parse(raw)
+  }
+
   if (Array.isArray(parsed)) return parsed
   if (Array.isArray(parsed.data)) return parsed.data
   if (Array.isArray(parsed.markets)) return parsed.markets
@@ -58,17 +77,14 @@ async function readJsonFromKv(key: string): Promise<any[]> {
 async function writeJsonToKv(key: string, value: any): Promise<void> {
   if (!USE_KV) return
   const fullKey = `${KV_NAMESPACE}:${key}`
-  const body = new URLSearchParams({
-    value: JSON.stringify({ data: value }),
-  })
+  const payload = JSON.stringify({ data: value })
+  const encodedValue = encodeURIComponent(payload)
 
-  const response = await fetch(`${KV_REST_API_URL}/set/${encodeURIComponent(fullKey)}`, {
+  const response = await fetch(`${KV_REST_API_URL}/set/${encodeURIComponent(fullKey)}/${encodedValue}`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${KV_REST_API_TOKEN}`,
-      "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: body.toString(),
   })
 
   if (!response.ok) {
