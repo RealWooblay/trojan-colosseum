@@ -473,7 +473,12 @@ export async function getMarket(marketId: string) {
 
 export async function getTotalTickets(marketId: string): Promise<number | undefined> {
     try {
-        return (await getMarket(marketId))?.totalTickets.toNumber();
+        const market = await getMarket(marketId);
+        if (!market) {
+            console.error('Market not found');
+            return undefined;
+        }
+        return market.totalTickets.toNumber();
     } catch (error) {
         console.error(error);
         return undefined;

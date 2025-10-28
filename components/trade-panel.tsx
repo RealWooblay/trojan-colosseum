@@ -188,6 +188,7 @@ export function TradePanel({
 
     try {
       const transactionAmount = Number.parseFloat(buyAmount);
+
       const transaction = await buyTransaction(
         Number(market.id),
         address,
@@ -195,6 +196,7 @@ export function TradePanel({
         coefficients,
         Math.trunc(transactionAmount * (10 ** 6))
       )
+
       if (!transaction.success) {
         toast({
           title: "Trade failed",
@@ -208,6 +210,8 @@ export function TradePanel({
 
       const result = await walletProvider.signAndSendTransaction(versionedTransaction, {
         skipPreflight: false,
+        maxRetries: 3,
+        preflightCommitment: 'confirmed',
       });
 
       const totalTickets = await getTotalTickets(market.id);

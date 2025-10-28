@@ -106,7 +106,7 @@ export default function CreateMarketPage() {
         title: "Market created",
         description: (
           <a
-            href={`https://solscan.io/tx/${result.signature}`}
+            href={`https://solscan.io/tx/${result.signature}?cluster=devnet`}
             target="_blank"
             rel="noopener noreferrer"
             className="underline hover:text-cyan-400"

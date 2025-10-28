@@ -134,6 +134,228 @@
           ]
         }
       }
+    },
+    {
+      "id": "42",
+      "title": "SOL in 1997",
+      "description": "",
+      "unit": "USD",
+      "domain": {
+        "min": 0,
+        "max": 100
+      },
+      "prior": {
+        "kind": "normal",
+        "params": {}
+      },
+      "liquidityUSD": 0,
+      "vol24hUSD": 0,
+      "category": "Crypto",
+      "expiry": "2026-10-10T06:01:00.000Z",
+      "resolvesAt": "2026-10-10T06:01:00.000Z",
+      "alpha": [
+        0.49999996999999974,
+        0.4999999699999999,
+        9.99999999999996e-9,
+        9.99999999999996e-9,
+        9.99999999999996e-9,
+        9.99999999999996e-9,
+        9.99999999999996e-9,
+        9.99999999999996e-9
+      ],
+      "k": 7,
+      "tolCoeffSum": 1e-10,
+      "epsAlpha": 1e-8,
+      "muDefault": 1,
+      "coefficients": [
+        0.49999996999999974,
+        0.4999999699999999,
+        9.99999999999996e-9,
+        9.99999999999996e-9,
+        9.99999999999996e-9,
+        9.99999999999996e-9,
+        9.99999999999996e-9,
+        9.99999999999996e-9
+      ],
+      "ranges": [
+        [
+          20,
+          40
+        ],
+        [
+          5,
+          25
+        ]
+      ],
+      "createdAt": "2025-10-28T21:20:54.776Z",
+      "stats": {
+        "mean": 0,
+        "variance": 0,
+        "skew": 0,
+        "kurtosis": 0
+      },
+      "txSignature": "3fEDnzY3Jf8z69Ht84re25ctf5k9rGsLYns4GryGrZ8MUU4RaXJhft6jXr8hRiSB2oHhWbJVoryxyyuo9eGtvzz6",
+      "oracle": {
+        "type": "ai",
+        "status": "pending",
+        "request": {
+          "marketId": "42",
+          "question": "SOL in 1997",
+          "resolutionCriteria": "Resolve to YES if \"SOL in 1997\" occurs as described, otherwise resolve to NO.",
+          "resolutionDeadline": "2026-10-10T06:01:00.000Z",
+          "locale": "en-US",
+          "options": [
+            {
+              "id": "yes",
+              "label": "YES",
+              "keywords": [
+                "sol",
+                "1997",
+                "crypto",
+                "confirmed",
+                "announced",
+                "completed",
+                "approved",
+                "successful"
+              ]
+            },
+            {
+              "id": "no",
+              "label": "NO",
+              "keywords": [
+                "sol",
+                "1997",
+                "crypto",
+                "no sol",
+                "no 1997",
+                "no crypto",
+                "not sol",
+                "not 1997",
+                "not crypto",
+                "not",
+                "cancelled",
+                "canceled",
+                "denied",
+                "failed",
+                "postponed",
+                "delayed",
+                "refused"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "43",
+      "title": "What price will BTC be by the end of 2025",
+      "description": "",
+      "unit": "USD",
+      "domain": {
+        "min": 0,
+        "max": 100
+      },
+      "prior": {
+        "kind": "normal",
+        "params": {}
+      },
+      "liquidityUSD": 0,
+      "vol24hUSD": 0,
+      "category": "Crypto",
+      "expiry": "2025-10-28T23:15:00.000Z",
+      "resolvesAt": "2025-10-28T23:15:00.000Z",
+      "alpha": [
+        0.9999999299999998,
+        9.999999999999947e-9,
+        9.999999999999947e-9,
+        9.999999999999947e-9,
+        9.999999999999947e-9,
+        9.999999999999947e-9,
+        9.999999999999947e-9,
+        9.999999999999947e-9
+      ],
+      "k": 7,
+      "tolCoeffSum": 1e-10,
+      "epsAlpha": 1e-8,
+      "muDefault": 1,
+      "coefficients": [
+        0.9999999299999998,
+        9.999999999999947e-9,
+        9.999999999999947e-9,
+        9.999999999999947e-9,
+        9.999999999999947e-9,
+        9.999999999999947e-9,
+        9.999999999999947e-9,
+        9.999999999999947e-9
+      ],
+      "ranges": [
+        [
+          20,
+          40
+        ]
+      ],
+      "createdAt": "2025-10-28T23:13:19.737Z",
+      "stats": {
+        "mean": 0,
+        "variance": 0,
+        "skew": 0,
+        "kurtosis": 0
+      },
+      "txSignature": "32wGJqyoADSQrjUEbkbCJHxdPAkfFc48BeJXXZMemFjcKQhX9DaoNzhEuHmx2pB38pmvfKgTpxKY6jjjyNVsysZd",
+      "oracle": {
+        "type": "ai",
+        "status": "pending",
+        "request": {
+          "marketId": "43",
+          "question": "What price will BTC be by the end of 2025",
+          "resolutionCriteria": "Resolve to YES if \"What price will BTC be by the end of 2025\" occurs as described, otherwise resolve to NO.",
+          "resolutionDeadline": "2025-10-28T23:15:00.000Z",
+          "locale": "en-US",
+          "options": [
+            {
+              "id": "yes",
+              "label": "YES",
+              "keywords": [
+                "price",
+                "btc",
+                "end",
+                "crypto",
+                "confirmed",
+                "announced",
+                "completed",
+                "approved",
+                "successful"
+              ]
+            },
+            {
+              "id": "no",
+              "label": "NO",
+              "keywords": [
+                "price",
+                "btc",
+                "end",
+                "crypto",
+                "no price",
+                "no btc",
+                "no end",
+                "no crypto",
+                "not price",
+                "not btc",
+                "not end",
+                "not crypto",
+                "not",
+                "cancelled",
+                "canceled",
+                "denied",
+                "failed",
+                "postponed",
+                "delayed",
+                "refused"
+              ]
+            }
+          ]
+        }
+      }
     }
   ]
 }

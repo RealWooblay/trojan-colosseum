@@ -13,6 +13,46 @@
       "realizedAmount": 75940,
       "createdAt": "2025-10-27T12:53:31.526Z",
       "txSignature": "61HZBoGryX34GHNA1N92KLQJYzsfYpXPhwC6iFFfJgA4NC1iKzu6PFfSLLixEvWTyuo6rAqRFKLpPdajMxnjmXQx"
+    },
+    {
+      "id": "0",
+      "marketId": "42",
+      "authority": "4BY24m8XLsy7pBwR8xB5gc7zS1upq2P8Dk8cneeSbvpw",
+      "pTrade": [
+        0.4999999970888573,
+        0.4999999429111425,
+        9.999999999999962e-9,
+        9.999999999999962e-9,
+        9.999999999999962e-9,
+        9.999999999999962e-9,
+        9.999999999999962e-9,
+        9.999999999999962e-9
+      ],
+      "collateralAmount": 100000,
+      "claimAmount": 5.303613052386709,
+      "realizedAmount": 0,
+      "createdAt": "2025-10-28T23:05:48.624Z",
+      "txSignature": "5xzrE5ueGR1HRV58UipMKPSA6q1dGQLcznejq3xv2MfJhVx7oZYz3nF2Q4rWed9h4oHCZb1WAp2nuJsz7mwYHb5p"
+    },
+    {
+      "id": "1",
+      "marketId": "42",
+      "authority": "4BY24m8XLsy7pBwR8xB5gc7zS1upq2P8Dk8cneeSbvpw",
+      "pTrade": [
+        0.4999999970888573,
+        0.4999999429111425,
+        9.999999999999962e-9,
+        9.999999999999962e-9,
+        9.999999999999962e-9,
+        9.999999999999962e-9,
+        9.999999999999962e-9,
+        9.999999999999962e-9
+      ],
+      "collateralAmount": 100000,
+      "claimAmount": 0,
+      "realizedAmount": 52240,
+      "createdAt": "2025-10-28T23:06:08.898Z",
+      "txSignature": "4QuHbVxupFT6yjseVS6c9kBhsJJiixXHN7FdWozVvggXGq7pECvQKAkCGw18ARqZj74Yn3Mib8TxL8ox9k2tjZQu"
     }
   ]
 }
