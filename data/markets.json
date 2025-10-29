@@ -1,143 +1,8 @@
 {
   "data": [
     {
-      "id": "29",
-      "title": "ETH in 2027",
-      "description": "Because",
-      "unit": "USD",
-      "domain": {
-        "min": 0,
-        "max": 100
-      },
-      "prior": {
-        "kind": "normal",
-        "params": {}
-      },
-      "liquidityUSD": 0,
-      "vol24hUSD": 0,
-      "category": "Crypto",
-      "expiry": "2027-01-14T12:00:00.000Z",
-      "resolvesAt": "2027-01-14T12:00:00.000Z",
-      "alpha": [
-        0.49663296683501684,
-        0.5033669731649828,
-        9.99999999999996e-9,
-        9.99999999999996e-9,
-        9.99999999999996e-9,
-        9.99999999999996e-9,
-        9.99999999999996e-9,
-        9.99999999999996e-9
-      ],
-      "k": 7,
-      "tolCoeffSum": 1e-10,
-      "epsAlpha": 1e-8,
-      "muDefault": 1,
-      "coefficients": [
-        0.49663296683501684,
-        0.5033669731649828,
-        9.99999999999996e-9,
-        9.99999999999996e-9,
-        9.99999999999996e-9,
-        9.99999999999996e-9,
-        9.99999999999996e-9,
-        9.99999999999996e-9
-      ],
-      "ranges": [
-        [
-          0,
-          49.663296683501684
-        ],
-        [
-          49.663296683501684,
-          99.99999399999996
-        ],
-        [
-          99.99999399999996,
-          99.99999499999996
-        ],
-        [
-          99.99999499999996,
-          99.99999599999995
-        ],
-        [
-          99.99999599999995,
-          99.99999699999995
-        ],
-        [
-          99.99999699999995,
-          99.99999799999995
-        ],
-        [
-          99.99999799999995,
-          99.99999899999995
-        ],
-        [
-          99.99999899999995,
-          99.99999999999994
-        ]
-      ],
-      "createdAt": "2025-10-28T02:34:17.821Z",
-      "stats": {
-        "mean": 0,
-        "variance": 0,
-        "skew": 0,
-        "kurtosis": 0
-      },
-      "txSignature": "2Xu1Kp6XxfLrbEqdkj3ybR19wdZBaJChBRhBNxaF8ivMi71g6eXpaR4mb9RRKToFjHnN5hDnGzrRmpxTYf8LCzpG",
-      "oracle": {
-        "type": "ai",
-        "status": "pending",
-        "request": {
-          "marketId": "29",
-          "question": "ETH in 2027",
-          "resolutionCriteria": "Because",
-          "resolutionDeadline": "2027-01-14T12:00:00.000Z",
-          "locale": "en-US",
-          "options": [
-            {
-              "id": "yes",
-              "label": "YES",
-              "keywords": [
-                "eth",
-                "2027",
-                "crypto",
-                "confirmed",
-                "announced",
-                "completed",
-                "approved",
-                "successful"
-              ]
-            },
-            {
-              "id": "no",
-              "label": "NO",
-              "keywords": [
-                "eth",
-                "2027",
-                "crypto",
-                "no eth",
-                "no 2027",
-                "no crypto",
-                "not eth",
-                "not 2027",
-                "not crypto",
-                "not",
-                "cancelled",
-                "canceled",
-                "denied",
-                "failed",
-                "postponed",
-                "delayed",
-                "refused"
-              ]
-            }
-          ]
-        }
-      }
-    },
-    {
-      "id": "42",
-      "title": "SOL in 1997",
+      "id": "48",
+      "title": "What will the price of BTC be at the end of 2025",
       "description": "",
       "unit": "USD",
       "domain": {
@@ -151,119 +16,8 @@
       "liquidityUSD": 0,
       "vol24hUSD": 0,
       "category": "Crypto",
-      "expiry": "2026-10-10T06:01:00.000Z",
-      "resolvesAt": "2026-10-10T06:01:00.000Z",
-      "alpha": [
-        0.49999996999999974,
-        0.4999999699999999,
-        9.99999999999996e-9,
-        9.99999999999996e-9,
-        9.99999999999996e-9,
-        9.99999999999996e-9,
-        9.99999999999996e-9,
-        9.99999999999996e-9
-      ],
-      "k": 7,
-      "tolCoeffSum": 1e-10,
-      "epsAlpha": 1e-8,
-      "muDefault": 1,
-      "coefficients": [
-        0.49999996999999974,
-        0.4999999699999999,
-        9.99999999999996e-9,
-        9.99999999999996e-9,
-        9.99999999999996e-9,
-        9.99999999999996e-9,
-        9.99999999999996e-9,
-        9.99999999999996e-9
-      ],
-      "ranges": [
-        [
-          20,
-          40
-        ],
-        [
-          5,
-          25
-        ]
-      ],
-      "createdAt": "2025-10-28T21:20:54.776Z",
-      "stats": {
-        "mean": 0,
-        "variance": 0,
-        "skew": 0,
-        "kurtosis": 0
-      },
-      "txSignature": "3fEDnzY3Jf8z69Ht84re25ctf5k9rGsLYns4GryGrZ8MUU4RaXJhft6jXr8hRiSB2oHhWbJVoryxyyuo9eGtvzz6",
-      "oracle": {
-        "type": "ai",
-        "status": "pending",
-        "request": {
-          "marketId": "42",
-          "question": "SOL in 1997",
-          "resolutionCriteria": "Resolve to YES if \"SOL in 1997\" occurs as described, otherwise resolve to NO.",
-          "resolutionDeadline": "2026-10-10T06:01:00.000Z",
-          "locale": "en-US",
-          "options": [
-            {
-              "id": "yes",
-              "label": "YES",
-              "keywords": [
-                "sol",
-                "1997",
-                "crypto",
-                "confirmed",
-                "announced",
-                "completed",
-                "approved",
-                "successful"
-              ]
-            },
-            {
-              "id": "no",
-              "label": "NO",
-              "keywords": [
-                "sol",
-                "1997",
-                "crypto",
-                "no sol",
-                "no 1997",
-                "no crypto",
-                "not sol",
-                "not 1997",
-                "not crypto",
-                "not",
-                "cancelled",
-                "canceled",
-                "denied",
-                "failed",
-                "postponed",
-                "delayed",
-                "refused"
-              ]
-            }
-          ]
-        }
-      }
-    },
-    {
-      "id": "43",
-      "title": "What price will BTC be by the end of 2025",
-      "description": "",
-      "unit": "USD",
-      "domain": {
-        "min": 0,
-        "max": 100
-      },
-      "prior": {
-        "kind": "normal",
-        "params": {}
-      },
-      "liquidityUSD": 0,
-      "vol24hUSD": 0,
-      "category": "Crypto",
-      "expiry": "2025-10-28T23:15:00.000Z",
-      "resolvesAt": "2025-10-28T23:15:00.000Z",
+      "expiry": "2025-10-29T19:33:00.000Z",
+      "resolvesAt": "2025-10-29T19:33:00.000Z",
       "alpha": [
         0.9999999299999998,
         9.999999999999947e-9,
@@ -294,22 +48,22 @@
           40
         ]
       ],
-      "createdAt": "2025-10-28T23:13:19.737Z",
+      "createdAt": "2025-10-29T07:32:04.105Z",
       "stats": {
         "mean": 0,
         "variance": 0,
         "skew": 0,
         "kurtosis": 0
       },
-      "txSignature": "32wGJqyoADSQrjUEbkbCJHxdPAkfFc48BeJXXZMemFjcKQhX9DaoNzhEuHmx2pB38pmvfKgTpxKY6jjjyNVsysZd",
+      "txSignature": "64a4bKfAaMp6oLiFeFLe35fsafsiCn6RZvbZ3L8uf9QF7RYbH5KuTntrMEBvyZ9Yg8sDqKHA8axCxcJTXbN5wMJC",
       "oracle": {
         "type": "ai",
         "status": "pending",
         "request": {
-          "marketId": "43",
-          "question": "What price will BTC be by the end of 2025",
-          "resolutionCriteria": "Resolve to YES if \"What price will BTC be by the end of 2025\" occurs as described, otherwise resolve to NO.",
-          "resolutionDeadline": "2025-10-28T23:15:00.000Z",
+          "marketId": "48",
+          "question": "What will the price of BTC be at the end of 2025",
+          "resolutionCriteria": "Resolve to YES if \"What will the price of BTC be at the end of 2025\" occurs as described, otherwise resolve to NO.",
+          "resolutionDeadline": "2025-10-29T19:33:00.000Z",
           "locale": "en-US",
           "options": [
             {
@@ -353,9 +107,1183 @@
                 "refused"
               ]
             }
+          ],
+          "unit": "USD",
+          "domain": {
+            "min": 0,
+            "max": 100
+          },
+          "valueDomain": {
+            "min": 0,
+            "max": 1000000000
+          }
+        }
+      }
+    },
+    {
+      "id": "49",
+      "title": "Bitcoin price on 31st of December",
+      "description": "",
+      "unit": "USD",
+      "domain": {
+        "min": 0,
+        "max": 100
+      },
+      "prior": {
+        "kind": "normal",
+        "params": {}
+      },
+      "liquidityUSD": 0,
+      "vol24hUSD": 0,
+      "category": "Crypto",
+      "expiry": "2025-10-29T07:37:00.000Z",
+      "resolvesAt": "2025-10-29T07:37:00.000Z",
+      "alpha": [
+        0.9999999299999998,
+        9.999999999999947e-9,
+        9.999999999999947e-9,
+        9.999999999999947e-9,
+        9.999999999999947e-9,
+        9.999999999999947e-9,
+        9.999999999999947e-9,
+        9.999999999999947e-9
+      ],
+      "k": 7,
+      "tolCoeffSum": 1e-10,
+      "epsAlpha": 1e-8,
+      "muDefault": 1,
+      "coefficients": [
+        0.9999999299999998,
+        9.999999999999947e-9,
+        9.999999999999947e-9,
+        9.999999999999947e-9,
+        9.999999999999947e-9,
+        9.999999999999947e-9,
+        9.999999999999947e-9,
+        9.999999999999947e-9
+      ],
+      "ranges": [
+        [
+          20,
+          40
+        ]
+      ],
+      "createdAt": "2025-10-29T07:34:25.818Z",
+      "stats": {
+        "mean": 0,
+        "variance": 0,
+        "skew": 0,
+        "kurtosis": 0
+      },
+      "txSignature": "37qjmU3vEGXjTNyN33hLvCBX2SSTRV2nWLgqAxYhjPg6bCCyKAJkSPDBrT2DBPJVhwwB4DpurL1uL2eZq81mds9P",
+      "oracle": {
+        "type": "ai",
+        "status": "pending",
+        "request": {
+          "marketId": "49",
+          "question": "Bitcoin price on 31st of December",
+          "resolutionCriteria": "Resolve to YES if \"Bitcoin price on 31st of December\" occurs as described, otherwise resolve to NO.",
+          "resolutionDeadline": "2025-10-29T07:37:00.000Z",
+          "locale": "en-US",
+          "options": [
+            {
+              "id": "yes",
+              "label": "YES",
+              "keywords": [
+                "bitcoin",
+                "price",
+                "31st",
+                "december",
+                "crypto",
+                "confirmed",
+                "announced",
+                "completed",
+                "approved",
+                "successful"
+              ]
+            },
+            {
+              "id": "no",
+              "label": "NO",
+              "keywords": [
+                "bitcoin",
+                "price",
+                "31st",
+                "december",
+                "crypto",
+                "no bitcoin",
+                "no price",
+                "no 31st",
+                "no december",
+                "no crypto",
+                "not bitcoin",
+                "not price",
+                "not 31st",
+                "not december",
+                "not crypto",
+                "not",
+                "cancelled",
+                "canceled",
+                "denied",
+                "failed",
+                "postponed",
+                "delayed",
+                "refused"
+              ]
+            }
+          ],
+          "unit": "USD",
+          "domain": {
+            "min": 0,
+            "max": 100
+          },
+          "valueDomain": {
+            "min": 0,
+            "max": 1000000000
+          }
+        },
+        "lastCheckedAt": "2025-10-29T08:15:12.085Z",
+        "lastVerdict": {
+          "outcome": "PENDING",
+          "confidence": 0,
+          "reasoning": "No direct evidence confirms or denies the Bitcoin price on 31st December 2025. Latest data shows record highs in early October 2025, but no info for December 31.",
+          "decidedAt": "2025-10-29T08:15:16.838Z",
+          "signals": [
+            {
+              "source": "bing.com",
+              "url": "http://www.bing.com/news/apiclick.aspx?ref=FexRss&amp;aid=&amp;tid=6901cd105c304f698a1d236ca756b56f&amp;url=https%3a%2f%2ffinance.yahoo.com%2fnews%2fbitcoin-price-surges-time-high-053751894.html&amp;c=8178473667891360980&amp;mkt=es-xl",
+              "headline": "Bitcoin price surges to all-time high above $125,000",
+              "snippet": "Bitcoin’s price surged to a record high shortly after midnight ET on October 5, 2024, wicking up to just above $125,700 per Coinbase bitcoin price data displayed on TradingView. Rising 3% on the day, ...",
+              "publishedAt": "Sat, 04 Oct 2025 17:00:00 GMT",
+              "confidence": 0.4
+            },
+            {
+              "source": "bing.com",
+              "url": "http://www.bing.com/news/apiclick.aspx?ref=FexRss&amp;aid=&amp;tid=6901cd105c304f698a1d236ca756b56f&amp;url=https%3a%2f%2fwww.investopedia.com%2fbitcoin-price-levels-to-watch-after-cryptocurrency-hits-record-high-above-usd125000-11824639&amp;c=4663802359303583177&amp;mkt=es-xl",
+              "headline": "Bitcoin Price Levels to Watch After Cryptocurrency Hits Record High Above $125,000",
+              "snippet": "Tim Smith has 20+ years of experience in the financial services industry, both as a writer and as a trader. Bitcoin hit another record high Monday after surpassing the closely watched $125,000 level ...",
+              "publishedAt": "Mon, 06 Oct 2025 10:54:00 GMT",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/north-carolina-man-charged-murder-181907474.html",
+              "headline": "A North Carolina man is charged with 4 murder counts after telling authorities he killed his kids",
+              "snippet": "",
+              "publishedAt": "2025-10-28T18:19:07Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "tech.yahoo.com",
+              "url": "https://tech.yahoo.com/phones/articles/samsung-launch-one-more-galaxy-110000004.html",
+              "headline": "Samsung will launch one more Galaxy phone this year – and it's the flagship we've been waiting for",
+              "snippet": "",
+              "publishedAt": "2025-10-27T11:00:00Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/jamie-lee-curtis-withdraws-sympathy-221540454.html",
+              "headline": "Jamie Lee Curtis Withdraws Sympathy For Charlie Kirk Amid Alleged Shooter's Court Win",
+              "snippet": "",
+              "publishedAt": "2025-10-28T22:15:40Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "tech.yahoo.com",
+              "url": "https://tech.yahoo.com/transportation/articles/quiet-supersonic-x-59-jet-213846986.html",
+              "headline": "Quiet supersonic X-59 jet soars over California desert in first test flight",
+              "snippet": "",
+              "publishedAt": "2025-10-28T21:38:46Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/hes-completely-lost-people-cant-152709656.html",
+              "headline": "This Video Of President Trump Trying To Walk Around The Japanese Guard Has People Noticing...A Few Very Interesting Things",
+              "snippet": "",
+              "publishedAt": "2025-10-28T15:27:09Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/entertainment/celebrity/articles/brigitte-macron-forced-alter-her-013030130.html",
+              "headline": "Brigitte Macron Forced To Alter Her Style As She Struggles With Her Appearance Amid Trans Claims",
+              "snippet": "",
+              "publishedAt": "2025-10-29T01:30:30Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/videos/hegseth-stumbled-10-minute-speech-160138950.html",
+              "headline": "Hegseth stumbled through a 10-minute speech, managing to shock the Navy service members by joking about bombing and even ripping his own son.",
+              "snippet": "",
+              "publishedAt": "2025-10-28T16:01:38Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/suspect-shooting-sheriffs-deputy-crashes-230309748.html",
+              "headline": "Deputy is killed; as suspect flees, second deputy knocks him off his motorcycle in 150 mph chase",
+              "snippet": "",
+              "publishedAt": "2025-10-27T23:03:09Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/ufc-screwball-bryce-mitchell-quits-180002570.html",
+              "headline": "UFC screwball Bryce Mitchell quits MAGA movement after bible reveals tricky Trump is actually ‘the Antichrist’",
+              "snippet": "",
+              "publishedAt": "2025-10-28T18:00:02Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/court-disqualifies-trump-appointed-us-005538254.html",
+              "headline": "Court disqualifies Trump-appointed US attorney from overseeing multiple criminal cases",
+              "snippet": "",
+              "publishedAt": "2025-10-29T00:55:38Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "finance.yahoo.com",
+              "url": "https://finance.yahoo.com/news/major-candy-company-files-chapter-153300721.html",
+              "headline": "Major candy company files Chapter 11 bankruptcy in Halloween week",
+              "snippet": "",
+              "publishedAt": "2025-10-27T15:33:00Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/million-old-sea-crossing-near-210700645.html",
+              "headline": "Million-year-old sea crossing near ‘Hobbit’s’ island rewrites early human history",
+              "snippet": "",
+              "publishedAt": "2025-10-27T21:07:00Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/conflicting-accounts-emerge-un-peacekeepers-093014827.html",
+              "headline": "Conflicting accounts emerge after UN peacekeepers shoot down Israeli drone",
+              "snippet": "",
+              "publishedAt": "2025-10-27T09:30:14Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/russian-honeypot-reveals-putin-sex-202433646.html",
+              "headline": "Russian honeypot reveals how Putin’s sex spies seduce Silicon Valley nerds to learn secrets",
+              "snippet": "",
+              "publishedAt": "2025-10-28T20:24:33Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/two-popular-candy-bars-recalled-163033349.html",
+              "headline": "Two Popular Candy Bars Recalled Ahead of Halloween Over Potentially Life-Threatening Ingredient",
+              "snippet": "",
+              "publishedAt": "2025-10-28T16:30:33Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "health.yahoo.com",
+              "url": "https://health.yahoo.com/wellness/nutrition/vitamins-supplements/article/best-protein-bars-233732149.html",
+              "headline": "The best protein bars for 2025: Tried, tested and approved by experts",
+              "snippet": "",
+              "publishedAt": "2025-02-21T23:37:32Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/poll-reveals-leading-2028-democratic-173326450.html",
+              "headline": "New poll reveals who is leading the 2028 Democratic field in New Hampshire - and it’s not Newsom",
+              "snippet": "",
+              "publishedAt": "2025-10-28T17:33:26Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/san-diego-freeway-named-nation-012358220.html",
+              "headline": "San Diego freeway named nation’s most riskiest road for drivers this Halloween",
+              "snippet": "",
+              "publishedAt": "2025-10-29T01:23:58Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/putin-brandishes-nuclear-powered-missile-162827967.html",
+              "headline": "Putin brandishes a new nuclear-powered missile as he digs in over Russia's demands on Ukraine",
+              "snippet": "",
+              "publishedAt": "2025-10-27T16:28:27Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/she-half-ape-half-human-130000143.html",
+              "headline": "She Was Half Ape, Half Human—and She May Hold the Secret to What Makes Us Who We Are",
+              "snippet": "",
+              "publishedAt": "2025-10-28T13:00:00Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "health.yahoo.com",
+              "url": "https://health.yahoo.com/conditions/neurological-health/articles/over-time-starves-brain-neurologists-103103183.html",
+              "headline": "\"Over Time, It Starves The Brain\": Neurologists Shared The Foods They Would Never, Ever Eat And Why",
+              "snippet": "",
+              "publishedAt": "2025-10-28T10:31:03Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/us-judge-decertifies-apple-app-205418559.html",
+              "headline": "US judge decertifies Apple app store class action",
+              "snippet": "",
+              "publishedAt": "2025-10-27T20:54:18Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "finance.yahoo.com",
+              "url": "https://finance.yahoo.com/news/m-70s-tax-hit-withdraw-191300522.html",
+              "headline": "I’m in my 70s. Should I take the tax hit and withdraw all of my inherited IRA to avoid required minimum distributions?",
+              "snippet": "",
+              "publishedAt": "2025-10-27T19:13:00Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/fact-check-rumor-mike-johnsons-190900936.html",
+              "headline": "Fact Check: Rumor has it Mike Johnson's wife's hidden LLC was exposed by Rachel Maddow. Here's the truth",
+              "snippet": "",
+              "publishedAt": "2025-10-28T19:09:00Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/undergarment-upgrades-bring-many-mormon-003343123.html",
+              "headline": "Undergarment upgrades bring many Mormon women comfort and joy",
+              "snippet": "",
+              "publishedAt": "2025-10-29T00:33:43Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/thieves-stealing-toyotas-minutes-using-180000839.html",
+              "headline": "Thieves Are Stealing Toyotas in Minutes Using a Simple Headlight Hack",
+              "snippet": "",
+              "publishedAt": "2025-10-27T18:00:00Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/beloved-actor-william-daniels-98-144311511.html",
+              "headline": "Beloved Actor William Daniels, 98, Makes Strong Political Declaration, Firmly Dividing Fans",
+              "snippet": "",
+              "publishedAt": "2025-10-28T14:43:11Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/florida-man-convicted-raping-killing-040206556.html",
+              "headline": "Florida man executed for the 1998 rape and murder of his neighbor",
+              "snippet": "",
+              "publishedAt": "2025-10-28T04:02:06Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "finance.yahoo.com",
+              "url": "https://finance.yahoo.com/news/38-old-amazon-rival-retailer-183700179.html",
+              "headline": "Major office supply retail chain closes another 100 stores.",
+              "snippet": "",
+              "publishedAt": "2025-10-27T18:37:00Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/oil-engine-car-buying-scam-044301408.html",
+              "headline": "‘Oil-in-the-engine’ car-buying scam: 2 arrests made in Northern California",
+              "snippet": "",
+              "publishedAt": "2025-10-28T04:43:01Z",
+              "confidence": 0.4
+            }
           ]
         }
       }
+    },
+    {
+      "id": "50",
+      "title": "What will the price of Bitcoin be tomorrow",
+      "description": "",
+      "unit": "USD",
+      "domain": {
+        "min": 0,
+        "max": 100
+      },
+      "prior": {
+        "kind": "normal",
+        "params": {}
+      },
+      "liquidityUSD": 0,
+      "vol24hUSD": 0,
+      "category": "Crypto",
+      "expiry": "2025-10-29T07:59:00.000Z",
+      "resolvesAt": "2025-10-29T07:59:00.000Z",
+      "alpha": [
+        0.9999999299999998,
+        9.999999999999947e-9,
+        9.999999999999947e-9,
+        9.999999999999947e-9,
+        9.999999999999947e-9,
+        9.999999999999947e-9,
+        9.999999999999947e-9,
+        9.999999999999947e-9
+      ],
+      "k": 7,
+      "tolCoeffSum": 1e-10,
+      "epsAlpha": 1e-8,
+      "muDefault": 1,
+      "coefficients": [
+        0.9999999299999998,
+        9.999999999999947e-9,
+        9.999999999999947e-9,
+        9.999999999999947e-9,
+        9.999999999999947e-9,
+        9.999999999999947e-9,
+        9.999999999999947e-9,
+        9.999999999999947e-9
+      ],
+      "ranges": [
+        [
+          20,
+          40
+        ]
+      ],
+      "createdAt": "2025-10-29T07:57:19.910Z",
+      "stats": {
+        "mean": 0,
+        "variance": 0,
+        "skew": 0,
+        "kurtosis": 0
+      },
+      "txSignature": "5FdTWTgsWpnaQwYDZVrNnskzcQ3uj45PJChuBogmM3EUR7WQbgPnsfzT6G5XLpjTqvRV6W7oVHMqZDxFb3mdmvsb",
+      "oracle": {
+        "type": "ai",
+        "status": "resolved",
+        "request": {
+          "marketId": "50",
+          "question": "What will the price of Bitcoin be tomorrow",
+          "resolutionCriteria": "Resolve to YES if \"What will the price of Bitcoin be tomorrow\" occurs as described, otherwise resolve to NO.",
+          "resolutionDeadline": "2025-10-29T07:59:00.000Z",
+          "locale": "en-US",
+          "options": [
+            {
+              "id": "yes",
+              "label": "YES",
+              "keywords": [
+                "price",
+                "bitcoin",
+                "tomorrow",
+                "crypto",
+                "confirmed",
+                "announced",
+                "completed",
+                "approved",
+                "successful"
+              ]
+            },
+            {
+              "id": "no",
+              "label": "NO",
+              "keywords": [
+                "price",
+                "bitcoin",
+                "tomorrow",
+                "crypto",
+                "no price",
+                "no bitcoin",
+                "no tomorrow",
+                "no crypto",
+                "not price",
+                "not bitcoin",
+                "not tomorrow",
+                "not crypto",
+                "not",
+                "cancelled",
+                "canceled",
+                "denied",
+                "failed",
+                "postponed",
+                "delayed",
+                "refused"
+              ]
+            }
+          ],
+          "unit": "USD",
+          "domain": {
+            "min": 0,
+            "max": 100
+          },
+          "valueDomain": {
+            "min": 0,
+            "max": 1000000000
+          }
+        },
+        "lastCheckedAt": "2025-10-29T08:00:10.205Z",
+        "lastVerdict": {
+          "outcome": 1,
+          "confidence": 0.8,
+          "reasoning": "Evidence confirms Bitcoin price exists and fluctuates daily, so the question 'What will the price of Bitcoin be tomorrow' is valid and will occur. Price around $112K-$124K implies index ~11 on 0-100 scale.",
+          "decidedAt": "2025-10-29T08:00:19.331Z",
+          "signals": [
+            {
+              "source": "bing.com",
+              "url": "http://www.bing.com/news/apiclick.aspx?ref=FexRss&amp;aid=&amp;tid=6901c98d35a649f78ee44cb578e0fb42&amp;url=https%3a%2f%2finsidebitcoins.com%2fnews%2fbitcoin-price-prediction-as-bitmines-tom-lee-says-btc-not-immune-to-50-crashes&amp;c=8966416725736140995&amp;mkt=es-xl",
+              "headline": "Bitcoin Price Prediction As BitMine’s Tom Lee Says BTC Not Immune To 50% Crashes",
+              "snippet": "The Bitcoin price has jumped 1% even after BitMine’s Tom Lee cautions that BTC isn’t safe from major drops, and that a 50% crash is possible.",
+              "publishedAt": "Fri, 24 Oct 2025 05:44:00 GMT",
+              "confidence": 0.4
+            },
+            {
+              "source": "bing.com",
+              "url": "http://www.bing.com/news/apiclick.aspx?ref=FexRss&amp;aid=&amp;tid=6901c98d35a649f78ee44cb578e0fb42&amp;url=https%3a%2f%2fwww.forbes.com%2fsites%2fdigital-assets%2f2025%2f10%2f18%2fthis-will-be-brutal-bitcoin-suddenly-goes-into-free-fall-as-price-crash-panic-wipes-600-billion-from-crypto%2f&amp;c=2480121942692161580&amp;mkt=es-xl",
+              "headline": "Bitcoin Suddenly Braced For A Massive 2026 Crypto Price Shock After Serious Crash Warning",
+              "snippet": "Bitcoin has suddenly dropped toward $100,000, accelerating a sudden sell-off that hit the bitcoin price and crypto market last ...",
+              "publishedAt": "Sun, 19 Oct 2025 06:09:00 GMT",
+              "confidence": 0.4
+            },
+            {
+              "source": "bing.com",
+              "url": "http://www.bing.com/news/apiclick.aspx?ref=FexRss&amp;aid=&amp;tid=6901c98d35a649f78ee44cb578e0fb42&amp;url=https%3a%2f%2fwww.forbes.com%2fsites%2fdigital-assets%2f2025%2f10%2f06%2fbitcoin-price-hits-an-all-time-high-but-heres-what-really-matters%2f&amp;c=15261757695371167838&amp;mkt=es-xl",
+              "headline": "Bitcoin Price Hits An All-Time High, But Here’s What Really Matters",
+              "snippet": "Bitcoin’s price just hit an all-time high at $124,688, pushing its market cap past $2.47 trillion. As Wall Street debates whether it’s a risk-on or risk-off asset, BlackRock says it’s something else ...",
+              "publishedAt": "Mon, 06 Oct 2025 09:04:00 GMT",
+              "confidence": 0.4
+            },
+            {
+              "source": "bing.com",
+              "url": "http://www.bing.com/news/apiclick.aspx?ref=FexRss&amp;aid=&amp;tid=6901c98d35a649f78ee44cb578e0fb42&amp;url=https%3a%2f%2fwww.coingabbar.com%2fen%2fprice-prediction%2fbitcoin-price-recovery-etf-outflows-key-cpi-impact&amp;c=10630127883078083552&amp;mkt=es-xl",
+              "headline": "Bitcoin Price Eyes Recovery as ETFs Face Major Outflows",
+              "snippet": "Bitcoin price shows potential for recovery amid ETF outflows. CPI data and Trump’s remarks could shape the next price move. Will BTC break through $113K?",
+              "publishedAt": "Thu, 23 Oct 2025 03:38:00 GMT",
+              "confidence": 0.4
+            },
+            {
+              "source": "bing.com",
+              "url": "http://www.bing.com/news/apiclick.aspx?ref=FexRss&amp;aid=&amp;tid=6901c98d35a649f78ee44cb578e0fb42&amp;url=https%3a%2f%2fwww.msn.com%2fen-us%2fmoney%2fmarkets%2fbitcoin-btc-price-crashes-to-112000-a-breakdown-of-the-carnage-unfolding%2far-AA1N2uUf&amp;c=2615264076584575757&amp;mkt=es-xl",
+              "headline": "Bitcoin (BTC) Price Crashes to $112,000 — A Breakdown of the Carnage Unfolding",
+              "snippet": "Bitcoin (BTC) failed to move above the $117,000 horizontal resistance area. The BTC price broke down from an ascending parallel channel pattern. How much further will the Bitcoin price continue to ...",
+              "publishedAt": "Mon, 22 Sep 2025 00:43:00 GMT",
+              "confidence": 0.4
+            },
+            {
+              "source": "bing.com",
+              "url": "http://www.bing.com/news/apiclick.aspx?ref=FexRss&amp;aid=&amp;tid=6901c98d35a649f78ee44cb578e0fb42&amp;url=https%3a%2f%2fwww.thestreet.com%2fcrypto%2finvesting%2fanalyst-revamps-price-target-for-bitcoin-after-4-years&amp;c=2187463803316990302&amp;mkt=es-xl",
+              "headline": "Willy Woo revamps Bitcoin price target after 4 years",
+              "snippet": "Willy Woo, the popular on-chain analyst, recently joined TheStreet Roundtable host Scott Melker in which he shared his outlook on a range of concerns surrounding the crypto market. The duo talked ...",
+              "publishedAt": "Wed, 24 Sep 2025 12:24:00 GMT",
+              "confidence": 0.4
+            },
+            {
+              "source": "bing.com",
+              "url": "http://www.bing.com/news/apiclick.aspx?ref=FexRss&amp;aid=&amp;tid=6901c98d35a649f78ee44cb578e0fb42&amp;url=https%3a%2f%2fwww.fool.com%2finvesting%2f2025%2f10%2f05%2fwhere-will-bitcoin-be-in-10-years%2f&amp;c=691063166034731626&amp;mkt=es-xl",
+              "headline": "Where Will Bitcoin Be in 10 Years?",
+              "snippet": "Bitcoin continues to benefit from more buy-in from politicians and financial institutions. Bitcoin could easily reach the same market cap as gold. If Bitcoin is adopted as a widely used medium of ...",
+              "publishedAt": "Sun, 05 Oct 2025 01:45:00 GMT",
+              "confidence": 0.4
+            },
+            {
+              "source": "bing.com",
+              "url": "http://www.bing.com/news/apiclick.aspx?ref=FexRss&amp;aid=&amp;tid=6901c98d35a649f78ee44cb578e0fb42&amp;url=https%3a%2f%2fcointelegraph.com%2fnews%2fbitcoin-price-3-4-million-by-2028-arthur-hayes-doesnt-think-so&amp;c=3566764154156764863&amp;mkt=es-xl",
+              "headline": "Bitcoin price to $3.4M by 2028? Arthur Hayes doesn’t think so",
+              "snippet": "Bitcoin will be “markedly higher” by 2028, Arthur Hayes said, but $3.4 million per coin is too bullish. BTC price increases from credit growth may not match past performance. US money printing is back ...",
+              "publishedAt": "Mon, 22 Sep 2025 17:00:00 GMT",
+              "confidence": 0.4
+            },
+            {
+              "source": "bing.com",
+              "url": "http://www.bing.com/news/apiclick.aspx?ref=FexRss&amp;aid=&amp;tid=6901c98d35a649f78ee44cb578e0fb42&amp;url=https%3a%2f%2fwww.wsj.com%2flivecoverage%2fstock-market-today-government-shutdown-10-06-2025%2fcard%2fbitcoin-price-sets-new-record-above-125-000-ZU0QeEQLN62M5XCFFlKn&amp;c=12005345887582077673&amp;mkt=es-xl",
+              "headline": "Bitcoin Price Sets New Record Above $125,000",
+              "snippet": "The price of bitcoin hit record highs Monday. The cryptocurrency, which is up 34% this year, ended the trading day at $125,481.71, according to CoinDesk. That was an all-time closing high. Bitcoin ...",
+              "publishedAt": "Sun, 05 Oct 2025 17:01:00 GMT",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/north-carolina-man-charged-murder-181907474.html",
+              "headline": "A North Carolina man is charged with 4 murder counts after telling authorities he killed his kids",
+              "snippet": "",
+              "publishedAt": "2025-10-28T18:19:07Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "tech.yahoo.com",
+              "url": "https://tech.yahoo.com/phones/articles/samsung-launch-one-more-galaxy-110000004.html",
+              "headline": "Samsung will launch one more Galaxy phone this year – and it's the flagship we've been waiting for",
+              "snippet": "",
+              "publishedAt": "2025-10-27T11:00:00Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/jamie-lee-curtis-withdraws-sympathy-221540454.html",
+              "headline": "Jamie Lee Curtis Withdraws Sympathy For Charlie Kirk Amid Alleged Shooter's Court Win",
+              "snippet": "",
+              "publishedAt": "2025-10-28T22:15:40Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "tech.yahoo.com",
+              "url": "https://tech.yahoo.com/transportation/articles/quiet-supersonic-x-59-jet-213846986.html",
+              "headline": "Quiet supersonic X-59 jet soars over California desert in first test flight",
+              "snippet": "",
+              "publishedAt": "2025-10-28T21:38:46Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/hes-completely-lost-people-cant-152709656.html",
+              "headline": "This Video Of President Trump Trying To Walk Around The Japanese Guard Has People Noticing...A Few Very Interesting Things",
+              "snippet": "",
+              "publishedAt": "2025-10-28T15:27:09Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/entertainment/celebrity/articles/brigitte-macron-forced-alter-her-013030130.html",
+              "headline": "Brigitte Macron Forced To Alter Her Style As She Struggles With Her Appearance Amid Trans Claims",
+              "snippet": "",
+              "publishedAt": "2025-10-29T01:30:30Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "health.yahoo.com",
+              "url": "https://health.yahoo.com/wellness/nutrition/vitamins-supplements/article/best-protein-bars-233732149.html",
+              "headline": "The best protein bars for 2025: Tried, tested and approved by experts",
+              "snippet": "",
+              "publishedAt": "2025-02-21T23:37:32Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/suspect-shooting-sheriffs-deputy-crashes-230309748.html",
+              "headline": "Deputy is killed; as suspect flees, second deputy knocks him off his motorcycle in 150 mph chase",
+              "snippet": "",
+              "publishedAt": "2025-10-27T23:03:09Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "finance.yahoo.com",
+              "url": "https://finance.yahoo.com/news/major-candy-company-files-chapter-153300721.html",
+              "headline": "Major candy company files Chapter 11 bankruptcy in Halloween week",
+              "snippet": "",
+              "publishedAt": "2025-10-27T15:33:00Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/conflicting-accounts-emerge-un-peacekeepers-093014827.html",
+              "headline": "Conflicting accounts emerge after UN peacekeepers shoot down Israeli drone",
+              "snippet": "",
+              "publishedAt": "2025-10-27T09:30:14Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/videos/hegseth-stumbled-10-minute-speech-160138950.html",
+              "headline": "Hegseth stumbled through a 10-minute speech, managing to shock the Navy service members by joking about bombing and even ripping his own son.",
+              "snippet": "",
+              "publishedAt": "2025-10-28T16:01:38Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/ufc-screwball-bryce-mitchell-quits-180002570.html",
+              "headline": "UFC screwball Bryce Mitchell quits MAGA movement after bible reveals tricky Trump is actually ‘the Antichrist’",
+              "snippet": "",
+              "publishedAt": "2025-10-28T18:00:02Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/court-disqualifies-trump-appointed-us-005538254.html",
+              "headline": "Court disqualifies Trump-appointed US attorney from overseeing multiple criminal cases",
+              "snippet": "",
+              "publishedAt": "2025-10-29T00:55:38Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/million-old-sea-crossing-near-210700645.html",
+              "headline": "Million-year-old sea crossing near ‘Hobbit’s’ island rewrites early human history",
+              "snippet": "",
+              "publishedAt": "2025-10-27T21:07:00Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/trump-79-looks-frail-tries-174910577.html",
+              "headline": "Trump, 79, Looks Frail as He Tries to Avoid a Fall on Asia Tour",
+              "snippet": "",
+              "publishedAt": "2025-10-27T17:49:10Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/putin-brandishes-nuclear-powered-missile-162827967.html",
+              "headline": "Putin brandishes a new nuclear-powered missile as he digs in over Russia's demands on Ukraine",
+              "snippet": "",
+              "publishedAt": "2025-10-27T16:28:27Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/two-popular-candy-bars-recalled-163033349.html",
+              "headline": "Two Popular Candy Bars Recalled Ahead of Halloween Over Potentially Life-Threatening Ingredient",
+              "snippet": "",
+              "publishedAt": "2025-10-28T16:30:33Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/entertainment/celebrity/articles/cause-death-announced-third-disney-175727815.html",
+              "headline": "Cause of death announced for third Disney World guest death this month",
+              "snippet": "",
+              "publishedAt": "2025-10-27T17:57:27Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/us-judge-decertifies-apple-app-205418559.html",
+              "headline": "US judge decertifies Apple app store class action",
+              "snippet": "",
+              "publishedAt": "2025-10-27T20:54:18Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/she-half-ape-half-human-130000143.html",
+              "headline": "She Was Half Ape, Half Human—and She May Hold the Secret to What Makes Us Who We Are",
+              "snippet": "",
+              "publishedAt": "2025-10-28T13:00:00Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "health.yahoo.com",
+              "url": "https://health.yahoo.com/conditions/neurological-health/articles/over-time-starves-brain-neurologists-103103183.html",
+              "headline": "\"Over Time, It Starves The Brain\": Neurologists Shared The Foods They Would Never, Ever Eat And Why",
+              "snippet": "",
+              "publishedAt": "2025-10-28T10:31:03Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/undergarment-upgrades-bring-many-mormon-003343123.html",
+              "headline": "Undergarment upgrades bring many Mormon women comfort and joy",
+              "snippet": "",
+              "publishedAt": "2025-10-29T00:33:43Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/videos/woman-sentenced-blaming-her-high-210409481.html",
+              "headline": "Woman Sentenced After Blaming Her High Heels For Fatal Car Crash",
+              "snippet": "",
+              "publishedAt": "2025-10-28T21:04:09Z",
+              "confidence": 0.4
+            }
+          ]
+        },
+        "resolvedOutcome": 1
+      },
+      "resolvedOutcome": 1,
+      "resolutionConfidence": 80
+    },
+    {
+      "id": "51",
+      "title": "WHAT WILL THE PRICE OF SOLANA BE TOMORROW",
+      "description": "",
+      "unit": "USD",
+      "domain": {
+        "min": 0,
+        "max": 100
+      },
+      "prior": {
+        "kind": "normal",
+        "params": {}
+      },
+      "liquidityUSD": 0,
+      "vol24hUSD": 0,
+      "category": "Crypto",
+      "expiry": "2025-10-29T08:15:00.000Z",
+      "resolvesAt": "2025-10-29T08:15:00.000Z",
+      "alpha": [
+        0.9999999299999998,
+        9.999999999999947e-9,
+        9.999999999999947e-9,
+        9.999999999999947e-9,
+        9.999999999999947e-9,
+        9.999999999999947e-9,
+        9.999999999999947e-9,
+        9.999999999999947e-9
+      ],
+      "k": 7,
+      "tolCoeffSum": 1e-10,
+      "epsAlpha": 1e-8,
+      "muDefault": 1,
+      "coefficients": [
+        0.9999999299999998,
+        9.999999999999947e-9,
+        9.999999999999947e-9,
+        9.999999999999947e-9,
+        9.999999999999947e-9,
+        9.999999999999947e-9,
+        9.999999999999947e-9,
+        9.999999999999947e-9
+      ],
+      "ranges": [
+        [
+          20,
+          40
+        ]
+      ],
+      "createdAt": "2025-10-29T08:13:44.984Z",
+      "stats": {
+        "mean": 0,
+        "variance": 0,
+        "skew": 0,
+        "kurtosis": 0
+      },
+      "txSignature": "3qeVDG5JzYDVGPiBEWgXanKFyzZQ2sfmdHdqLjbv4aTHdJHWxuHDVU5M3uf2nuYVTjcgWH5ybBBr3NuRgSQB6JhG",
+      "oracle": {
+        "type": "ai",
+        "status": "resolved",
+        "request": {
+          "marketId": "51",
+          "question": "WHAT WILL THE PRICE OF SOLANA BE TOMORROW",
+          "resolutionCriteria": "Resolve to YES if \"WHAT WILL THE PRICE OF SOLANA BE TOMORROW\" occurs as described, otherwise resolve to NO.",
+          "resolutionDeadline": "2025-10-29T08:15:00.000Z",
+          "locale": "en-US",
+          "options": [
+            {
+              "id": "yes",
+              "label": "YES",
+              "keywords": [
+                "price",
+                "solana",
+                "tomorrow",
+                "crypto",
+                "confirmed",
+                "announced",
+                "completed",
+                "approved",
+                "successful"
+              ]
+            },
+            {
+              "id": "no",
+              "label": "NO",
+              "keywords": [
+                "price",
+                "solana",
+                "tomorrow",
+                "crypto",
+                "no price",
+                "no solana",
+                "no tomorrow",
+                "no crypto",
+                "not price",
+                "not solana",
+                "not tomorrow",
+                "not crypto",
+                "not",
+                "cancelled",
+                "canceled",
+                "denied",
+                "failed",
+                "postponed",
+                "delayed",
+                "refused"
+              ]
+            }
+          ],
+          "unit": "USD",
+          "domain": {
+            "min": 0,
+            "max": 100
+          },
+          "valueDomain": {
+            "min": 0,
+            "max": 1000000000
+          }
+        },
+        "lastCheckedAt": "2025-10-29T08:15:12.085Z",
+        "lastVerdict": {
+          "outcome": 1,
+          "confidence": 0.75,
+          "reasoning": "Evidence shows Solana ETFs launching tomorrow and price rallies above $200, indicating Solana will have a price tomorrow. Estimated price ~$200 corresponds to index ~20 on 0-100 scale.",
+          "decidedAt": "2025-10-29T08:15:20.647Z",
+          "signals": [
+            {
+              "source": "bing.com",
+              "url": "http://www.bing.com/news/apiclick.aspx?ref=FexRss&amp;aid=&amp;tid=6901cd14a2234763a239e06815e2fe2a&amp;url=https%3a%2f%2fbeincrypto.com%2fsolana-and-hbar-etfs-will-begin-trading-tomorrow%2f&amp;c=15939600118415197698&amp;mkt=es-xl",
+              "headline": "Solana and HBAR ETFs Will Begin Trading Tomorrow",
+              "snippet": "Solana and HBAR ETFs from Bitwise and Canary Capital launch tomorrow amid market uncertainty and muted token reactions.",
+              "publishedAt": "Mon, 27 Oct 2025 15:26:00 GMT",
+              "confidence": 0.4
+            },
+            {
+              "source": "bing.com",
+              "url": "http://www.bing.com/news/apiclick.aspx?ref=FexRss&amp;aid=&amp;tid=6901cd14a2234763a239e06815e2fe2a&amp;url=https%3a%2f%2fcoingape.com%2fmarkets%2fwill-solana-price-rally-to-300-as-bitwise-launches-bsol-etf%2f&amp;c=4142210333956973980&amp;mkt=es-xl",
+              "headline": "Will Solana Price Rally to $300 as Bitwise Launches $BSOL ETF?",
+              "snippet": "Solana price has seen a strong performance, rallying above the $200 level after bouncing off key support. Momentum is building, with a potential retest of ...",
+              "publishedAt": "Tue, 28 Oct 2025 07:31:00 GMT",
+              "confidence": 0.4
+            },
+            {
+              "source": "bing.com",
+              "url": "http://www.bing.com/news/apiclick.aspx?ref=FexRss&amp;aid=&amp;tid=6901cd14a2234763a239e06815e2fe2a&amp;url=https%3a%2f%2fwww.msn.com%2fen-us%2fmoney%2fmarkets%2fhow-high-can-sol-s-price-go-as-the-first-solana-etf-goes-live%2far-AA1Pl8Hc&amp;c=314215255539174128&amp;mkt=es-xl",
+              "headline": "How high can SOL’s price go as the first Solana ETF goes live?",
+              "snippet": "SOL has recovered 14% from its recent lows, with analysts eyeing a potential rise to $400 and beyond, boosted by institutional demand.",
+              "publishedAt": "Tue, 28 Oct 2025 05:59:00 GMT",
+              "confidence": 0.4
+            },
+            {
+              "source": "bing.com",
+              "url": "http://www.bing.com/news/apiclick.aspx?ref=FexRss&amp;aid=&amp;tid=6901cd14a2234763a239e06815e2fe2a&amp;url=https%3a%2f%2fwww.coingabbar.com%2fen%2fcrypto-currency-news%2fsec-solana-etf-approval-decision-october-galaxy-digital-hint&amp;c=5711467304549514457&amp;mkt=es-xl",
+              "headline": "SEC Solana ETF Approval Tomorrow? 5 Moves Hint Yes, Galaxy Leads",
+              "snippet": "Galaxy Digital moves $50M hint Solana ETF approval SEC decision may hit tomorrow. 5 key market signals and $SOL price movement. Watch latest insights ...",
+              "publishedAt": "Wed, 15 Oct 2025 06:33:00 GMT",
+              "confidence": 0.4
+            },
+            {
+              "source": "bing.com",
+              "url": "http://www.bing.com/news/apiclick.aspx?ref=FexRss&amp;aid=&amp;tid=6901cd14a2234763a239e06815e2fe2a&amp;url=https%3a%2f%2ffinance.yahoo.com%2fnews%2fprediction-solana-300-cryptocurrency-within-093000682.html&amp;c=3427432830732298285&amp;mkt=es-xl",
+              "headline": "Prediction: Solana Will Be a $300 Cryptocurrency Within 1 Year",
+              "snippet": "New spot crypto ETFs could start trading later this year, leading to new demand for Solana. Digital asset treasury companies continue to accumulate Solana at a rapid clip. Growth in decentralized ...",
+              "publishedAt": "Thu, 18 Sep 2025 16:59:00 GMT",
+              "confidence": 0.4
+            },
+            {
+              "source": "bing.com",
+              "url": "http://www.bing.com/news/apiclick.aspx?ref=FexRss&amp;aid=&amp;tid=6901cd14a2234763a239e06815e2fe2a&amp;url=https%3a%2f%2fwww.forbes.com%2fsites%2fgreatspeculations%2f2025%2f09%2f15%2fsolana-price-prediction-sol-price-to-500%2f&amp;c=8306909200194560341&amp;mkt=es-xl",
+              "headline": "Solana Price To $500?",
+              "snippet": "ILLUSTRATION - 11 August 2025, Baden-W&#252;rttemberg, Rottweil: The cryptocurrency Solana can be seen on the display of an iPhone in the crypto trading platform Koingecko. Photo: Silas Stein/dpa (Photo by ...",
+              "publishedAt": "Mon, 15 Sep 2025 18:48:00 GMT",
+              "confidence": 0.4
+            },
+            {
+              "source": "bing.com",
+              "url": "http://www.bing.com/news/apiclick.aspx?ref=FexRss&amp;aid=&amp;tid=6901cd14a2234763a239e06815e2fe2a&amp;url=https%3a%2f%2ffinance.yahoo.com%2fnews%2fsolana-price-poised-short-term-153026021.html&amp;c=207573940650279356&amp;mkt=es-xl",
+              "headline": "Solana Price Poised for Short-Term Bounce Following $315 Million Buying",
+              "snippet": "Solana’s price has seen a recent decline, but investors view it as a healthy reset rather than weakness. SOL has bounced within its range after weeks of volatility, with buying activity suggesting ...",
+              "publishedAt": "Tue, 23 Sep 2025 17:00:00 GMT",
+              "confidence": 0.4
+            },
+            {
+              "source": "bing.com",
+              "url": "http://www.bing.com/news/apiclick.aspx?ref=FexRss&amp;aid=&amp;tid=6901cd14a2234763a239e06815e2fe2a&amp;url=https%3a%2f%2fwww.outlookindia.com%2fxhub%2fblockchain-insights%2fsolana-price-skyrockets-on-institutional-demand-experts-say-this-new-crypto-is-next&amp;c=1480606180172273229&amp;mkt=es-xl",
+              "headline": "Solana Price Skyrockets On Institutional Demand; Experts Say This New Crypto Is Next",
+              "snippet": "To step into the evolving world of digital assets, investors only need to connect a wallet, pick their payment token, purchase $LBRETT, and begin staking. As the ...",
+              "publishedAt": "Sat, 13 Sep 2025 06:07:00 GMT",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/north-carolina-man-charged-murder-181907474.html",
+              "headline": "A North Carolina man is charged with 4 murder counts after telling authorities he killed his kids",
+              "snippet": "",
+              "publishedAt": "2025-10-28T18:19:07Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "tech.yahoo.com",
+              "url": "https://tech.yahoo.com/phones/articles/samsung-launch-one-more-galaxy-110000004.html",
+              "headline": "Samsung will launch one more Galaxy phone this year – and it's the flagship we've been waiting for",
+              "snippet": "",
+              "publishedAt": "2025-10-27T11:00:00Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/jamie-lee-curtis-withdraws-sympathy-221540454.html",
+              "headline": "Jamie Lee Curtis Withdraws Sympathy For Charlie Kirk Amid Alleged Shooter's Court Win",
+              "snippet": "",
+              "publishedAt": "2025-10-28T22:15:40Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "tech.yahoo.com",
+              "url": "https://tech.yahoo.com/transportation/articles/quiet-supersonic-x-59-jet-213846986.html",
+              "headline": "Quiet supersonic X-59 jet soars over California desert in first test flight",
+              "snippet": "",
+              "publishedAt": "2025-10-28T21:38:46Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/hes-completely-lost-people-cant-152709656.html",
+              "headline": "This Video Of President Trump Trying To Walk Around The Japanese Guard Has People Noticing...A Few Very Interesting Things",
+              "snippet": "",
+              "publishedAt": "2025-10-28T15:27:09Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/entertainment/celebrity/articles/brigitte-macron-forced-alter-her-013030130.html",
+              "headline": "Brigitte Macron Forced To Alter Her Style As She Struggles With Her Appearance Amid Trans Claims",
+              "snippet": "",
+              "publishedAt": "2025-10-29T01:30:30Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/videos/hegseth-stumbled-10-minute-speech-160138950.html",
+              "headline": "Hegseth stumbled through a 10-minute speech, managing to shock the Navy service members by joking about bombing and even ripping his own son.",
+              "snippet": "",
+              "publishedAt": "2025-10-28T16:01:38Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/suspect-shooting-sheriffs-deputy-crashes-230309748.html",
+              "headline": "Deputy is killed; as suspect flees, second deputy knocks him off his motorcycle in 150 mph chase",
+              "snippet": "",
+              "publishedAt": "2025-10-27T23:03:09Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/ufc-screwball-bryce-mitchell-quits-180002570.html",
+              "headline": "UFC screwball Bryce Mitchell quits MAGA movement after bible reveals tricky Trump is actually ‘the Antichrist’",
+              "snippet": "",
+              "publishedAt": "2025-10-28T18:00:02Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/court-disqualifies-trump-appointed-us-005538254.html",
+              "headline": "Court disqualifies Trump-appointed US attorney from overseeing multiple criminal cases",
+              "snippet": "",
+              "publishedAt": "2025-10-29T00:55:38Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "finance.yahoo.com",
+              "url": "https://finance.yahoo.com/news/major-candy-company-files-chapter-153300721.html",
+              "headline": "Major candy company files Chapter 11 bankruptcy in Halloween week",
+              "snippet": "",
+              "publishedAt": "2025-10-27T15:33:00Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/million-old-sea-crossing-near-210700645.html",
+              "headline": "Million-year-old sea crossing near ‘Hobbit’s’ island rewrites early human history",
+              "snippet": "",
+              "publishedAt": "2025-10-27T21:07:00Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/conflicting-accounts-emerge-un-peacekeepers-093014827.html",
+              "headline": "Conflicting accounts emerge after UN peacekeepers shoot down Israeli drone",
+              "snippet": "",
+              "publishedAt": "2025-10-27T09:30:14Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/russian-honeypot-reveals-putin-sex-202433646.html",
+              "headline": "Russian honeypot reveals how Putin’s sex spies seduce Silicon Valley nerds to learn secrets",
+              "snippet": "",
+              "publishedAt": "2025-10-28T20:24:33Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/two-popular-candy-bars-recalled-163033349.html",
+              "headline": "Two Popular Candy Bars Recalled Ahead of Halloween Over Potentially Life-Threatening Ingredient",
+              "snippet": "",
+              "publishedAt": "2025-10-28T16:30:33Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "health.yahoo.com",
+              "url": "https://health.yahoo.com/wellness/nutrition/vitamins-supplements/article/best-protein-bars-233732149.html",
+              "headline": "The best protein bars for 2025: Tried, tested and approved by experts",
+              "snippet": "",
+              "publishedAt": "2025-02-21T23:37:32Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/poll-reveals-leading-2028-democratic-173326450.html",
+              "headline": "New poll reveals who is leading the 2028 Democratic field in New Hampshire - and it’s not Newsom",
+              "snippet": "",
+              "publishedAt": "2025-10-28T17:33:26Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/san-diego-freeway-named-nation-012358220.html",
+              "headline": "San Diego freeway named nation’s most riskiest road for drivers this Halloween",
+              "snippet": "",
+              "publishedAt": "2025-10-29T01:23:58Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/putin-brandishes-nuclear-powered-missile-162827967.html",
+              "headline": "Putin brandishes a new nuclear-powered missile as he digs in over Russia's demands on Ukraine",
+              "snippet": "",
+              "publishedAt": "2025-10-27T16:28:27Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/she-half-ape-half-human-130000143.html",
+              "headline": "She Was Half Ape, Half Human—and She May Hold the Secret to What Makes Us Who We Are",
+              "snippet": "",
+              "publishedAt": "2025-10-28T13:00:00Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "health.yahoo.com",
+              "url": "https://health.yahoo.com/conditions/neurological-health/articles/over-time-starves-brain-neurologists-103103183.html",
+              "headline": "\"Over Time, It Starves The Brain\": Neurologists Shared The Foods They Would Never, Ever Eat And Why",
+              "snippet": "",
+              "publishedAt": "2025-10-28T10:31:03Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/us-judge-decertifies-apple-app-205418559.html",
+              "headline": "US judge decertifies Apple app store class action",
+              "snippet": "",
+              "publishedAt": "2025-10-27T20:54:18Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "finance.yahoo.com",
+              "url": "https://finance.yahoo.com/news/m-70s-tax-hit-withdraw-191300522.html",
+              "headline": "I’m in my 70s. Should I take the tax hit and withdraw all of my inherited IRA to avoid required minimum distributions?",
+              "snippet": "",
+              "publishedAt": "2025-10-27T19:13:00Z",
+              "confidence": 0.4
+            },
+            {
+              "source": "yahoo.com",
+              "url": "https://www.yahoo.com/news/articles/fact-check-rumor-mike-johnsons-190900936.html",
+              "headline": "Fact Check: Rumor has it Mike Johnson's wife's hidden LLC was exposed by Rachel Maddow. Here's the truth",
+              "snippet": "",
+              "publishedAt": "2025-10-28T19:09:00Z",
+              "confidence": 0.4
+            }
+          ]
+        },
+        "resolvedOutcome": 1
+      },
+      "resolvedOutcome": 1,
+      "resolutionConfidence": 75
     }
   ]
 }

@@ -189,6 +189,10 @@
           "signer": true
         },
         {
+          "name": "market_authority",
+          "signer": true
+        },
+        {
           "name": "payer",
           "writable": true,
           "signer": true
@@ -702,63 +706,6 @@
           }
         }
       ]
-    },
-    {
-      "name": "settle",
-      "discriminator": [
-        175,
-        42,
-        185,
-        87,
-        144,
-        131,
-        102,
-        212
-      ],
-      "accounts": [
-        {
-          "name": "market_authority",
-          "signer": true
-        },
-        {
-          "name": "payer",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "market",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  77,
-                  65,
-                  82,
-                  75,
-                  69,
-                  84
-                ]
-              },
-              {
-                "kind": "arg",
-                "path": "market_id"
-              }
-            ]
-          }
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": [
-        {
-          "name": "market_id",
-          "type": "u64"
-        }
-      ]
     }
   ],
   "accounts": [
@@ -968,10 +915,6 @@
           {
             "name": "expiry",
             "type": "i64"
-          },
-          {
-            "name": "settled",
-            "type": "bool"
           },
           {
             "name": "_reserved",

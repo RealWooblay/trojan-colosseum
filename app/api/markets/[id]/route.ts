@@ -6,7 +6,7 @@ import { coefficientsToRanges } from "@/lib/trade-utils"
 import { MOCK_MARKETS } from "@/lib/mock-data"
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
-  const { id } = params
+  const { id } = await params
 
   const storedMarket = await findStoredMarket(id)
   const mockMarket = storedMarket ? null : MOCK_MARKETS.find((m) => m.id === id)

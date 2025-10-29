@@ -808,80 +808,71 @@ export class AiOracle {
     )}. Convert observed values into this index via linear interpolation, then clamp to 0-100.`;
 
     const body = {
-      model: this.config.openAiModel,
+      model: this.config.openAiModel, // e.g., "gpt-4.1" / "gpt-4.1-mini" / "gpt-5.1"
+      text: {
+        format: {
+          type: "json_schema", 
+          name: "oracle_verdict",
+          schema: {
+            type: "object",
+            properties: {
+              outcome: {
+                type: "string",
+                enum: ["INDEX", "PENDING", "INVALID"],
+                description: "Outcome type. If INDEX, outcome_index must be provided."
+              },
+              outcome_index: {
+                type: "number",
+                minimum: 0,
+                maximum: 100,
+                description: "Resolved index 0–100. Only when outcome = INDEX."
+              },
+              confidence: { type: "number", minimum: 0, maximum: 1 },
+              reasoning: { type: "string", maxLength: 512 }
+            },
+            required: ["outcome", "outcome_index", "confidence", "reasoning"],
+            additionalProperties: false
+          }
+        }
+      },
       input: [
         {
-          role: 'system',
+          role: "system",
           content: [
             {
-              type: 'text',
-              text: 'You are an impartial prediction market oracle. Return a verdict in JSON. Only use the provided evidence.',
-            },
-          ],
+              type: "input_text",
+              text:
+                "You are an impartial prediction market oracle. Return a verdict in JSON. Only use the provided evidence."
+            }
+          ]
         },
         {
-          role: 'user',
+          role: "user",
           content: [
             {
-              type: 'text',
+              type: "input_text",
               text: [
                 `Market ID: ${request.marketId}`,
                 `Question: ${request.question}`,
-                request.resolutionCriteria ? `Resolution criteria: ${request.resolutionCriteria}` : undefined,
+                request.resolutionCriteria
+                  ? `Resolution criteria: ${request.resolutionCriteria}`
+                  : undefined,
                 deadline ? `Resolution deadline: ${deadline}` : undefined,
                 optionsSummary ? `Options:\n${optionsSummary}` : undefined,
-                `Heuristic baseline outcome index: ${baselineOutcome} (confidence ${heuristicVerdict.confidence.toFixed(
-                  2,
-                )})`,
+                `Heuristic baseline outcome index: ${baselineOutcome} (confidence ${heuristicVerdict.confidence.toFixed(2)})`,
                 scaleSummary,
-                `Evidence:\n${evidence.join('\n') || 'No evidence collected.'}`,
-                'Return JSON with fields: outcome (integer 0-100 or string "PENDING"/"INVALID"), confidence (0-1), reasoning (<= 280 chars).',
+                `Evidence:\n${evidence.join("\n") || "No evidence collected."}`,
+                "Return JSON with fields: outcome (integer 0-100 or string \"PENDING\"/\"INVALID\"), confidence (0-1), reasoning (<= 280 chars)."
               ]
                 .filter(Boolean)
-                .join('\n\n'),
-            },
-          ],
-        },
+                .join("\n\n")
+            }
+          ]
+        }
       ],
-      response_format: {
-        type: 'json_schema',
-        json_schema: {
-          name: 'oracle_verdict',
-          schema: {
-            type: 'object',
-            properties: {
-              outcome: {
-                description:
-                  'Resolved index (0-100). Use "PENDING" if insufficient evidence or "INVALID" if market conditions cannot be evaluated.',
-                oneOf: [
-                  {
-                    type: 'number',
-                    minimum: 0,
-                    maximum: 100,
-                  },
-                  {
-                    type: 'string',
-                    enum: ['PENDING', 'INVALID'],
-                  },
-                ],
-              },
-              confidence: {
-                type: 'number',
-                minimum: 0,
-                maximum: 1,
-              },
-              reasoning: {
-                type: 'string',
-                maxLength: 512,
-              },
-            },
-            required: ['outcome', 'confidence', 'reasoning'],
-            additionalProperties: false,
-          },
-        },
-      },
+
       temperature: 0.1,
-      max_output_tokens: 500,
+      max_output_tokens: 500
     };
 
     const url = `${this.config.openAiBaseUrl.replace(/\/+$/, '')}/v1/responses`;
@@ -908,14 +899,17 @@ export class AiOracle {
           throw new Error('OpenAI response did not include text output.');
         }
 
-        let parsed: { outcome: number | string; confidence: number; reasoning: string };
+        let parsed: { outcome: "INDEX" | "PENDING" | "INVALID"; outcome_index: number; confidence: number; reasoning: string };
         try {
           parsed = JSON.parse(rawText);
         } catch (parseError) {
           throw new Error(`Failed to parse OpenAI JSON response: ${(parseError as Error).message}`);
         }
 
-        const outcome = this.normalizeOutcomeValue(parsed.outcome, request);
+
+        const outcome = parsed.outcome === "INDEX" ?
+          this.normalizeOutcomeValue(parsed.outcome_index, request) :
+          this.normalizeOutcomeValue(parsed.outcome, request);
         const confidence = Number.isFinite(parsed.confidence)
           ? Math.min(1, Math.max(0, parsed.confidence))
           : heuristicVerdict.confidence;

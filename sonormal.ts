@@ -195,6 +195,10 @@ export type Sonormal = {
           "signer": true
         },
         {
+          "name": "marketAuthority",
+          "signer": true
+        },
+        {
           "name": "payer",
           "writable": true,
           "signer": true
@@ -708,63 +712,6 @@ export type Sonormal = {
           }
         }
       ]
-    },
-    {
-      "name": "settle",
-      "discriminator": [
-        175,
-        42,
-        185,
-        87,
-        144,
-        131,
-        102,
-        212
-      ],
-      "accounts": [
-        {
-          "name": "marketAuthority",
-          "signer": true
-        },
-        {
-          "name": "payer",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "market",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  77,
-                  65,
-                  82,
-                  75,
-                  69,
-                  84
-                ]
-              },
-              {
-                "kind": "arg",
-                "path": "marketId"
-              }
-            ]
-          }
-        },
-        {
-          "name": "systemProgram",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": [
-        {
-          "name": "marketId",
-          "type": "u64"
-        }
-      ]
     }
   ],
   "accounts": [
@@ -974,10 +921,6 @@ export type Sonormal = {
           {
             "name": "expiry",
             "type": "i64"
-          },
-          {
-            "name": "settled",
-            "type": "bool"
           },
           {
             "name": "reserved",

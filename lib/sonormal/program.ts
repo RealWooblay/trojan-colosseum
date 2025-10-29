@@ -5,11 +5,12 @@ import * as anchor from "@coral-xyz/anchor";
 import { Sonormal } from "../../sonormal";
 import SonormalIdl from "../../sonormal.json";
 import { getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { appendStoredMarket } from "../storage";
+import { appendStoredMarket, findStoredMarket } from "../storage";
 import { createDefaultAiOracleState } from "../oracle/market-oracle";
 import { coefficientsToRanges } from "../trade-utils";
 import { findControllerPda, findMarketPda, findTicketPda } from "./pda";
-import { fetchSellMath } from "./math";
+import { fetchSellMath, fetchSettleMath } from "./math";
+import { BN } from "bn.js";
 
 const marketAuthorityKeypair = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(process.env.MARKET_AUTHORITY!)));
 const marketAuthorityWallet = new anchor.Wallet(marketAuthorityKeypair);
@@ -147,16 +148,16 @@ export async function newMarket(
             .map(normalizeInputRange)
             .filter((tuple): tuple is [number, number] => Array.isArray(tuple))
             .map(([startRaw, endRaw]) => {
-            const start = startRaw ?? domain.min;
-            const end = endRaw ?? startRaw ?? domain.min;
-            const low = Math.max(domain.min, Math.min(start, end));
-            const high = Math.min(domain.max, Math.max(start, end));
-            if (high - low <= 0) {
-                const epsilon = (domain.max - domain.min) * 0.01;
-                return [low, Math.min(domain.max, low + epsilon)] as [number, number];
-            }
-            return [low, high] as [number, number];
-        });
+                const start = startRaw ?? domain.min;
+                const end = endRaw ?? startRaw ?? domain.min;
+                const low = Math.max(domain.min, Math.min(start, end));
+                const high = Math.min(domain.max, Math.max(start, end));
+                if (high - low <= 0) {
+                    const epsilon = (domain.max - domain.min) * 0.01;
+                    return [low, Math.min(domain.max, low + epsilon)] as [number, number];
+                }
+                return [low, high] as [number, number];
+            });
         const storedRanges = normalizedRanges.length > 0 ? normalizedRanges : coefficientsToRanges(alpha, domain);
 
         await appendStoredMarket({
@@ -204,40 +205,6 @@ export async function newMarket(
             success: true,
             signature: result.signature
         };
-    } catch (error) {
-        console.error(error);
-        if (error instanceof SendTransactionError) {
-            try {
-                const logs = await error.getLogs(solanaRpc);
-                const signature =
-                    typeof (error as any).signature === 'string'
-                        ? (error as any).signature
-                        : undefined;
-                return {
-                    success: false,
-                    error: {
-                        type: 'SendTransactionError',
-                        message: error.message,
-                        logs: logs ?? undefined,
-                        signature,
-                    }
-                };
-            } catch (logError) {
-                console.error('Failed to fetch transaction logs', logError);
-            }
-        }
-        return {
-            success: false,
-            error: error
-        };
-    }
-}
-
-export async function settle(
-    marketId: string
-) {
-    try {
-
     } catch (error) {
         console.error(error);
         if (error instanceof SendTransactionError) {
@@ -412,7 +379,7 @@ export async function sellTransaction(
             liquidityMint,
             marketAuthorityKeypair.publicKey
         );
-        
+
         const instruction = await sonormalProgram.methods
             .sell(
                 new anchor.BN(marketId),
@@ -452,6 +419,125 @@ export async function sellTransaction(
             success: true,
             transaction: transaction.versionedTransaction.serialize(),
             tStar: sellMath.tStar
+        };
+    } catch (error) {
+        console.error(error);
+        return {
+            success: false,
+            error: error
+        };
+    }
+}
+
+export async function settleTransaction(
+    marketId: number,
+    ticketId: number,
+    claimerAuthority: string,
+    payer: string,
+): Promise<{ success: true, transaction: Uint8Array, payout: number } | { success: false, error: any }> {
+    try {
+        const [onchainMarket, onchainticket, dbMarket] = await Promise.all([
+            sonormalProgram.account.market.fetch(findMarketPda(marketId.toString())),
+            sonormalProgram.account.ticket.fetch(findTicketPda(marketId.toString(), ticketId.toString())),
+            findStoredMarket(marketId.toString())
+        ]);
+        if (!onchainMarket || !onchainticket) {
+            return {
+                success: false,
+                error: 'Market or ticket not found onchain'
+            };
+        }
+        if (!dbMarket) {
+            return {
+                success: false,
+                error: 'Market not found in database'
+            };
+        }
+        if (dbMarket?.resolvedOutcome === undefined || dbMarket.resolvedOutcome === 'INVALID' || dbMarket.resolvedOutcome === 'PENDING') {
+            return {
+                success: false,
+                error: 'Market not resolved'
+            };
+        }
+
+        const settleMath = await fetchSettleMath(
+            new BN(onchainMarket.params.k).toNumber(),
+            onchainMarket.params.l,
+            onchainMarket.params.h,
+            dbMarket.resolvedOutcome,
+            onchainMarket.params.boundaryMarginEta,
+            onchainMarket.params.tolCoeffSum,
+            onchainMarket.params.epsDens,
+            0.05,
+            1.0,
+            1e-18,
+            1.0,
+            1.0,
+            Math.trunc(onchainMarket.totalPoolAmount.toNumber() / (10 ** 6)),
+            onchainticket.coefficients,
+            onchainticket.claim
+        );
+        if (!settleMath.success) {
+            return {
+                success: false,
+                error: settleMath.error
+            };
+        }
+
+        const liquidityMint = new PublicKey(process.env.USDC_MINT!);
+
+        const claimerAta = getAssociatedTokenAddressSync(
+            liquidityMint,
+            new PublicKey(claimerAuthority)
+        );
+
+        const protocolFeeReceiverAta = getAssociatedTokenAddressSync(
+            liquidityMint,
+            marketAuthorityKeypair.publicKey
+        );
+
+        const marketFeeReceiverAta = getAssociatedTokenAddressSync(
+            liquidityMint,
+            marketAuthorityKeypair.publicKey
+        );
+
+        const instruction = await sonormalProgram.methods
+            .claim(
+                new anchor.BN(marketId),
+                new anchor.BN(ticketId),
+                new anchor.BN(Math.trunc(settleMath.payout * (10 ** 6))),
+            )
+            .accounts({
+                claimerAuthority: new PublicKey(claimerAuthority),
+                marketAuthority: marketAuthorityKeypair.publicKey,
+                payer: new PublicKey(payer),
+                claimerAta: claimerAta,
+                liquidityMint: liquidityMint,
+                protocolFeeReceiverAta: protocolFeeReceiverAta,
+                marketFeeReceiverAta: marketFeeReceiverAta,
+                tokenProgram: TOKEN_PROGRAM_ID,
+            })
+            .instruction();
+
+        const blockhash = await solanaRpc.getLatestBlockhash('confirmed');
+
+        const transaction = await buildTransaction(
+            [instruction],
+            blockhash.blockhash,
+            new PublicKey(payer),
+            [marketAuthoritySigner]
+        );
+        if (!transaction.success) {
+            return {
+                success: false,
+                error: transaction.error
+            };
+        }
+
+        return {
+            success: true,
+            transaction: transaction.versionedTransaction.serialize(),
+            payout: settleMath.payout
         };
     } catch (error) {
         console.error(error);

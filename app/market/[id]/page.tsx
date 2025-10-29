@@ -5,6 +5,8 @@ import { useParams } from "next/navigation"
 import { Navbar } from "@/components/navbar"
 import { PdfChart } from "@/components/pdf-chart"
 import { TradePanel } from "@/components/trade-panel"
+import { ClaimPanel } from "@/components/claim-panel"
+import { hasMarketResolved } from "@/lib/oracle/market-oracle"
 import { StatsStrip } from "@/components/stats-strip"
 import { MicroTutorialOverlay } from "@/components/micro-tutorial-overlay"
 import { Card } from "@/components/ui/card"
@@ -349,16 +351,20 @@ export default function MarketDetailPage() {
 
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 }}>
             <div data-trade-panel>
-              <TradePanel
-                market={market}
-                marketPdf={pdf}
-                selectedRanges={selectedRanges}
-                onTradePreview={handleTradePreview}
-                tradePreview={tradePreview}
-                onAddRange={addRange}
-                onRemoveRange={removeRange}
-                onUpdateRange={updateRange}
-              />
+              {hasMarketResolved(market) ? (
+                <ClaimPanel market={market} />
+              ) : (
+                <TradePanel
+                  market={market}
+                  marketPdf={pdf}
+                  selectedRanges={selectedRanges}
+                  onTradePreview={handleTradePreview}
+                  tradePreview={tradePreview}
+                  onAddRange={addRange}
+                  onRemoveRange={removeRange}
+                  onUpdateRange={updateRange}
+                />
+              )}
             </div>
           </motion.div>
         </div>

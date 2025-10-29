@@ -3,7 +3,7 @@ import type { OutcomeRequest, OracleOutcome } from "./ai-oracle"
 import type { Market, MarketOracleState } from "../types"
 import { readStoredMarkets, writeStoredMarkets } from "../storage"
 
-const ORACLE_CHECK_INTERVAL_MS = 5 * 60 * 1000 // 5 minutes between checks
+const ORACLE_CHECK_INTERVAL_MS = 60 * 1000 // 1 minute between checks
 
 type NewMarketOracleInput = {
   id: string

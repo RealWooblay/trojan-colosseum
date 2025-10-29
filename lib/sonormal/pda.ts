@@ -25,3 +25,11 @@ export function findTicketPda(marketId: string, ticketId: string) {
         new BN(ticketId).toArrayLike(Buffer, "le", 8)
     ], programId)[0];
 }
+
+export function findMarketPoolPda(marketId: string) {
+    const marketPda = findMarketPda(marketId);
+    return PublicKey.findProgramAddressSync([
+        Buffer.from('MARKET_POOL'),
+        marketPda.toBuffer()
+    ], programId)[0];
+}
