@@ -44,7 +44,7 @@ export async function fetchSellMath(
     }
 }
 
-export async function fetchSettleMath(
+export async function fetchClaimMath(
     k: number,
     l: number,
     h: number,
@@ -62,7 +62,7 @@ export async function fetchSettleMath(
     m: number,
 ): Promise<{ success: true, payout: number } | { success: false, error: any }> {
     try {
-        const result = await fetch(`${process.env.NEXT_PUBLIC_MATH_SERVER!}/math/settle`, {
+        const result = await fetch(`${process.env.NEXT_PUBLIC_MATH_SERVER!}/math/claim`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

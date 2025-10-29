@@ -11,7 +11,7 @@ import type { Provider } from "@reown/appkit-adapter-solana/react"
 import { VersionedTransaction } from "@solana/web3.js"
 import { findStoredTicketsByAuthorityAndMarketId, updateStoredTicket } from "@/lib/storage"
 import { CheckCircle, AlertCircle, Coins } from "lucide-react"
-import { settleTransaction } from "@/lib/sonormal/program"
+import { claimTransaction } from "@/lib/sonormal/program"
 
 interface ClaimPanelProps {
 	market: Market
@@ -89,7 +89,7 @@ export function ClaimPanel({ market }: ClaimPanelProps) {
 				return;
 			}
 
-			const transaction = await settleTransaction(Number(market.id), Number(ticket.id), address, address);
+			const transaction = await claimTransaction(Number(market.id), Number(ticket.id), address, address);
 
 			if (!transaction.success) {
 				toast({

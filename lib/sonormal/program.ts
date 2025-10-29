@@ -9,7 +9,7 @@ import { appendStoredMarket, findStoredMarket } from "../storage";
 import { createDefaultAiOracleState } from "../oracle/market-oracle";
 import { coefficientsToRanges } from "../trade-utils";
 import { findControllerPda, findMarketPda, findTicketPda } from "./pda";
-import { fetchSellMath, fetchSettleMath } from "./math";
+import { fetchClaimMath, fetchSellMath } from "./math";
 import { BN } from "bn.js";
 
 const marketAuthorityKeypair = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(process.env.MARKET_AUTHORITY!)));
@@ -429,7 +429,7 @@ export async function sellTransaction(
     }
 }
 
-export async function settleTransaction(
+export async function claimTransaction(
     marketId: number,
     ticketId: number,
     claimerAuthority: string,
@@ -460,7 +460,7 @@ export async function settleTransaction(
             };
         }
 
-        const settleMath = await fetchSettleMath(
+        const claimMath = await fetchClaimMath(
             new BN(onchainMarket.params.k).toNumber(),
             onchainMarket.params.l,
             onchainMarket.params.h,
@@ -477,10 +477,10 @@ export async function settleTransaction(
             onchainticket.coefficients,
             onchainticket.claim
         );
-        if (!settleMath.success) {
+        if (!claimMath.success) {
             return {
                 success: false,
-                error: settleMath.error
+                error: claimMath.error
             };
         }
 
@@ -505,7 +505,7 @@ export async function settleTransaction(
             .claim(
                 new anchor.BN(marketId),
                 new anchor.BN(ticketId),
-                new anchor.BN(Math.trunc(settleMath.payout * (10 ** 6))),
+                new anchor.BN(Math.trunc(claimMath.payout * (10 ** 6))),
             )
             .accounts({
                 claimerAuthority: new PublicKey(claimerAuthority),
@@ -537,7 +537,7 @@ export async function settleTransaction(
         return {
             success: true,
             transaction: transaction.versionedTransaction.serialize(),
-            payout: settleMath.payout
+            payout: claimMath.payout
         };
     } catch (error) {
         console.error(error);
