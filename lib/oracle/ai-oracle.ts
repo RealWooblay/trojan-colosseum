@@ -6,7 +6,11 @@
  * The public interface is intentionally lightweight so the caller can handle
  * persistence, scheduling, and any higher level workflow orchestration.
  */
-export type OracleOutcome = 'YES' | 'NO' | 'INVALID' | 'PENDING';
+/**
+ * Oracle outcome index or unresolved sentinel.
+ * 0 maps to the minimum observable value, 100 to the configured maximum.
+ */
+export type OracleOutcome = number | 'INVALID' | 'PENDING';
 
 export interface OutcomeOption {
   id: string;
@@ -21,6 +25,9 @@ export interface OutcomeRequest {
   resolutionDeadline?: Date | string;
   options: OutcomeOption[];
   locale?: string;
+  unit?: string;
+  domain?: { min: number; max: number };
+  valueDomain?: { min: number; max: number };
 }
 
 export interface OutcomeSignal {
@@ -76,10 +83,6 @@ export interface AiOracleConfig {
   openAiMaxRetries?: number;
 }
 
-interface AggregatedScores {
-  [optionId: string]: number;
-}
-
 const DEFAULT_CONFIG: Required<Pick<
   AiOracleConfig,
   'fetcher' | 'maxSignalsPerQuery' | 'resolutionThreshold' | 'logger'
@@ -98,6 +101,18 @@ type ResolvedAiOracleConfig = Required<Pick<
   openAiModel: string;
   openAiBaseUrl: string;
   openAiMaxRetries: number;
+};
+
+const MAX_OUTCOME_INDEX = 100;
+export const MAX_DOLLAR_VALUE = 1_000_000_000; // $1B ceiling mapped to index 100
+const MIN_CONFIDENCE_SAMPLES = 3;
+
+type DomainRange = { min: number; max: number };
+
+type ValueSample = {
+  value: number;
+  weight: number;
+  signal: OutcomeSignal;
 };
 
 /**
@@ -127,8 +142,7 @@ export class AiOracle {
    */
   async checkOutcome(request: OutcomeRequest): Promise<OutcomeVerdict> {
     const signals = await this.collectSignals(request);
-    const scores = this.scoreSignals(request, signals);
-    const heuristicVerdict = this.buildHeuristicVerdict(request, scores, signals);
+    const heuristicVerdict = this.buildHeuristicVerdict(request, signals);
 
     if (this.config.openAiApiKey && signals.length > 0) {
       try {
@@ -190,120 +204,452 @@ export class AiOracle {
     return base;
   }
 
-  private scoreSignals(
-    request: OutcomeRequest,
-    signals: OutcomeSignal[],
-  ): AggregatedScores {
-    const scores: AggregatedScores = Object.fromEntries(
-      request.options.map((option) => [option.id, 0]),
-    );
-
-    for (const signal of signals) {
-      for (const option of request.options) {
-        const confidence = this.scoreSignalAgainstOption(signal, option);
-        scores[option.id] += confidence;
-      }
-    }
-
-    return scores;
-  }
-
   private buildHeuristicVerdict(
     request: OutcomeRequest,
-    scores: AggregatedScores,
     signals: OutcomeSignal[],
   ): OutcomeVerdict {
-    const sorted = [...request.options]
-      .map((option) => ({
-        option,
-        score: scores[option.id],
-      }))
-      .sort((a, b) => b.score - a.score);
+    const numericEstimate = this.estimateNumericOutcome(request, signals);
 
-    const top = sorted[0];
-    const runnerUp = sorted[1];
-
-    if (!top) {
+    if (!numericEstimate) {
       return {
         outcome: 'PENDING',
         confidence: 0,
-        reasoning: 'No supporting signals were collected.',
+        reasoning: 'No reliable signals matching the market unit were detected.',
         decidedAt: new Date().toISOString(),
         signals,
       };
     }
 
-    const totalScore = Object.values(scores).reduce((sum, value) => sum + value, 0);
-    const confidence = totalScore > 0 ? top.score / totalScore : 0;
-
-    if (confidence < this.config.resolutionThreshold) {
+    if (numericEstimate.confidence < this.config.resolutionThreshold) {
       return {
         outcome: 'PENDING',
-        confidence,
+        confidence: numericEstimate.confidence,
         reasoning:
-          'Signals are inconclusive. Accumulate more data or escalate to a human reviewer.',
+          'Signals suggest a tentative value, but confidence is below the resolution threshold.',
         decidedAt: new Date().toISOString(),
         signals,
       };
     }
 
-    const conciseSignals = signals
-      .filter((signal) => this.scoreSignalAgainstOption(signal, top.option) > 0)
-      .slice(0, 3)
-      .map((signal) => `${signal.headline} (${signal.source})`)
-      .join('; ');
+    const formattedEstimate = this.formatValue(
+      numericEstimate.estimatedValue,
+      request.unit,
+    );
+    const reasoning = `Estimated outcome index ${numericEstimate.outcomeIndex} (~${formattedEstimate}) based on signals from ${numericEstimate.summary || 'available sources'}.`;
 
-    const margin = runnerUp ? top.score - runnerUp.score : top.score;
-
-    const reasoning = `Resolved to "${top.option.label}" with confidence ${confidence.toFixed(
-      2,
-    )}. Margin vs. next option: ${margin.toFixed(
-      2,
-    )}. Sample supporting signals: ${conciseSignals || 'none captured'}.`;
-
-    // The caller is expected to map option IDs to market payouts.
     return {
-      outcome: this.normalizeOutcomeLabel(top.option.label),
-      confidence,
+      outcome: numericEstimate.outcomeIndex,
+      confidence: numericEstimate.confidence,
       reasoning,
       decidedAt: new Date().toISOString(),
       signals,
     };
   }
 
-  private normalizeOutcomeLabel(label: string): OracleOutcome {
-    const normalized = label.trim().toUpperCase();
+  private estimateNumericOutcome(
+    request: OutcomeRequest,
+    signals: OutcomeSignal[],
+  ): { outcomeIndex: number; estimatedValue: number; confidence: number; summary: string } | undefined {
+    const keywords = request.options.flatMap((option) => option.keywords ?? []);
+    const valueDomain = this.getValueDomain(request);
+    const samples: ValueSample[] = [];
 
-    if (normalized.includes('YES')) return 'YES';
-    if (normalized.includes('NO')) return 'NO';
-    if (normalized.includes('INVALID')) return 'INVALID';
+    for (const signal of signals) {
+      const text = `${signal.headline ?? ''} ${signal.snippet ?? ''}`;
+      const extracted = this.extractValuesForUnit(text, request.unit, valueDomain);
+      if (extracted.length === 0) continue;
 
-    return 'PENDING';
-  }
+      const representative = this.selectRepresentativeValue(extracted);
+      if (!Number.isFinite(representative)) continue;
 
-  private scoreSignalAgainstOption(
-    signal: OutcomeSignal,
-    option: OutcomeOption,
-  ): number {
-    const headline = `${signal.headline} ${signal.snippet}`.toLowerCase();
-    const keywords = option.keywords ?? [];
+      const tolerance = Math.max(1, (valueDomain.max - valueDomain.min) * 0.1);
+      if (!this.isWithinDomain(representative, valueDomain, tolerance)) continue;
 
-    if (keywords.length === 0) {
-      return 0;
+      const clamped = this.clampValueToDomain(representative, valueDomain);
+
+      const relevanceBoost = this.computeSignalRelevance(text, keywords);
+      const confidence = Number.isFinite(signal.confidence) ? signal.confidence : 0.5;
+      const weight = Math.max(0.1, confidence * relevanceBoost);
+
+      samples.push({ value: clamped, weight, signal });
     }
 
-    let score = 0;
+    if (samples.length === 0) {
+      return undefined;
+    }
+
+    const totalWeight = samples.reduce((sum, sample) => sum + sample.weight, 0);
+    if (totalWeight <= 0) {
+      return undefined;
+    }
+
+    const weightedMean =
+      samples.reduce((sum, sample) => sum + sample.value * sample.weight, 0) / totalWeight;
+
+    const weightedMedian = this.computeWeightedMedian(samples);
+    const estimatedValue = (weightedMean + weightedMedian) / 2;
+
+    const outcomeIndex = this.normalizeToIndex(estimatedValue, valueDomain);
+
+    const averageSignalConfidence = Math.min(1, totalWeight / samples.length);
+    const supportFactor = Math.min(1, samples.length / MIN_CONFIDENCE_SAMPLES);
+    const confidence = Math.max(
+      0,
+      Math.min(1, averageSignalConfidence * 0.6 + supportFactor * 0.4),
+    );
+
+    const summary = [...samples]
+      .sort((a, b) => b.weight - a.weight)
+      .slice(0, 3)
+      .map(
+        (sample) =>
+          `${sample.signal.source || 'unknown'} ~${this.formatValue(sample.value, request.unit)} (${sample.weight.toFixed(2)})`,
+      )
+      .join('; ');
+
+    return {
+      outcomeIndex,
+      estimatedValue,
+      confidence,
+      summary,
+    };
+  }
+
+  private selectRepresentativeValue(values: number[]): number {
+    if (values.length === 0) return 0;
+    const sorted = [...values].sort((a, b) => a - b);
+    const middle = Math.floor(sorted.length / 2);
+    if (sorted.length % 2 === 0) {
+      return (sorted[middle - 1] + sorted[middle]) / 2;
+    }
+    return sorted[middle];
+  }
+
+  private computeWeightedMedian(samples: ValueSample[]): number {
+    const sorted = [...samples].sort((a, b) => a.value - b.value);
+    const totalWeight = sorted.reduce((sum, sample) => sum + sample.weight, 0);
+    let cumulative = 0;
+
+    for (const sample of sorted) {
+      cumulative += sample.weight;
+      if (cumulative >= totalWeight / 2) {
+        return sample.value;
+      }
+    }
+
+    return sorted[sorted.length - 1]?.value ?? 0;
+  }
+
+  private computeSignalRelevance(text: string, keywords: string[]): number {
+    if (!keywords.length) return 1;
+    const lower = text.toLowerCase();
+    let matches = 0;
 
     for (const keyword of keywords) {
       const trimmed = keyword.trim().toLowerCase();
       if (!trimmed) continue;
-
-      const occurrences = headline.split(trimmed).length - 1;
-      score += occurrences > 0 ? occurrences : 0;
+      if (lower.includes(trimmed)) {
+        matches += 1;
+      }
     }
 
-    // Weight by the crawler confidence for extra signal.
-    return score * (signal.confidence || 1);
+    // Cap the contribution so a single article doesn't dominate
+    return 1 + Math.min(matches, 5) * 0.1;
+  }
+
+  private getValueDomain(request: OutcomeRequest): DomainRange {
+    const explicit = request.valueDomain ?? request.domain;
+    if (explicit && this.isValidDomain(explicit)) {
+      return explicit;
+    }
+
+    const unit = (request.unit ?? '').toLowerCase();
+    if (unit === 'usd' || unit === '$') {
+      return { min: 0, max: MAX_DOLLAR_VALUE };
+    }
+
+    return { min: 0, max: MAX_OUTCOME_INDEX };
+  }
+
+  private isValidDomain(domain: DomainRange): boolean {
+    return (
+      domain !== undefined &&
+      Number.isFinite(domain.min) &&
+      Number.isFinite(domain.max) &&
+      domain.max > domain.min
+    );
+  }
+
+  private isWithinDomain(value: number, domain: DomainRange, tolerance = 0): boolean {
+    if (!Number.isFinite(value)) return false;
+    const lower = domain.min - tolerance;
+    const upper = domain.max + tolerance;
+    return value >= lower && value <= upper;
+  }
+
+  private clampValueToDomain(value: number, domain: DomainRange): number {
+    if (!Number.isFinite(value)) return domain.min;
+    return Math.min(domain.max, Math.max(domain.min, value));
+  }
+
+  private extractValuesForUnit(text: string, unit: string | undefined, domain: DomainRange): number[] {
+    const normalizedUnit = (unit ?? '').toLowerCase();
+
+    if (normalizedUnit === 'usd' || normalizedUnit === '$') {
+      return this.extractDollarAmounts(text);
+    }
+
+    if (normalizedUnit === '%' || normalizedUnit === 'percent') {
+      return this.extractPercentages(text);
+    }
+
+    if (
+      normalizedUnit === '°c' ||
+      normalizedUnit === 'celsius' ||
+      normalizedUnit === 'degc' ||
+      normalizedUnit === '°' ||
+      normalizedUnit.includes('celsius')
+    ) {
+      return this.extractTemperatures(text);
+    }
+
+    return this.extractPlainNumericValues(text, domain);
+  }
+
+  private extractPercentages(text: string): number[] {
+    if (!text) return [];
+    const matches = text.match(
+      /-?\d+(?:\.\d+)?\s?(?:%|percent(?:age)?(?:\s?points?)?|pct)/gi,
+    );
+    if (!matches) return [];
+    const values: number[] = [];
+    for (const token of matches) {
+      const cleaned = token.replace(/(%|percent(?:age)?(?:\s?points?)?|pct)/gi, '').trim();
+      const parsed = Number.parseFloat(cleaned);
+      if (Number.isFinite(parsed)) {
+        values.push(parsed);
+      }
+    }
+    return values;
+  }
+
+  private extractTemperatures(text: string): number[] {
+    if (!text) return [];
+    const matches = text.match(
+      /-?\d+(?:\.\d+)?\s?(?:°\s?c|degrees?\s?c(?:elsius)?|\s?c(?![a-z]))/gi,
+    );
+    if (!matches) return [];
+    const values: number[] = [];
+    for (const token of matches) {
+      const cleaned = token
+        .toLowerCase()
+        .replace(/(°\s?c|degrees?\s?c(?:elsius)?|\s?c(?![a-z]))/g, '')
+        .trim();
+      const parsed = Number.parseFloat(cleaned);
+      if (Number.isFinite(parsed)) {
+        values.push(parsed);
+      }
+    }
+    return values;
+  }
+
+  private extractPlainNumericValues(text: string, domain: DomainRange): number[] {
+    if (!text) return [];
+    const matches = text.match(/-?\d+(?:\.\d+)?/g);
+    if (!matches) return [];
+    const tolerance = Math.max(1, (domain.max - domain.min) * 0.1);
+    const values: number[] = [];
+
+    for (const token of matches) {
+      const parsed = Number.parseFloat(token);
+      if (!Number.isFinite(parsed)) continue;
+
+      if (this.isWithinDomain(parsed, domain, tolerance)) {
+        values.push(parsed);
+      }
+    }
+
+    return values;
+  }
+
+  private normalizeOutcomeValue(raw: unknown, request: OutcomeRequest): OracleOutcome {
+    const domain = this.getValueDomain(request);
+
+    if (typeof raw === 'number' && Number.isFinite(raw)) {
+      return this.normalizeToIndex(raw, domain);
+    }
+
+    if (typeof raw === 'string') {
+      const trimmed = raw.trim();
+      if (!trimmed) return 'PENDING';
+
+      const upper = trimmed.toUpperCase();
+      if (upper === 'PENDING') return 'PENDING';
+      if (upper === 'INVALID') return 'INVALID';
+
+      const parsed = Number.parseFloat(trimmed.replace(/[^0-9.-]/g, ''));
+      if (Number.isFinite(parsed)) {
+        return this.normalizeToIndex(parsed, domain);
+      }
+    }
+
+    throw new Error(`Unsupported outcome value: ${String(raw)}`);
+  }
+
+  private normalizeToIndex(value: number, domain: DomainRange): number {
+    if (!Number.isFinite(value)) {
+      return 0;
+    }
+
+    const clamped = this.clampValueToDomain(value, domain);
+    const span = domain.max - domain.min;
+    if (span <= 0) {
+      return 0;
+    }
+
+    const ratio = (clamped - domain.min) / span;
+    const scaled = Math.ceil(ratio * MAX_OUTCOME_INDEX);
+    return this.clampOutcomeIndex(scaled);
+  }
+
+  private indexToValue(index: number, domain: DomainRange): number {
+    if (!Number.isFinite(index)) return domain.min;
+    const clampedIndex = Math.min(MAX_OUTCOME_INDEX, Math.max(0, index));
+    const span = domain.max - domain.min;
+    if (span <= 0) {
+      return domain.min;
+    }
+
+    return domain.min + (span * clampedIndex) / MAX_OUTCOME_INDEX;
+  }
+
+  private clampOutcomeIndex(index: number): number {
+    if (!Number.isFinite(index)) return 0;
+    return Math.min(MAX_OUTCOME_INDEX, Math.max(0, Math.round(index)));
+  }
+
+  private formatValue(value: number, unit?: string): string {
+    if (!Number.isFinite(value)) return '0';
+    const normalized = (unit ?? '').toLowerCase();
+
+    if (normalized === 'usd' || normalized === '$') {
+      return this.formatUsd(value);
+    }
+
+    if (normalized === '%' || normalized === 'percent') {
+      return `${value.toFixed(1)}%`;
+    }
+
+    if (
+      normalized === '°c' ||
+      normalized === 'celsius' ||
+      normalized === 'degc' ||
+      normalized.includes('celsius')
+    ) {
+      return `${value.toFixed(1)}°C`;
+    }
+
+    if (Math.abs(value) >= 1000) {
+      return value.toFixed(0);
+    }
+
+    return Math.abs(value) >= 1 ? value.toFixed(1) : value.toPrecision(2);
+  }
+
+  private formatUsd(value: number): string {
+    if (!Number.isFinite(value)) return '0';
+    const abs = Math.abs(value);
+    const sign = value < 0 ? '-' : '';
+
+    if (abs >= 1_000_000_000) {
+      return `${sign}$${(abs / 1_000_000_000).toFixed(2)}B`;
+    }
+    if (abs >= 1_000_000) {
+      return `${sign}$${(abs / 1_000_000).toFixed(2)}M`;
+    }
+    if (abs >= 1_000) {
+      return `${sign}$${(abs / 1_000).toFixed(2)}K`;
+    }
+    if (abs >= 1) {
+      return `${sign}$${abs.toFixed(0)}`;
+    }
+    return `${sign}$${abs.toPrecision(2)}`;
+  }
+
+  private extractDollarAmounts(text: string): number[] {
+    if (!text) return [];
+
+    const matches = new Set<number>();
+    const patterns = [
+      /\$[\s]*\d{1,3}(?:,\d{3})*(?:\.\d+)?(?:\s?(?:billion|million|trillion|thousand|bn|mm|m|b|t|k))?/gi,
+      /\b(?:usd|us\$|u\.s\.d\.)\s*\d{1,3}(?:,\d{3})*(?:\.\d+)?(?:\s?(?:billion|million|trillion|thousand|bn|mm|m|b|t|k))?\b/gi,
+      /\b\d+(?:\.\d+)?\s?(?:billion|million|trillion|thousand|bn|mm|m|b|t|k)\b/gi,
+      /\b\d+(?:\.\d+)?(?:(?:k|m|b|t)\b)/gi,
+    ];
+
+    for (const pattern of patterns) {
+      const found = text.match(pattern);
+      if (!found) continue;
+
+      for (const token of found) {
+        const amount = this.parseAmountToken(token);
+        if (amount && Number.isFinite(amount) && amount > 0) {
+          matches.add(amount);
+        }
+      }
+    }
+
+    return Array.from(matches);
+  }
+
+  private parseAmountToken(token: string): number | undefined {
+    const cleaned = token
+      .toLowerCase()
+      .replace(/(?:usd|us\$|u\.s\.d\.|dollars?)/g, '')
+      .replace(/[,\s]+/g, '')
+      .trim();
+
+    const suffixMatch = cleaned.match(
+      /(billion|million|trillion|thousand|bn|mm|m|b|t|k)$/i,
+    );
+
+    let multiplier = 1;
+    let numericPortion = cleaned;
+
+    if (suffixMatch) {
+      const suffix = suffixMatch[1];
+      multiplier = this.multiplierForSuffix(suffix);
+      numericPortion = cleaned.slice(0, Math.max(0, cleaned.length - suffix.length));
+    }
+
+    numericPortion = numericPortion.replace(/[^0-9.-]/g, '');
+    if (!numericPortion) return undefined;
+
+    const baseValue = Number.parseFloat(numericPortion);
+    if (!Number.isFinite(baseValue)) return undefined;
+
+    return baseValue * multiplier;
+  }
+
+  private multiplierForSuffix(suffix: string): number {
+    switch (suffix.toLowerCase()) {
+      case 'trillion':
+      case 't':
+        return 1_000_000_000_000;
+      case 'billion':
+      case 'bn':
+      case 'b':
+        return 1_000_000_000;
+      case 'million':
+      case 'mm':
+      case 'm':
+        return 1_000_000;
+      case 'thousand':
+      case 'k':
+        return 1_000;
+      default:
+        return 1;
+    }
   }
 
   private async fetchGoogleNewsSignals(query: string): Promise<OutcomeSignal[]> {
@@ -403,6 +749,23 @@ export class AiOracle {
         ? request.resolutionDeadline
         : request.resolutionDeadline?.toISOString();
 
+    const valueDomain = this.getValueDomain(request);
+    const baselineOutcome =
+      typeof heuristicVerdict.outcome === 'number'
+        ? `${heuristicVerdict.outcome} (≈${this.formatValue(
+            this.indexToValue(heuristicVerdict.outcome, valueDomain),
+            request.unit,
+          )})`
+        : heuristicVerdict.outcome;
+
+    const scaleSummary = `Scale mapping: index 0 → ${this.formatValue(
+      valueDomain.min,
+      request.unit,
+    )}, index 100 → ${this.formatValue(
+      valueDomain.max,
+      request.unit,
+    )}. Convert observed values into this index via linear interpolation, then clamp to 0-100.`;
+
     const body = {
       model: this.config.openAiModel,
       input: [
@@ -425,12 +788,13 @@ export class AiOracle {
                 `Question: ${request.question}`,
                 request.resolutionCriteria ? `Resolution criteria: ${request.resolutionCriteria}` : undefined,
                 deadline ? `Resolution deadline: ${deadline}` : undefined,
-                `Options:\n${optionsSummary}`,
-                `Heuristic baseline outcome: ${heuristicVerdict.outcome} (confidence ${heuristicVerdict.confidence.toFixed(
+                optionsSummary ? `Options:\n${optionsSummary}` : undefined,
+                `Heuristic baseline outcome index: ${baselineOutcome} (confidence ${heuristicVerdict.confidence.toFixed(
                   2,
                 )})`,
+                scaleSummary,
                 `Evidence:\n${evidence.join('\n') || 'No evidence collected.'}`,
-                'Return JSON with fields: outcome (YES | NO | INVALID | PENDING), confidence (0-1), reasoning (<= 280 chars).',
+                'Return JSON with fields: outcome (integer 0-100 or string "PENDING"/"INVALID"), confidence (0-1), reasoning (<= 280 chars).',
               ]
                 .filter(Boolean)
                 .join('\n\n'),
@@ -446,8 +810,19 @@ export class AiOracle {
             type: 'object',
             properties: {
               outcome: {
-                type: 'string',
-                enum: ['YES', 'NO', 'INVALID', 'PENDING'],
+                description:
+                  'Resolved index (0-100). Use "PENDING" if insufficient evidence or "INVALID" if market conditions cannot be evaluated.',
+                oneOf: [
+                  {
+                    type: 'number',
+                    minimum: 0,
+                    maximum: 100,
+                  },
+                  {
+                    type: 'string',
+                    enum: ['PENDING', 'INVALID'],
+                  },
+                ],
               },
               confidence: {
                 type: 'number',
@@ -492,14 +867,14 @@ export class AiOracle {
           throw new Error('OpenAI response did not include text output.');
         }
 
-        let parsed: { outcome: OracleOutcome; confidence: number; reasoning: string };
+        let parsed: { outcome: number | string; confidence: number; reasoning: string };
         try {
           parsed = JSON.parse(rawText);
         } catch (parseError) {
           throw new Error(`Failed to parse OpenAI JSON response: ${(parseError as Error).message}`);
         }
 
-        const outcome = this.normalizeOutcomeLabel(parsed.outcome);
+        const outcome = this.normalizeOutcomeValue(parsed.outcome, request);
         const confidence = Number.isFinite(parsed.confidence)
           ? Math.min(1, Math.max(0, parsed.confidence))
           : heuristicVerdict.confidence;

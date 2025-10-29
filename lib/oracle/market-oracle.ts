@@ -1,4 +1,4 @@
-import { AiOracle } from "./ai-oracle"
+import { AiOracle, MAX_DOLLAR_VALUE } from "./ai-oracle"
 import type { OutcomeRequest, OracleOutcome } from "./ai-oracle"
 import type { Market, MarketOracleState } from "../types"
 import { readStoredMarkets, writeStoredMarkets } from "../storage"
@@ -11,6 +11,8 @@ type NewMarketOracleInput = {
   category: string
   description?: string
   expiry?: string
+  unit: Market["unit"]
+  domain: Market["domain"]
 }
 
 export function createDefaultAiOracleState(input: NewMarketOracleInput): MarketOracleState {
@@ -20,6 +22,13 @@ export function createDefaultAiOracleState(input: NewMarketOracleInput): MarketO
     `Resolve to YES if "${normalizedTitle}" occurs as described, otherwise resolve to NO.`
 
   const keywords = extractKeywords(normalizedTitle, input.category)
+  const domain = input.domain ?? { min: 0, max: 100 }
+  const unit = input.unit ?? "other"
+  const normalizedUnit = unit.toUpperCase()
+  const valueDomain =
+    normalizedUnit === "USD"
+      ? { min: 0, max: MAX_DOLLAR_VALUE }
+      : domain
 
   const request: OutcomeRequest = {
     marketId: input.id,
@@ -39,6 +48,9 @@ export function createDefaultAiOracleState(input: NewMarketOracleInput): MarketO
         keywords: [...keywords.primary, ...keywords.negative, ...COMMON_NEGATIVE_KEYWORDS],
       },
     ],
+    unit,
+    domain,
+    valueDomain,
   }
 
   return {
@@ -171,9 +183,17 @@ export async function syncStoredMarketsWithOracle(existing?: Market[]): Promise<
     }
 
     try {
+      const normalizedUnit = (oracleState.request.unit ?? market.unit ?? "other").toUpperCase()
       const request: OutcomeRequest = {
         ...oracleState.request,
         resolutionDeadline: effectiveDeadline,
+        unit: oracleState.request.unit ?? market.unit,
+        domain: oracleState.request.domain ?? market.domain,
+        valueDomain:
+          oracleState.request.valueDomain ??
+          (normalizedUnit === "USD"
+            ? { min: 0, max: MAX_DOLLAR_VALUE }
+            : market.domain),
       }
       const verdict = await oracle.checkOutcome(request)
 
@@ -189,7 +209,7 @@ export async function syncStoredMarketsWithOracle(existing?: Market[]): Promise<
 
       const resolutionConfidence = Math.round(verdict.confidence * 100)
       const boundedConfidence =
-        resolvedOutcome && !Number.isNaN(resolutionConfidence)
+        resolvedOutcome !== undefined && !Number.isNaN(resolutionConfidence)
           ? Math.min(100, Math.max(0, resolutionConfidence))
           : market.resolutionConfidence
 
@@ -203,7 +223,7 @@ export async function syncStoredMarketsWithOracle(existing?: Market[]): Promise<
       if (
         oracleState.lastVerdict?.outcome !== verdict.outcome ||
         oracleState.status !== nextOracleState.status ||
-        (resolvedOutcome && market.resolutionConfidence !== boundedConfidence) ||
+        (resolvedOutcome !== undefined && market.resolutionConfidence !== boundedConfidence) ||
         oracleState.lastCheckedAt !== nextOracleState.lastCheckedAt
       ) {
         updated = true
@@ -231,8 +251,11 @@ export async function syncStoredMarketsWithOracle(existing?: Market[]): Promise<
 }
 
 export function hasMarketResolved(market: Market): boolean {
-  if (market.resolvedOutcome && market.resolvedOutcome !== "PENDING") return true
-  if (market.oracle?.resolvedOutcome && market.oracle.resolvedOutcome !== "PENDING") {
+  const directOutcome = market.resolvedOutcome
+  if (directOutcome !== undefined && directOutcome !== "PENDING") return true
+
+  const oracleOutcome = market.oracle?.resolvedOutcome
+  if (oracleOutcome !== undefined && oracleOutcome !== "PENDING") {
     return true
   }
   return false

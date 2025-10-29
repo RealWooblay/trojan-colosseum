@@ -195,6 +195,8 @@ export async function newMarket(
                 category,
                 description,
                 expiry: expiryIso,
+                unit,
+                domain,
             }),
         });
 
