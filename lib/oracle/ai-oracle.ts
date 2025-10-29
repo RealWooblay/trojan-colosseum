@@ -53,6 +53,10 @@ export interface AiOracleConfig {
    */
   fetcher?: typeof fetch;
   /**
+   * Override the news RSS endpoints used for signal collection.
+   */
+  newsFeedBases?: string[];
+  /**
    * How many news items to inspect per query.
    */
   maxSignalsPerQuery?: number;
@@ -101,6 +105,7 @@ type ResolvedAiOracleConfig = Required<Pick<
   openAiModel: string;
   openAiBaseUrl: string;
   openAiMaxRetries: number;
+  newsFeedBuilders: NewsFeedBuilder[];
 };
 
 const MAX_OUTCOME_INDEX = 100;
@@ -115,16 +120,22 @@ type ValueSample = {
   signal: OutcomeSignal;
 };
 
-/**
- * DuckDuckGo and Google block direct scraping, but https://r.jina.ai acts as
- * a passthrough that returns the raw document. The endpoint used here does not
- * require API keys and keeps the implementation dependency-free.
- */
-const GOOGLE_NEWS_RSS_BASES = [
-  // Prefer HTTPS mirror, but fall back to HTTP in case the proxy blocks it.
-  'https://r.jina.ai/https://news.google.com/rss/search?hl=en-US&gl=US&ceid=US:en&q=',
-  'https://r.jina.ai/http://news.google.com/rss/search?hl=en-US&gl=US&ceid=US:en&q=',
+type NewsFeedBuilder = (query: string) => string;
+
+// Public RSS endpoints with broad availability; callers can override via config.
+const DEFAULT_NEWS_FEED_BUILDERS: NewsFeedBuilder[] = [
+  (query) =>
+    `https://www.bing.com/news/search?q=${encodeURIComponent(query)}&format=RSS`,
+  (query) => `https://news.yahoo.com/rss/search?p=${encodeURIComponent(query)}`,
 ];
+
+const createNewsFeedBuilder = (template: string): NewsFeedBuilder => {
+  if (template.includes('{{query}}')) {
+    return (query) =>
+      template.replace(/{{query}}/g, encodeURIComponent(query));
+  }
+  return (query) => `${template}${encodeURIComponent(query)}`;
+};
 
 export class AiOracle {
   private readonly config: ResolvedAiOracleConfig;
@@ -137,6 +148,10 @@ export class AiOracle {
       openAiModel: config.openAiModel ?? process.env.OPENAI_MODEL ?? 'gpt-4.1-mini',
       openAiBaseUrl: config.openAiBaseUrl ?? process.env.OPENAI_BASE_URL ?? 'https://api.openai.com',
       openAiMaxRetries: config.openAiMaxRetries ?? 2,
+      newsFeedBuilders:
+        config.newsFeedBases && config.newsFeedBases.length > 0
+          ? config.newsFeedBases.map(createNewsFeedBuilder)
+          : [...DEFAULT_NEWS_FEED_BUILDERS],
     };
   }
 
@@ -656,11 +671,10 @@ export class AiOracle {
   }
 
   private async fetchGoogleNewsSignals(query: string): Promise<OutcomeSignal[]> {
-    const encoded = encodeURIComponent(query);
     let lastError: Error | undefined;
 
-    for (const base of GOOGLE_NEWS_RSS_BASES) {
-      const url = `${base}${encoded}`;
+    for (const buildUrl of this.config.newsFeedBuilders) {
+      const url = buildUrl(query);
       try {
         const response = await this.config.fetcher(url, {
           headers: {
@@ -687,10 +701,13 @@ export class AiOracle {
       }
     }
 
-    throw (
-      lastError ??
-      new Error('Failed to fetch Google News signals from all configured bases.')
-    );
+    if (lastError) {
+      this.config.logger.warn?.(
+        `[AiOracle] Signal collection failed for query "${query}": ${lastError.message}`,
+      );
+    }
+
+    return [];
   }
 
   private parseGoogleNewsRss(xml: string): OutcomeSignal[] {
@@ -777,9 +794,9 @@ export class AiOracle {
     const baselineOutcome =
       typeof heuristicVerdict.outcome === 'number'
         ? `${heuristicVerdict.outcome} (≈${this.formatValue(
-            this.indexToValue(heuristicVerdict.outcome, valueDomain),
-            request.unit,
-          )})`
+          this.indexToValue(heuristicVerdict.outcome, valueDomain),
+          request.unit,
+        )})`
         : heuristicVerdict.outcome;
 
     const scaleSummary = `Scale mapping: index 0 → ${this.formatValue(
