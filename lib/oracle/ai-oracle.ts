@@ -120,8 +120,11 @@ type ValueSample = {
  * a passthrough that returns the raw document. The endpoint used here does not
  * require API keys and keeps the implementation dependency-free.
  */
-const GOOGLE_NEWS_RSS_BASE =
-  'https://r.jina.ai/http://news.google.com/rss/search?hl=en-US&gl=US&ceid=US:en&q=';
+const GOOGLE_NEWS_RSS_BASES = [
+  // Prefer HTTPS mirror, but fall back to HTTP in case the proxy blocks it.
+  'https://r.jina.ai/https://news.google.com/rss/search?hl=en-US&gl=US&ceid=US:en&q=',
+  'https://r.jina.ai/http://news.google.com/rss/search?hl=en-US&gl=US&ceid=US:en&q=',
+];
 
 export class AiOracle {
   private readonly config: ResolvedAiOracleConfig;
@@ -653,20 +656,41 @@ export class AiOracle {
   }
 
   private async fetchGoogleNewsSignals(query: string): Promise<OutcomeSignal[]> {
-    const url = `${GOOGLE_NEWS_RSS_BASE}${encodeURIComponent(query)}`;
-    const response = await this.config.fetcher(url, {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (compatible; AiOracleBot/1.0; +https://example.com/oracle)',
-      },
-    });
+    const encoded = encodeURIComponent(query);
+    let lastError: Error | undefined;
 
-    if (!response.ok) {
-      throw new Error(`Unexpected status ${response.status}`);
+    for (const base of GOOGLE_NEWS_RSS_BASES) {
+      const url = `${base}${encoded}`;
+      try {
+        const response = await this.config.fetcher(url, {
+          headers: {
+            'User-Agent':
+              'Mozilla/5.0 (compatible; AiOracleBot/1.0; +https://example.com/oracle)',
+          },
+        });
+
+        if (!response.ok) {
+          lastError = new Error(`Unexpected status ${response.status} for ${url}`);
+          continue;
+        }
+
+        const xml = await response.text();
+        const parsed = this.parseGoogleNewsRss(xml);
+        if (parsed.length > 0) {
+          return parsed;
+        }
+      } catch (error) {
+        lastError =
+          error instanceof Error
+            ? error
+            : new Error(`Unknown error while fetching ${url}`);
+      }
     }
 
-    const xml = await response.text();
-    return this.parseGoogleNewsRss(xml);
+    throw (
+      lastError ??
+      new Error('Failed to fetch Google News signals from all configured bases.')
+    );
   }
 
   private parseGoogleNewsRss(xml: string): OutcomeSignal[] {
