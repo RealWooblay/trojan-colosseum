@@ -1,3 +1,7 @@
+import { MAX_DOLLAR_VALUE } from "../value-domain";
+
+export { MAX_DOLLAR_VALUE } from "../value-domain";
+
 /**
  * AI-assisted oracle service that can be wired into prediction markets.
  * The oracle pulls public signals from the web, applies lightweight NLP
@@ -45,6 +49,7 @@ export interface OutcomeVerdict {
   reasoning: string;
   decidedAt: string;
   signals: OutcomeSignal[];
+  valueDomain?: DomainRange;
 }
 
 export interface AiOracleConfig {
@@ -109,7 +114,6 @@ type ResolvedAiOracleConfig = Required<Pick<
 };
 
 const MAX_OUTCOME_INDEX = 100;
-export const MAX_DOLLAR_VALUE = 1_000_000_000; // $1B ceiling mapped to index 100
 const MIN_CONFIDENCE_SAMPLES = 3;
 
 type DomainRange = { min: number; max: number };
@@ -261,13 +265,20 @@ export class AiOracle {
       reasoning,
       decidedAt: new Date().toISOString(),
       signals,
+      valueDomain: numericEstimate.valueDomain,
     };
   }
 
   private estimateNumericOutcome(
     request: OutcomeRequest,
     signals: OutcomeSignal[],
-  ): { outcomeIndex: number; estimatedValue: number; confidence: number; summary: string } | undefined {
+  ): {
+    outcomeIndex: number;
+    estimatedValue: number;
+    confidence: number;
+    summary: string;
+    valueDomain?: DomainRange;
+  } | undefined {
     const keywords = request.options.flatMap((option) => option.keywords ?? []);
     const valueDomain = this.getValueDomain(request);
     const samples: ValueSample[] = [];
@@ -325,12 +336,49 @@ export class AiOracle {
       )
       .join('; ');
 
+    const derivedDomain = this.deriveDomainFromSamples(samples, valueDomain);
+
     return {
       outcomeIndex,
       estimatedValue,
       confidence,
       summary,
+      valueDomain: derivedDomain,
     };
+  }
+
+  private deriveDomainFromSamples(samples: ValueSample[], fallback: DomainRange): DomainRange | undefined {
+    if (!samples.length) return undefined;
+
+    const numericValues = samples
+      .map((sample) => sample.value)
+      .filter((value) => Number.isFinite(value));
+
+    if (!numericValues.length) return undefined;
+
+    const sampleMin = Math.min(...numericValues);
+    const sampleMax = Math.max(...numericValues);
+    const rawSpan = sampleMax - sampleMin;
+    const fallbackSpan = fallback.max - fallback.min;
+
+    const spanForPadding = Math.max(rawSpan, Math.abs(sampleMax) * 0.15, fallbackSpan * 0.02, 1);
+    const padding = Math.max(spanForPadding * 0.4, 1);
+
+    let min = this.clampValueToDomain(sampleMin - padding, fallback);
+    let max = this.clampValueToDomain(sampleMax + padding, fallback);
+
+    if (max - min < Math.max(spanForPadding * 0.6, 1)) {
+      const center = (min + max) / 2;
+      const halfWidth = Math.max(spanForPadding, Math.abs(center) * 0.25, 1);
+      min = this.clampValueToDomain(center - halfWidth, fallback);
+      max = this.clampValueToDomain(center + halfWidth, fallback);
+    }
+
+    if (max <= min) {
+      return undefined;
+    }
+
+    return { min, max };
   }
 
   private selectRepresentativeValue(values: number[]): number {
@@ -921,6 +969,7 @@ export class AiOracle {
           reasoning,
           decidedAt: new Date().toISOString(),
           signals,
+          valueDomain: heuristicVerdict.valueDomain,
         };
       } catch (error) {
         if (attempt >= this.config.openAiMaxRetries) {

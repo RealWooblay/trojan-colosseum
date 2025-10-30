@@ -21,6 +21,7 @@ import { ArrowLeft, Info } from "lucide-react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { rangesToCoefficients, MAX_RANGE_SLOTS, coefficientsToRanges, MAX_COEFFICIENTS } from "@/lib/trade-utils"
+import { defaultValueDomainForUnit } from "@/lib/value-domain"
 
 export default function MarketDetailPage() {
   const params = useParams()
@@ -36,6 +37,8 @@ export default function MarketDetailPage() {
   const [ghostPdf, setGhostPdf] = useState<PdfPoint[] | undefined>(undefined)
 
   const selectedRangesRef = useRef(selectedRanges)
+  const fallbackValueDomain = market ? defaultValueDomainForUnit(market.unit) : undefined
+  const valueDomain = market?.valueDomain ?? market?.oracle?.request.valueDomain ?? fallbackValueDomain ?? market?.domain
 
   // Generate ghost curve - either trade preview result or multi-range prediction
   const ghostData: PdfPoint[] = useMemo(() => {
@@ -257,6 +260,7 @@ export default function MarketDetailPage() {
                   liquidityDepth={market.liquidityUSD}
                   onRangeChange={handleRangeChange}
                   onUpdateRange={updateRange}
+                  valueDomain={valueDomain}
                 />
               </div>
             </motion.div>

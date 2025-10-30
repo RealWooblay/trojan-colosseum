@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Navbar } from "@/components/navbar"
 import { Button } from "@/components/ui/button"
@@ -14,6 +14,7 @@ import { ArrowLeft, ArrowRight, CheckCircle, Plus, Minus } from "lucide-react"
 import { motion } from "framer-motion"
 import { MAX_RANGE_SLOTS, rangesToCoefficients } from "@/lib/trade-utils"
 import { newMarket } from "@/lib/sonormal/program"
+import { defaultValueDomainForUnit, normalizeValueDomain, suggestValueDomain } from "@/lib/value-domain"
 
 const DOMAIN = { min: 0, max: 100 }
 
@@ -29,6 +30,9 @@ export default function CreateMarketPage() {
   const [expiry, setExpiry] = useState("")
   const [ranges, setRanges] = useState<[number, number][]>([[20, 40]])
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [valueDomainTouched, setValueDomainTouched] = useState(false)
+  const [valueMin, setValueMin] = useState(() => defaultValueDomainForUnit("USD").min.toString())
+  const [valueMax, setValueMax] = useState(() => defaultValueDomainForUnit("USD").max.toString())
 
   const basePdf: PdfPoint[] = useMemo(() => generateUniformPdf(DOMAIN), [])
   const ghostPdf: PdfPoint[] = useMemo(() => {
@@ -36,13 +40,58 @@ export default function CreateMarketPage() {
     return projectGhostFromRanges(basePdf, ranges, DOMAIN)
   }, [basePdf, ranges])
 
+  const parsedValueDomain = useMemo(() => {
+    const min = Number.parseFloat(valueMin)
+    const max = Number.parseFloat(valueMax)
+    if (!Number.isFinite(min) || !Number.isFinite(max) || max <= min) {
+      return null
+    }
+    return { min, max }
+  }, [valueMin, valueMax])
+
+  const chartValueDomain = parsedValueDomain ?? defaultValueDomainForUnit(unit)
+
   const coefficients = useMemo(
     () => rangesToCoefficients(ranges, DOMAIN, MAX_RANGE_SLOTS, basePdf),
     [ranges, basePdf],
   )
   const weightSum = useMemo(() => coefficients.reduce((sum, weight) => sum + weight, 0), [coefficients])
 
-  const canProceedStepOne = title.trim().length > 2 && category.trim().length > 0 && expiry.length > 0
+  const canProceedStepOne =
+    title.trim().length > 2 &&
+    category.trim().length > 0 &&
+    expiry.length > 0 &&
+    parsedValueDomain !== null
+
+  useEffect(() => {
+    const defaults = defaultValueDomainForUnit(unit)
+    setValueMin(defaults.min.toString())
+    setValueMax(defaults.max.toString())
+    setValueDomainTouched(false)
+  }, [unit])
+
+  useEffect(() => {
+    if (valueDomainTouched) return
+    const suggested = normalizeValueDomain(
+      suggestValueDomain(
+        {
+          title: title.trim(),
+          description: description.trim(),
+          resolutionCriteria: undefined,
+          category: category.trim(),
+        },
+        unit,
+      ),
+    )
+    if (suggested) {
+      const minString = (Math.round(suggested.min * 100) / 100).toString()
+      const maxString = (Math.round(suggested.max * 100) / 100).toString()
+      if (minString !== valueMin || maxString !== valueMax) {
+        setValueMin(minString)
+        setValueMax(maxString)
+      }
+    }
+  }, [title, description, category, unit, valueDomainTouched, valueMin, valueMax])
 
   const addRange = () => {
     if (ranges.length >= MAX_RANGE_SLOTS) return
@@ -80,6 +129,16 @@ export default function CreateMarketPage() {
       return
     }
 
+    const normalizedValueDomain = normalizeValueDomain(parsedValueDomain)
+    if (!normalizedValueDomain) {
+      toast({
+        title: "Invalid outcome range",
+        description: "Provide a minimum and maximum outcome value where the maximum is greater than the minimum.",
+        variant: "destructive",
+      })
+      return
+    }
+
     setIsSubmitting(true)
 
     try {
@@ -90,7 +149,8 @@ export default function CreateMarketPage() {
         category,
         coefficients,
         new Date(expiry).getTime() / 1000,
-        ranges
+        ranges,
+        normalizedValueDomain
       )
 
       if (!result.success) {
@@ -238,6 +298,47 @@ export default function CreateMarketPage() {
                     className="w-full h-28 bg-black/70 border border-cyan-400/30 rounded-md px-3 py-2 text-sm text-white placeholder:text-cyan-200 focus:outline-none focus:border-cyan-400"
                   />
                 </div>
+
+                <div className="space-y-3">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-xs text-cyan-300 font-mono tracking-wide">
+                        Outcome minimum ({unit})
+                      </Label>
+                      <Input
+                        value={valueMin}
+                        onChange={(e) => {
+                          if (!valueDomainTouched) setValueDomainTouched(true)
+                          setValueMin(e.target.value)
+                        }}
+                        inputMode="decimal"
+                        className="bg-black/70 border-cyan-400/30 text-white placeholder:text-cyan-200"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs text-cyan-300 font-mono tracking-wide">
+                        Outcome maximum ({unit})
+                      </Label>
+                      <Input
+                        value={valueMax}
+                        onChange={(e) => {
+                          if (!valueDomainTouched) setValueDomainTouched(true)
+                          setValueMax(e.target.value)
+                        }}
+                        inputMode="decimal"
+                        className="bg-black/70 border-cyan-400/30 text-white placeholder:text-cyan-200"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-cyan-200/80 font-mono">
+                    This range controls how the 0–100 index is displayed on the chart and feeds into the oracle.
+                  </p>
+                  {valueDomainTouched && parsedValueDomain === null && (
+                    <p className="text-xs text-destructive font-mono">
+                      Enter numeric values where the maximum is greater than the minimum.
+                    </p>
+                  )}
+                </div>
               </div>
 
               <div className="flex justify-between pt-4">
@@ -340,6 +441,7 @@ export default function CreateMarketPage() {
                   unit={unit}
                   liquidityDepth={100000}
                   onUpdateRange={updateRange}
+                  valueDomain={chartValueDomain}
                 />
 
                 <div className="space-y-2 bg-black/50 border border-white/10 rounded-lg p-4">

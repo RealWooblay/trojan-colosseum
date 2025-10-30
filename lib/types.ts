@@ -17,6 +17,7 @@ export type Market = {
   title: string
   unit: "%" | "USD" | "°C" | "other"
   domain: { min: number; max: number }
+  valueDomain?: { min: number; max: number }
   prior: {
     kind: "normal" | "lognormal" | "beta" | "uniform"
     params: Record<string, number>

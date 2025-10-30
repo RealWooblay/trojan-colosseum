@@ -2,6 +2,7 @@ import { AiOracle, MAX_DOLLAR_VALUE } from "./ai-oracle"
 import type { OutcomeRequest, OracleOutcome } from "./ai-oracle"
 import type { Market, MarketOracleState } from "../types"
 import { readStoredMarkets, writeStoredMarkets } from "../storage"
+import { defaultValueDomainForUnit, normalizeValueDomain, suggestValueDomain } from "../value-domain"
 
 const ORACLE_CHECK_INTERVAL_MS = 60 * 1000 // 1 minute between checks
 
@@ -13,6 +14,7 @@ type NewMarketOracleInput = {
   expiry?: string
   unit: Market["unit"]
   domain: Market["domain"]
+  valueDomain?: { min: number; max: number }
 }
 
 export function createDefaultAiOracleState(input: NewMarketOracleInput): MarketOracleState {
@@ -25,10 +27,30 @@ export function createDefaultAiOracleState(input: NewMarketOracleInput): MarketO
   const domain = input.domain ?? { min: 0, max: 100 }
   const unit = input.unit ?? "other"
   const normalizedUnit = unit.toUpperCase()
-  const valueDomain =
-    normalizedUnit === "USD"
+  const providedValueDomain = normalizeValueDomain(input.valueDomain)
+  const heuristicValueDomain =
+    providedValueDomain ??
+    normalizeValueDomain(
+      suggestValueDomain(
+        {
+          title: normalizedTitle,
+          description: input.description,
+          resolutionCriteria,
+          category: input.category,
+        },
+        unit,
+        { maxUsdValue: MAX_DOLLAR_VALUE },
+      ),
+    )
+
+  const fallbackValueDomain =
+    normalizedUnit === "USD" || normalizedUnit === "$"
       ? { min: 0, max: MAX_DOLLAR_VALUE }
-      : domain
+      : normalizedUnit === "%" || normalizedUnit === "°C"
+        ? defaultValueDomainForUnit(unit)
+        : domain
+
+  const valueDomain = heuristicValueDomain ?? fallbackValueDomain
 
   const request: OutcomeRequest = {
     marketId: input.id,
@@ -184,22 +206,30 @@ export async function syncStoredMarketsWithOracle(existing?: Market[]): Promise<
 
     try {
       const normalizedUnit = (oracleState.request.unit ?? market.unit ?? "other").toUpperCase()
+      const requestValueDomain =
+        oracleState.request.valueDomain ??
+        (normalizedUnit === "USD"
+          ? { min: 0, max: MAX_DOLLAR_VALUE }
+          : market.domain)
+
       const request: OutcomeRequest = {
         ...oracleState.request,
         resolutionDeadline: effectiveDeadline,
         unit: oracleState.request.unit ?? market.unit,
         domain: oracleState.request.domain ?? market.domain,
-        valueDomain:
-          oracleState.request.valueDomain ??
-          (normalizedUnit === "USD"
-            ? { min: 0, max: MAX_DOLLAR_VALUE }
-            : market.domain),
+        valueDomain: requestValueDomain,
       }
       const verdict = await oracle.checkOutcome(request)
 
       const resolvedOutcome = verdict.outcome === "PENDING" ? undefined : verdict.outcome
+      const nextValueDomain = verdict.valueDomain ?? request.valueDomain
+      const nextRequest: OutcomeRequest = {
+        ...request,
+        valueDomain: nextValueDomain,
+      }
       const nextOracleState: MarketOracleState = {
         ...oracleState,
+        request: nextRequest,
         status: verdict.outcome === "PENDING" ? "pending" : "resolved",
         lastCheckedAt: nowISO,
         lastVerdict: verdict,
@@ -215,6 +245,7 @@ export async function syncStoredMarketsWithOracle(existing?: Market[]): Promise<
 
       nextMarkets.push({
         ...market,
+        valueDomain: nextValueDomain ?? market.valueDomain,
         oracle: nextOracleState,
         resolvedOutcome: resolvedOutcome ?? market.resolvedOutcome,
         resolutionConfidence: boundedConfidence,
@@ -224,7 +255,9 @@ export async function syncStoredMarketsWithOracle(existing?: Market[]): Promise<
         oracleState.lastVerdict?.outcome !== verdict.outcome ||
         oracleState.status !== nextOracleState.status ||
         (resolvedOutcome !== undefined && market.resolutionConfidence !== boundedConfidence) ||
-        oracleState.lastCheckedAt !== nextOracleState.lastCheckedAt
+        oracleState.lastCheckedAt !== nextOracleState.lastCheckedAt ||
+        oracleState.request.valueDomain?.min !== nextRequest.valueDomain?.min ||
+        oracleState.request.valueDomain?.max !== nextRequest.valueDomain?.max
       ) {
         updated = true
       }

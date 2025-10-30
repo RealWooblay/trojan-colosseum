@@ -45,7 +45,8 @@ export async function newMarket(
     category: string,
     alpha: number[],
     expiry: number,
-    ranges?: [number, number][]
+    ranges?: [number, number][],
+    valueDomain?: { min: number; max: number }
 ): Promise<{ success: true, signature: string } | { success: false, error: any }> {
     try {
         if (expiry <= Date.now() / 1000) {
@@ -130,6 +131,16 @@ export async function newMarket(
         const marketId = (controller.totalMarkets.toNumber() - 1).toString();
         const expiryIso = new Date(expiry * 1000).toISOString();
         const domain = { min: 0, max: 100 };
+        const normalizeValueDomain = (candidate?: { min: number; max: number }) => {
+            if (!candidate) return undefined;
+            const min = Number(candidate.min);
+            const max = Number(candidate.max);
+            if (!Number.isFinite(min) || !Number.isFinite(max) || max <= min) {
+                return undefined;
+            }
+            return { min, max };
+        };
+        const sanitizedValueDomain = normalizeValueDomain(valueDomain);
         const normalizeInputRange = (value: any): [number, number] | null => {
             if (!value) return null;
             const raw = Array.isArray(value)
@@ -166,6 +177,7 @@ export async function newMarket(
             description: description,
             unit: unit,
             domain: domain,
+            valueDomain: sanitizedValueDomain,
             prior: {
                 kind: "normal",
                 params: {}
@@ -198,6 +210,7 @@ export async function newMarket(
                 expiry: expiryIso,
                 unit,
                 domain,
+                valueDomain: sanitizedValueDomain,
             }),
         });
 

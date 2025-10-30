@@ -11,6 +11,7 @@ interface CustomTooltipProps {
   selectedRange?: [number, number]
   selectedRanges?: [number, number][]
   allData: PdfPoint[]
+  valueFormatter?: (value: number) => string
 }
 
 export function CustomTooltip({
@@ -21,6 +22,7 @@ export function CustomTooltip({
   selectedRange,
   selectedRanges,
   allData,
+  valueFormatter,
 }: CustomTooltipProps) {
   if (!active || !payload || !payload.length || label === undefined) {
     return null
@@ -35,13 +37,14 @@ export function CustomTooltip({
   const liquidityDepth = assessLiquidityDepth(allData, label)
   const rangeLabel =
     matchingRange && matchingRangeIndex >= 0 && ranges.length > 1 ? `Range ${matchingRangeIndex + 1} Prob:` : "Range Prob:"
+  const formattedLabel = valueFormatter ? valueFormatter(label) : formatValue(label, unit)
 
   return (
     <div
       className="glass-card p-4 space-y-2 text-sm border border-white/20 shadow-xl"
       style={{ backdropFilter: "blur(12px)" }}
     >
-      <div className="font-semibold text-base">{formatValue(label, unit)}</div>
+      <div className="font-semibold text-base">{formattedLabel}</div>
 
       <div className="space-y-1">
         <div className="flex justify-between gap-6">
